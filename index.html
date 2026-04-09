@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VideoLink Player</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0a0f;
+      --surface: #111118;
+      --surface2: #1a1a24;
+      --accent: #e8ff47;
+      --accent2: #ff4f7b;
+      --text: #f0f0f5;
+      --muted: #555568;
+      --border: rgba(255,255,255,0.07);
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-x: hidden;
+    }
+
+    /* Background grain */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+      background-size: 200px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Glow blob */
+    body::after {
+      content: '';
+      position: fixed;
+      top: -200px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 800px;
+      height: 500px;
+      background: radial-gradient(ellipse, rgba(232,255,71,0.06) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    header {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      padding: 60px 20px 20px;
+    }
+
+    .logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(52px, 10vw, 96px);
+      letter-spacing: 4px;
+      line-height: 1;
+      background: linear-gradient(135deg, var(--accent) 0%, #b8ff00 50%, var(--accent2) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .tagline {
+      margin-top: 8px;
+      font-size: 13px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .input-section {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 720px;
+      padding: 40px 20px 30px;
+    }
+
+    .url-form {
+      display: flex;
+      gap: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 8px 8px 8px 20px;
+      transition: border-color 0.3s;
+    }
+
+    .url-form:focus-within {
+      border-color: rgba(232,255,71,0.4);
+      box-shadow: 0 0 0 3px rgba(232,255,71,0.06);
+    }
+
+    .url-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 300;
+      min-width: 0;
+    }
+
+    .url-input::placeholder { color: var(--muted); }
+
+    .play-btn {
+      background: var(--accent);
+      color: #000;
+      border: none;
+      border-radius: 10px;
+      padding: 12px 28px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.2s, transform 0.1s;
+      flex-shrink: 0;
+    }
+
+    .play-btn:hover { background: #d4eb30; transform: scale(1.02); }
+    .play-btn:active { transform: scale(0.98); }
+
+    .platform-badges {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    .badge {
+      font-size: 11px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: var(--muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 4px 12px;
+    }
+
+    /* Player area */
+    .player-container {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 960px;
+      padding: 0 20px 60px;
+    }
+
+    .player-wrapper {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+      display: none;
+      flex-direction: column;
+      animation: fadeUp 0.4s ease forwards;
+    }
+
+    .player-wrapper.visible { display: flex; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .player-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .platform-tag {
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-weight: 500;
+      padding: 4px 12px;
+      border-radius: 20px;
+    }
+
+    .tag-youtube  { background: rgba(255,0,0,0.15); color: #ff6b6b; }
+    .tag-tiktok   { background: rgba(105,201,208,0.15); color: #69c9d0; }
+    .tag-twitter  { background: rgba(29,161,242,0.15); color: #5cabf0; }
+    .tag-vimeo    { background: rgba(26,183,234,0.15); color: #1ab7ea; }
+    .tag-spotify  { background: rgba(30,215,96,0.15); color: #1ed760; }
+    .tag-unknown  { background: rgba(255,255,255,0.07); color: var(--muted); }
+
+    .url-display {
+      font-size: 12px;
+      color: var(--muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 60%;
+    }
+
+    .embed-area {
+      position: relative;
+      width: 100%;
+      padding-top: 56.25%; /* 16:9 */
+      background: #000;
+    }
+
+    .embed-area iframe,
+    .embed-area video {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    /* Notice box */
+    .notice-box {
+      display: none;
+      margin: 0 20px 20px;
+      padding: 16px 20px;
+      background: var(--surface2);
+      border: 1px solid rgba(255,79,123,0.2);
+      border-radius: 12px;
+      font-size: 13px;
+      color: #ccc;
+      line-height: 1.6;
+    }
+
+    .notice-box.visible { display: block; }
+    .notice-box a { color: var(--accent); text-decoration: none; }
+    .notice-box a:hover { text-decoration: underline; }
+
+    .error-box {
+      display: none;
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--muted);
+    }
+
+    .error-box.visible { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+    .error-icon { font-size: 42px; }
+    .error-title { font-size: 16px; color: var(--text); font-weight: 500; }
+    .error-msg { font-size: 13px; max-width: 400px; text-align: center; line-height: 1.6; }
+
+    /* Placeholder state */
+    .placeholder {
+      text-align: center;
+      padding: 80px 20px;
+      color: var(--muted);
+      position: relative;
+      z-index: 1;
+      font-size: 14px;
+      line-height: 1.8;
+      animation: pulse 3s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.6; }
+      50% { opacity: 1; }
+    }
+
+    .placeholder-icon { font-size: 52px; margin-bottom: 16px; display: block; }
+
+    footer {
+      position: relative; z-index: 1;
+      text-align: center;
+      padding: 20px;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 1px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">VideoLink</div>
+  <p class="tagline">Paste any video URL — watch it here</p>
+</header>
+
+<div class="input-section">
+  <div class="url-form">
+    <input
+      class="url-input"
+      id="urlInput"
+      type="text"
+      placeholder="https://youtube.com/watch?v=..."
+      autocomplete="off"
+      spellcheck="false"
+    />
+    <button class="play-btn" onclick="loadVideo()">▶ Abspielen</button>
+  </div>
+  <div class="platform-badges">
+    <span class="badge">YouTube</span>
+    <span class="badge">TikTok</span>
+    <span class="badge">Vimeo</span>
+    <span class="badge">Twitter / X</span>
+    <span class="badge">Spotify</span>
+    <span class="badge">Direct MP4</span>
+  </div>
+</div>
+
+<div class="player-container">
+  <div class="player-wrapper" id="playerWrapper">
+    <div class="player-header">
+      <span class="platform-tag" id="platformTag"></span>
+      <span class="url-display" id="urlDisplay"></span>
+    </div>
+    <div class="embed-area" id="embedArea"></div>
+    <div class="notice-box" id="noticeBox"></div>
+    <div class="error-box" id="errorBox">
+      <span class="error-icon">⚠️</span>
+      <span class="error-title">Einbettung nicht möglich</span>
+      <span class="error-msg" id="errorMsg"></span>
+    </div>
+  </div>
+</div>
+
+<div class="placeholder" id="placeholder">
+  <span class="placeholder-icon">🎬</span>
+  Füge eine Video-URL ein und klicke auf Abspielen
+</div>
+
+<footer>VideoLink — kein Tracking, kein Login, einfach abspielen</footer>
+
+<script>
+  const input = document.getElementById('urlInput');
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') loadVideo(); });
+
+  function loadVideo() {
+    const raw = input.value.trim();
+    if (!raw) return;
+
+    const wrapper   = document.getElementById('playerWrapper');
+    const embedArea = document.getElementById('embedArea');
+    const noticeBox = document.getElementById('noticeBox');
+    const errorBox  = document.getElementById('errorBox');
+    const platformTag = document.getElementById('platformTag');
+    const urlDisplay  = document.getElementById('urlDisplay');
+
+    // Reset
+    embedArea.innerHTML = '';
+    noticeBox.className = 'notice-box';
+    noticeBox.innerHTML = '';
+    errorBox.className  = 'error-box';
+    document.getElementById('errorMsg').textContent = '';
+    document.getElementById('placeholder').style.display = 'none';
+    wrapper.className = 'player-wrapper visible';
+    urlDisplay.textContent = raw;
+
+    const result = resolveEmbed(raw);
+
+    platformTag.textContent  = result.platform;
+    platformTag.className    = 'platform-tag ' + result.tagClass;
+
+    if (result.type === 'iframe') {
+      const iframe = document.createElement('iframe');
+      iframe.src = result.src;
+      iframe.allowFullscreen = true;
+      iframe.allow = 'autoplay; encrypted-media; picture-in-picture';
+      embedArea.appendChild(iframe);
+      embedArea.style.display = '';
+
+      if (result.notice) {
+        noticeBox.innerHTML = result.notice;
+        noticeBox.className = 'notice-box visible';
+      }
+
+    } else if (result.type === 'video') {
+      const video = document.createElement('video');
+      video.src = result.src;
+      video.controls = true;
+      video.autoplay = true;
+      embedArea.appendChild(video);
+      embedArea.style.display = '';
+
+    } else if (result.type === 'error') {
+      embedArea.style.display = 'none';
+      document.getElementById('errorMsg').textContent = result.message;
+      errorBox.className = 'error-box visible';
+      embedArea.style.display = 'none';
+    }
+  }
+
+  function resolveEmbed(url) {
+    // ── YouTube ──────────────────────────────────────────────
+    const ytMatch =
+      url.match(/(?:youtube\.com\/watch\?(?:.*&)?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/) ||
+      url.match(/youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/);
+    if (ytMatch) {
+      const id = ytMatch[1];
+      return {
+        platform: 'YouTube', tagClass: 'tag-youtube', type: 'iframe',
+        src: `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`
+      };
+    }
+
+    // ── YouTube Playlist ────────────────────────────────────
+    const ytList = url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
+    if (url.includes('youtube.com') && ytList) {
+      return {
+        platform: 'YouTube', tagClass: 'tag-youtube', type: 'iframe',
+        src: `https://www.youtube-nocookie.com/embed/videoseries?list=${ytList[1]}&autoplay=1`
+      };
+    }
+
+    // ── Vimeo ────────────────────────────────────────────────
+    const vimeo = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+    if (vimeo) {
+      return {
+        platform: 'Vimeo', tagClass: 'tag-vimeo', type: 'iframe',
+        src: `https://player.vimeo.com/video/${vimeo[1]}?autoplay=1`
+      };
+    }
+
+    // ── TikTok ───────────────────────────────────────────────
+    const tiktok = url.match(/tiktok\.com\/@[^/]+\/video\/(\d+)/);
+    if (tiktok) {
+      return {
+        platform: 'TikTok', tagClass: 'tag-tiktok', type: 'iframe',
+        src: `https://www.tiktok.com/embed/v2/${tiktok[1]}`,
+        notice: `⚠️ TikTok erlaubt Einbettungen nur begrenzt. Falls das Video nicht erscheint, öffne es direkt: <a href="${url}" target="_blank">Auf TikTok ansehen →</a>`
+      };
+    }
+
+    // ── Twitter / X ──────────────────────────────────────────
+    const twitter = url.match(/(?:twitter\.com|x\.com)\/[^/]+\/status\/(\d+)/);
+    if (twitter) {
+      const tweetId = twitter[1];
+      const embedHtml = `
+        <blockquote class="twitter-tweet" data-dnt="true" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+          <a href="${url}"></a>
+        </blockquote>
+        <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"><\/script>`;
+      return {
+        platform: 'Twitter / X', tagClass: 'tag-twitter', type: 'iframe',
+        src: `https://platform.twitter.com/embed/Tweet.html?id=${tweetId}&theme=dark`,
+        notice: `ℹ️ Twitter/X zeigt Videos direkt im Embed an. Falls es nicht lädt: <a href="${url}" target="_blank">Auf X ansehen →</a>`
+      };
+    }
+
+    // ── Spotify ──────────────────────────────────────────────
+    const spotify = url.match(/open\.spotify\.com\/(track|album|episode|show|playlist)\/([a-zA-Z0-9]+)/);
+    if (spotify) {
+      return {
+        platform: 'Spotify', tagClass: 'tag-spotify', type: 'iframe',
+        src: `https://open.spotify.com/embed/${spotify[1]}/${spotify[2]}?utm_source=generator&theme=0`
+      };
+    }
+
+    // ── Direct MP4 / WebM / OGG ──────────────────────────────
+    if (/\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(url)) {
+      return { platform: 'Direktlink', tagClass: 'tag-unknown', type: 'video', src: url };
+    }
+
+    // ── Instagram ────────────────────────────────────────────
+    if (url.includes('instagram.com')) {
+      return {
+        platform: 'Instagram', tagClass: 'tag-unknown', type: 'error',
+        message: 'Instagram blockiert das direkte Einbetten von Videos aus Datenschutzgründen. Bitte öffne den Link direkt in deinem Browser.'
+      };
+    }
+
+    // ── Fallback: try generic iframe ─────────────────────────
+    try {
+      new URL(url); // validate
+      return {
+        platform: 'Webseite', tagClass: 'tag-unknown', type: 'iframe',
+        src: url,
+        notice: `ℹ️ Unbekannte Quelle — viele Seiten blockieren Einbettungen (X-Frame-Options). Falls nichts erscheint, öffne die URL direkt: <a href="${url}" target="_blank">Öffnen →</a>`
+      };
+    } catch {
+      return {
+        platform: 'Fehler', tagClass: 'tag-unknown', type: 'error',
+        message: 'Die eingegebene URL ist ungültig. Bitte überprüfe sie und versuche es erneut.'
+      };
+    }
+  }
+</script>
+</body>
+  </html>
