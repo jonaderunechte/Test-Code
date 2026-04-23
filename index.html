@@ -1,498 +1,589 @@
+```html
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>VideoLink Player</title>
-  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
-  <style>
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jona Web Studio</title>
+    
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- xterm.js for Terminal -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css" />
+    <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js"></script>
 
-    :root {
-      --bg: #0a0a0f;
-      --surface: #111118;
-      --surface2: #1a1a24;
-      --accent: #e8ff47;
-      --accent2: #ff4f7b;
-      --text: #f0f0f5;
-      --muted: #555568;
-      --border: rgba(255,255,255,0.07);
-    }
+    <!-- Pyodide for Browser Python Execution -->
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
 
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'DM Sans', sans-serif;
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      overflow-x: hidden;
-    }
-
-    /* Background grain */
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
-      background-size: 200px;
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    /* Glow blob */
-    body::after {
-      content: '';
-      position: fixed;
-      top: -200px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 800px;
-      height: 500px;
-      background: radial-gradient(ellipse, rgba(232,255,71,0.06) 0%, transparent 70%);
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    header {
-      position: relative;
-      z-index: 1;
-      text-align: center;
-      padding: 60px 20px 20px;
-    }
-
-    .logo {
-      font-family: 'Bebas Neue', sans-serif;
-      font-size: clamp(52px, 10vw, 96px);
-      letter-spacing: 4px;
-      line-height: 1;
-      background: linear-gradient(135deg, var(--accent) 0%, #b8ff00 50%, var(--accent2) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .tagline {
-      margin-top: 8px;
-      font-size: 13px;
-      letter-spacing: 3px;
-      text-transform: uppercase;
-      color: var(--muted);
-    }
-
-    .input-section {
-      position: relative;
-      z-index: 1;
-      width: 100%;
-      max-width: 720px;
-      padding: 40px 20px 30px;
-    }
-
-    .url-form {
-      display: flex;
-      gap: 10px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 8px 8px 8px 20px;
-      transition: border-color 0.3s;
-    }
-
-    .url-form:focus-within {
-      border-color: rgba(232,255,71,0.4);
-      box-shadow: 0 0 0 3px rgba(232,255,71,0.06);
-    }
-
-    .url-input {
-      flex: 1;
-      background: transparent;
-      border: none;
-      outline: none;
-      color: var(--text);
-      font-family: 'DM Sans', sans-serif;
-      font-size: 15px;
-      font-weight: 300;
-      min-width: 0;
-    }
-
-    .url-input::placeholder { color: var(--muted); }
-
-    .play-btn {
-      background: var(--accent);
-      color: #000;
-      border: none;
-      border-radius: 10px;
-      padding: 12px 28px;
-      font-family: 'DM Sans', sans-serif;
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      white-space: nowrap;
-      transition: background 0.2s, transform 0.1s;
-      flex-shrink: 0;
-    }
-
-    .play-btn:hover { background: #d4eb30; transform: scale(1.02); }
-    .play-btn:active { transform: scale(0.98); }
-
-    .platform-badges {
-      display: flex;
-      gap: 8px;
-      justify-content: center;
-      flex-wrap: wrap;
-      margin-top: 16px;
-    }
-
-    .badge {
-      font-size: 11px;
-      letter-spacing: 1px;
-      text-transform: uppercase;
-      color: var(--muted);
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 4px 12px;
-    }
-
-    /* Player area */
-    .player-container {
-      position: relative;
-      z-index: 1;
-      width: 100%;
-      max-width: 960px;
-      padding: 0 20px 60px;
-    }
-
-    .player-wrapper {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      overflow: hidden;
-      display: none;
-      flex-direction: column;
-      animation: fadeUp 0.4s ease forwards;
-    }
-
-    .player-wrapper.visible { display: flex; }
-
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(24px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    .player-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 14px 20px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .platform-tag {
-      font-size: 11px;
-      letter-spacing: 2px;
-      text-transform: uppercase;
-      font-weight: 500;
-      padding: 4px 12px;
-      border-radius: 20px;
-    }
-
-    .tag-youtube  { background: rgba(255,0,0,0.15); color: #ff6b6b; }
-    .tag-tiktok   { background: rgba(105,201,208,0.15); color: #69c9d0; }
-    .tag-twitter  { background: rgba(29,161,242,0.15); color: #5cabf0; }
-    .tag-vimeo    { background: rgba(26,183,234,0.15); color: #1ab7ea; }
-    .tag-spotify  { background: rgba(30,215,96,0.15); color: #1ed760; }
-    .tag-unknown  { background: rgba(255,255,255,0.07); color: var(--muted); }
-
-    .url-display {
-      font-size: 12px;
-      color: var(--muted);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      max-width: 60%;
-    }
-
-    .embed-area {
-      position: relative;
-      width: 100%;
-      padding-top: 56.25%; /* 16:9 */
-      background: #000;
-    }
-
-    .embed-area iframe,
-    .embed-area video {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      border: none;
-    }
-
-    /* Notice box */
-    .notice-box {
-      display: none;
-      margin: 0 20px 20px;
-      padding: 16px 20px;
-      background: var(--surface2);
-      border: 1px solid rgba(255,79,123,0.2);
-      border-radius: 12px;
-      font-size: 13px;
-      color: #ccc;
-      line-height: 1.6;
-    }
-
-    .notice-box.visible { display: block; }
-    .notice-box a { color: var(--accent); text-decoration: none; }
-    .notice-box a:hover { text-decoration: underline; }
-
-    .error-box {
-      display: none;
-      text-align: center;
-      padding: 40px 20px;
-      color: var(--muted);
-    }
-
-    .error-box.visible { display: flex; flex-direction: column; align-items: center; gap: 10px; }
-    .error-icon { font-size: 42px; }
-    .error-title { font-size: 16px; color: var(--text); font-weight: 500; }
-    .error-msg { font-size: 13px; max-width: 400px; text-align: center; line-height: 1.6; }
-
-    /* Placeholder state */
-    .placeholder {
-      text-align: center;
-      padding: 80px 20px;
-      color: var(--muted);
-      position: relative;
-      z-index: 1;
-      font-size: 14px;
-      line-height: 1.8;
-      animation: pulse 3s ease-in-out infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 0.6; }
-      50% { opacity: 1; }
-    }
-
-    .placeholder-icon { font-size: 52px; margin-bottom: 16px; display: block; }
-
-    footer {
-      position: relative; z-index: 1;
-      text-align: center;
-      padding: 20px;
-      font-size: 11px;
-      color: var(--muted);
-      letter-spacing: 1px;
-    }
-  </style>
+    <style>
+        :root {
+            --bg-dark: #070f14;
+            --bg-panel: #0d1a21;
+            --accent-green: #39ff14;
+            --accent-blue: #00ffcc;
+            --text-main: #e0f8f5;
+        }
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden;
+        }
+        .jona-border { border-color: rgba(0, 255, 204, 0.2); }
+        .btn {
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .btn:hover:not(:disabled) {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(57, 255, 20, 0.2);
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .file-item {
+            cursor: pointer;
+            border-left: 2px solid transparent;
+        }
+        .file-item:hover { background-color: rgba(255,255,255,0.05); }
+        .file-item.active {
+            background-color: rgba(0, 255, 204, 0.1);
+            border-left: 2px solid var(--accent-green);
+            color: var(--accent-green);
+        }
+        
+        #loader {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(7, 15, 20, 0.95);
+            z-index: 50; display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+        }
+        .spinner {
+            width: 50px; height: 50px;
+            border: 3px solid rgba(0, 255, 204, 0.3);
+            border-top-color: var(--accent-green);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+        
+        /* Monaco custom tooltip fix */
+        .monaco-editor .suggest-widget .monaco-list .monaco-list-row { color: #ccc; }
+    </style>
 </head>
-<body>
+<body class="flex flex-col h-screen">
 
-<header>
-  <div class="logo">VideoLink</div>
-  <p class="tagline">Paste any video URL — watch it here</p>
-</header>
-
-<div class="input-section">
-  <div class="url-form">
-    <input
-      class="url-input"
-      id="urlInput"
-      type="text"
-      placeholder="https://youtube.com/watch?v=..."
-      autocomplete="off"
-      spellcheck="false"
-    />
-    <button class="play-btn" onclick="loadVideo()">▶ Abspielen</button>
-  </div>
-  <div class="platform-badges">
-    <span class="badge">YouTube</span>
-    <span class="badge">TikTok</span>
-    <span class="badge">Vimeo</span>
-    <span class="badge">Twitter / X</span>
-    <span class="badge">Spotify</span>
-    <span class="badge">Direct MP4</span>
-  </div>
-</div>
-
-<div class="player-container">
-  <div class="player-wrapper" id="playerWrapper">
-    <div class="player-header">
-      <span class="platform-tag" id="platformTag"></span>
-      <span class="url-display" id="urlDisplay"></span>
+    <!-- Loading Screen -->
+    <div id="loader">
+        <div class="spinner mb-4"></div>
+        <h2 class="text-2xl font-bold text-[#39ff14] mb-2 tracking-widest">JONA KERNEL</h2>
+        <p class="text-[#00ffcc] animate-pulse">Initialisiere Pyodide Compiler & Virtuelles Dateisystem...</p>
     </div>
-    <div class="embed-area" id="embedArea"></div>
-    <div class="notice-box" id="noticeBox"></div>
-    <div class="error-box" id="errorBox">
-      <span class="error-icon">⚠️</span>
-      <span class="error-title">Einbettung nicht möglich</span>
-      <span class="error-msg" id="errorMsg"></span>
+
+    <!-- Header / Toolbar -->
+    <header class="h-14 bg-opacity-50 bg-[#0d1a21] border-b jona-border flex items-center justify-between px-4 shrink-0">
+        <div class="flex items-center gap-4">
+            <h1 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#39ff14] to-[#00ffcc] tracking-widest">
+                JONA STUDIO
+            </h1>
+            <div class="h-6 w-px bg-gray-700 mx-2"></div>
+            <button id="btn-run" class="btn bg-green-900/40 text-[#39ff14] border border-[#39ff14]/50 px-4 py-1.5 rounded text-sm font-bold disabled:opacity-50" disabled>
+                ▶ Run
+            </button>
+            <button id="btn-split" class="btn bg-[#0d1a21] text-[#00ffcc] border border-[#00ffcc]/30 px-3 py-1.5 rounded text-sm hover:bg-[#00ffcc]/10">
+                ◫ Live Split
+            </button>
+        </div>
+        <div class="flex items-center gap-3">
+            <button id="btn-jona-to-py" class="btn bg-[#0d1a21] text-gray-300 border border-gray-600 px-3 py-1.5 rounded text-sm hover:bg-gray-800" title="Aktuelle Datei nach Python übersetzen">
+                Jona → Py
+            </button>
+            <button id="btn-py-to-jona" class="btn bg-[#0d1a21] text-gray-300 border border-gray-600 px-3 py-1.5 rounded text-sm hover:bg-gray-800" title="Aktuelle Datei nach Jona übersetzen">
+                Py → Jona
+            </button>
+            <div class="h-6 w-px bg-gray-700 mx-1"></div>
+            <button id="btn-download" class="btn text-gray-400 hover:text-white px-2 py-1.5" title="Datei Herunterladen">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            </button>
+            <button id="btn-share" class="btn text-gray-400 hover:text-white px-2 py-1.5" title="Code als Link teilen">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <div class="flex-1 flex overflow-hidden">
+        
+        <!-- Sidebar (File Explorer) -->
+        <div class="w-64 bg-[#0a141a] border-r jona-border flex flex-col shrink-0">
+            <div class="px-4 py-3 border-b border-gray-800 flex justify-between items-center">
+                <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Explorer</span>
+                <button id="btn-new-file" class="text-[#00ffcc] hover:text-[#39ff14]" title="Neue Datei">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+                </button>
+            </div>
+            <div id="file-list" class="flex-1 overflow-y-auto py-2">
+                <!-- File items injected here -->
+            </div>
+        </div>
+
+        <!-- Editor Area -->
+        <div class="flex-1 flex flex-col min-w-0">
+            <!-- Editors (Split View possible) -->
+            <div class="flex-1 flex overflow-hidden">
+                <!-- Primary Editor -->
+                <div class="flex-1 relative border-r border-gray-800">
+                    <div class="absolute top-0 right-0 bg-[#0d1a21] text-xs text-gray-500 px-2 py-1 border-b border-l border-gray-800 z-10" id="primary-editor-label">main.jona</div>
+                    <div id="editor-container" class="w-full h-full"></div>
+                </div>
+                <!-- Secondary Editor (Live Translation) -->
+                <div id="split-pane" class="flex-1 relative hidden bg-[#050a0d]">
+                    <div class="absolute top-0 right-0 bg-[#0d1a21] text-xs text-gray-500 px-2 py-1 border-b border-l border-gray-800 z-10 text-[#00ffcc]">Python Translation</div>
+                    <div id="viewer-container" class="w-full h-full"></div>
+                </div>
+            </div>
+
+            <!-- Terminal Area -->
+            <div class="h-64 border-t jona-border bg-black flex flex-col shrink-0 relative">
+                <div class="bg-[#0a141a] px-4 py-1.5 text-xs text-gray-400 flex justify-between items-center border-b border-gray-800">
+                    <span>Terminal / REPL</span>
+                    <button id="btn-clear-term" class="hover:text-white" title="Terminal leeren">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    </button>
+                </div>
+                <div id="terminal" class="flex-1 p-2"></div>
+            </div>
+        </div>
     </div>
-  </div>
-</div>
 
-<div class="placeholder" id="placeholder">
-  <span class="placeholder-icon">🎬</span>
-  Füge eine Video-URL ein und klicke auf Abspielen
-</div>
+    <!-- Monaco Editor Loader -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs/loader.min.js"></script>
+    
+    <script>
+        // --- JONA LANGUAGE DEFINITIONS ---
+        const JONA_TO_PYTHON = {
+            "jona": "print", "Jona": "while", "JONA": "for", "jona_jona": "if",
+            "Jona_jona": "elif", "JONA_jona": "else", "jonA": "pass", "JoNA": "break",
+            "JOnNA": "continue", "jonaJona": "def", "JonaJona": "class", "jonaJONA": "return",
+            "JONA_JONA": "import", "jona_JONA": "from", "JOna": "as", "joNa": "in",
+            "JoNa": "is", "JOnA": "not", "jOnA": "and", "jONa": "or", "joNAna": "try",
+            "JONAJONA": "except", "jonaJonaJona": "finally", "JONAjona": "raise",
+            "JonaJONA": "with", "JONAJona": "global", "jonaJONAjona": "nonlocal",
+            "jOna": "del", "JonaJOna": "assert", "jonaJona_jona": "lambda",
+            "JonaJona_JONA": "yield", "Jona_Jona": "True", "JONA_jonaJona": "False",
+            "jonajonaJona": "None"
+        };
+        const PYTHON_TO_JONA = Object.fromEntries(Object.entries(JONA_TO_PYTHON).map(([k, v]) => [v, k]));
 
-<footer>VideoLink — kein Tracking, kein Login, einfach abspielen</footer>
+        // --- PYTHON COMPILER SCRIPT (Injected into Pyodide) ---
+        const pythonCompilerCode = `
+import re
+import sys
 
-<script>
-  const input = document.getElementById('urlInput');
-  input.addEventListener('keydown', e => { if (e.key === 'Enter') loadVideo(); });
+JONA_TO_PYTHON = ${JSON.stringify(JONA_TO_PYTHON)}
+PYTHON_TO_JONA = ${JSON.stringify(PYTHON_TO_JONA)}
 
-  function loadVideo() {
-    const raw = input.value.trim();
-    if (!raw) return;
+_SORTED_JONA_KEYS = sorted(JONA_TO_PYTHON.keys(), key=len, reverse=True)
+_SORTED_PY_KEYS   = sorted(PYTHON_TO_JONA.keys(),  key=len, reverse=True)
 
-    const wrapper   = document.getElementById('playerWrapper');
-    const embedArea = document.getElementById('embedArea');
-    const noticeBox = document.getElementById('noticeBox');
-    const errorBox  = document.getElementById('errorBox');
-    const platformTag = document.getElementById('platformTag');
-    const urlDisplay  = document.getElementById('urlDisplay');
+def _build_pattern(keywords):
+    escaped = [re.escape(k) for k in keywords]
+    return re.compile(r'\\b(' + '|'.join(escaped) + r')\\b')
 
-    // Reset
-    embedArea.innerHTML = '';
-    noticeBox.className = 'notice-box';
-    noticeBox.innerHTML = '';
-    errorBox.className  = 'error-box';
-    document.getElementById('errorMsg').textContent = '';
-    document.getElementById('placeholder').style.display = 'none';
-    wrapper.className = 'player-wrapper visible';
-    urlDisplay.textContent = raw;
+_JONA_PATTERN = _build_pattern(_SORTED_JONA_KEYS)
+_PY_PATTERN   = _build_pattern(_SORTED_PY_KEYS)
 
-    const result = resolveEmbed(raw);
+def _protect_and_replace(source: str, pattern, mapping: dict) -> str:
+    STRING_OR_COMMENT = re.compile(
+        r'(\"\"\"[\\s\\S]*?\"\"\"|'
+        r"'''[\\s\\S]*?'''|"
+        r'\"(?:[^\"\\\\]|\\\\.)*\"|'
+        r"'(?:[^'\\\\]|\\\\.)*'|"
+        r'f\"\"\"[\\s\\S]*?\"\"\"|'
+        r"f'''[\\s\\S]*?'''|"
+        r'f\"(?:[^\"\\\\]|\\\\.)*\"|'
+        r"f'(?:[^'\\\\]|\\\\.)*'|"
+        r'#[^\\n]*)'
+    )
+    result = []
+    last = 0
+    for m in STRING_OR_COMMENT.finditer(source):
+        code_seg = source[last:m.start()]
+        translated = pattern.sub(lambda km: mapping[km.group(0)], code_seg)
+        result.append(translated)
+        result.append(m.group(0))
+        last = m.end()
+    code_seg = source[last:]
+    translated = pattern.sub(lambda km: mapping[km.group(0)], code_seg)
+    result.append(translated)
+    return "".join(result)
 
-    platformTag.textContent  = result.platform;
-    platformTag.className    = 'platform-tag ' + result.tagClass;
+def jona_to_python(source: str) -> str:
+    return _protect_and_replace(source, _JONA_PATTERN, JONA_TO_PYTHON)
 
-    if (result.type === 'iframe') {
-      const iframe = document.createElement('iframe');
-      iframe.src = result.src;
-      iframe.allowFullscreen = true;
-      iframe.allow = 'autoplay; encrypted-media; picture-in-picture';
-      embedArea.appendChild(iframe);
-      embedArea.style.display = '';
+def python_to_jona(source: str) -> str:
+    return _protect_and_replace(source, _PY_PATTERN, PYTHON_TO_JONA)
+`;
 
-      if (result.notice) {
-        noticeBox.innerHTML = result.notice;
-        noticeBox.className = 'notice-box visible';
-      }
+        // --- STATE & FILE SYSTEM ---
+        let files = {
+            "main.jona": "JONA_JONA math\n\njonaJona berechne_wurzel(zahl):\n    jona_jona zahl < 0:\n        JONAjona ValueError(\"Keine negativen Zahlen!\")\n    jonaJONA math.sqrt(zahl)\n\njoNAna:\n    ergebnis = berechne_wurzel(16)\n    jona(f\"Die Wurzel aus 16 ist {ergebnis}\")\n    \n    jona_jona Jona_Jona:\n        jona(\"Alles funktioniert! JONA = Python\")\nJONAJONA Exception JOna e:\n    jona(\"Fehler:\", e)\n"
+        };
+        let activeFile = "main.jona";
+        let pyodide = null;
+        let editor = null;
+        let viewer = null;
+        let terminal = null;
+        let termFitAddon = null;
+        
+        // --- LOAD FROM URL OR LOCALSTORAGE ---
+        const urlHash = window.location.hash.substring(1);
+        if (urlHash) {
+            try { files = JSON.parse(atob(urlHash)); } catch(e) { console.error("URL Load Error"); }
+        } else {
+            const saved = localStorage.getItem('jona_files');
+            if (saved) files = JSON.parse(saved);
+        }
+        if (!files[activeFile]) activeFile = Object.keys(files)[0];
 
-    } else if (result.type === 'video') {
-      const video = document.createElement('video');
-      video.src = result.src;
-      video.controls = true;
-      video.autoplay = true;
-      embedArea.appendChild(video);
-      embedArea.style.display = '';
+        function saveFiles() {
+            localStorage.setItem('jona_files', JSON.stringify(files));
+        }
 
-    } else if (result.type === 'error') {
-      embedArea.style.display = 'none';
-      document.getElementById('errorMsg').textContent = result.message;
-      errorBox.className = 'error-box visible';
-      embedArea.style.display = 'none';
-    }
-  }
+        // --- TERMINAL SETUP ---
+        function initTerminal() {
+            terminal = new Terminal({
+                theme: { background: '#000000', foreground: '#00ffcc', cursor: '#39ff14' },
+                fontFamily: 'Consolas, "Courier New", monospace',
+                fontSize: 14, cursorBlink: true
+            });
+            termFitAddon = new FitAddon.FitAddon();
+            terminal.loadAddon(termFitAddon);
+            terminal.open(document.getElementById('terminal'));
+            termFitAddon.fit();
+            terminal.writeln("\x1b[1;32m=== JONA REPL & TERMINAL ===\x1b[0m");
+            terminal.writeln("\x1b[38;5;240m(Schreibe Jona-Code und drücke Enter)\x1b[0m");
+            promptTerm();
 
-  function resolveEmbed(url) {
-    // ── YouTube ──────────────────────────────────────────────
-    const ytMatch =
-      url.match(/(?:youtube\.com\/watch\?(?:.*&)?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/) ||
-      url.match(/youtube\.com\/shorts\/([a-zA-Z0-9_-]{11})/);
-    if (ytMatch) {
-      const id = ytMatch[1];
-      return {
-        platform: 'YouTube', tagClass: 'tag-youtube', type: 'iframe',
-        src: `https://www.youtube-nocookie.com/embed/${id}?autoplay=1&rel=0`
-      };
-    }
+            let currentLine = "";
+            terminal.onData(e => {
+                if (e === '\r') {
+                    terminal.write('\r\n');
+                    handleReplLine(currentLine);
+                    currentLine = "";
+                } else if (e === '\u007F') { // Backspace
+                    if (currentLine.length > 0) {
+                        currentLine = currentLine.slice(0, -1);
+                        terminal.write('\b \b');
+                    }
+                } else {
+                    currentLine += e;
+                    terminal.write(e);
+                }
+            });
+        }
 
-    // ── YouTube Playlist ────────────────────────────────────
-    const ytList = url.match(/[?&]list=([a-zA-Z0-9_-]+)/);
-    if (url.includes('youtube.com') && ytList) {
-      return {
-        platform: 'YouTube', tagClass: 'tag-youtube', type: 'iframe',
-        src: `https://www.youtube-nocookie.com/embed/videoseries?list=${ytList[1]}&autoplay=1`
-      };
-    }
+        function promptTerm() { terminal.write('\r\n\x1b[1;36mJona>\x1b[0m '); }
 
-    // ── Vimeo ────────────────────────────────────────────────
-    const vimeo = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
-    if (vimeo) {
-      return {
-        platform: 'Vimeo', tagClass: 'tag-vimeo', type: 'iframe',
-        src: `https://player.vimeo.com/video/${vimeo[1]}?autoplay=1`
-      };
-    }
+        async function handleReplLine(line) {
+            if(!line.trim()) return promptTerm();
+            if(!pyodide) { terminal.writeln("\x1b[31mSystem noch nicht bereit.\x1b[0m"); return promptTerm(); }
+            
+            try {
+                // Translate
+                pyodide.globals.set("repl_input", line);
+                let pyCode = pyodide.runPython("jona_to_python(repl_input)");
+                // Execute
+                let result = await pyodide.runPythonAsync(`
+try:
+    _repl_res = eval(${JSON.stringify(pyCode)})
+    if _repl_res is not None: print(repr(_repl_res))
+except SyntaxError:
+    exec(${JSON.stringify(pyCode)})
+`);
+            } catch (err) {
+                // StdErr handler will print the error in red automatically
+            }
+            promptTerm();
+        }
 
-    // ── TikTok ───────────────────────────────────────────────
-    const tiktok = url.match(/tiktok\.com\/@[^/]+\/video\/(\d+)/);
-    if (tiktok) {
-      return {
-        platform: 'TikTok', tagClass: 'tag-tiktok', type: 'iframe',
-        src: `https://www.tiktok.com/embed/v2/${tiktok[1]}`,
-        notice: `⚠️ TikTok erlaubt Einbettungen nur begrenzt. Falls das Video nicht erscheint, öffne es direkt: <a href="${url}" target="_blank">Auf TikTok ansehen →</a>`
-      };
-    }
+        // --- PYODIDE INITIALIZATION ---
+        async function initPyodide() {
+            pyodide = await loadPyodide({
+                stdout: (text) => terminal.writeln(text),
+                stderr: (text) => terminal.writeln('\x1b[31m' + text + '\x1b[0m') // Error Highlighting
+            });
+            await pyodide.runPythonAsync(pythonCompilerCode);
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('btn-run').disabled = false;
+        }
 
-    // ── Twitter / X ──────────────────────────────────────────
-    const twitter = url.match(/(?:twitter\.com|x\.com)\/[^/]+\/status\/(\d+)/);
-    if (twitter) {
-      const tweetId = twitter[1];
-      const embedHtml = `
-        <blockquote class="twitter-tweet" data-dnt="true" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
-          <a href="${url}"></a>
-        </blockquote>
-        <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"><\/script>`;
-      return {
-        platform: 'Twitter / X', tagClass: 'tag-twitter', type: 'iframe',
-        src: `https://platform.twitter.com/embed/Tweet.html?id=${tweetId}&theme=dark`,
-        notice: `ℹ️ Twitter/X zeigt Videos direkt im Embed an. Falls es nicht lädt: <a href="${url}" target="_blank">Auf X ansehen →</a>`
-      };
-    }
+        // --- MONACO EDITOR SETUP ---
+        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs' }});
+        require(['vs/editor/editor.main'], function() {
+            
+            // Register Jona Language
+            monaco.languages.register({ id: 'jona' });
+            
+            // Syntax Highlighting Tokens
+            monaco.languages.setMonarchTokensProvider('jona', {
+                tokenizer: {
+                    root: [
+                        [/\b(jona_jona|Jona_jona|JONA_jona|Jona|JONA|jonA|JoNA|JOnNA|joNAna|JONAJONA|jonaJonaJona|JONAjona|JonaJONA)\b/, 'keyword.control'],
+                        [/\b(jonaJona|JonaJona|jonaJONA|jonaJona_jona|JonaJona_JONA)\b/, 'keyword.function'],
+                        [/\b(joNa|JoNa|JOnA|jOnA|jONa)\b/, 'keyword.operator'],
+                        [/\b(Jona_Jona|JONA_jonaJona|jonajonaJona)\b/, 'constant.language'],
+                        [/\b(JONA_JONA|jona_JONA|JOna|JONAJona|jonaJONAjona|jOna|JonaJOna)\b/, 'keyword.other'],
+                        [/\b(jona)\b/, 'support.function'],
+                        [/".*?"/, 'string'],
+                        [/'.*?'/, 'string'],
+                        [/#.*/, 'comment'],
+                        [/\d+/, 'number'],
+                    ]
+                }
+            });
 
-    // ── Spotify ──────────────────────────────────────────────
-    const spotify = url.match(/open\.spotify\.com\/(track|album|episode|show|playlist)\/([a-zA-Z0-9]+)/);
-    if (spotify) {
-      return {
-        platform: 'Spotify', tagClass: 'tag-spotify', type: 'iframe',
-        src: `https://open.spotify.com/embed/${spotify[1]}/${spotify[2]}?utm_source=generator&theme=0`
-      };
-    }
+            // Cyberpunk Theme
+            monaco.editor.defineTheme('jonaTheme', {
+                base: 'vs-dark',
+                inherit: true,
+                rules: [
+                    { token: 'keyword.control', foreground: '00ffcc', fontStyle: 'bold' },
+                    { token: 'keyword.function', foreground: '39ff14', fontStyle: 'bold' },
+                    { token: 'keyword.operator', foreground: 'ff00ff' },
+                    { token: 'constant.language', foreground: 'ffff00' },
+                    { token: 'keyword.other', foreground: 'ff9900' },
+                    { token: 'support.function', foreground: '39ff14' },
+                    { token: 'comment', foreground: '666666', fontStyle: 'italic' },
+                    { token: 'string', foreground: 'ffaaaa' }
+                ],
+                colors: { 'editor.background': '#070f14', 'editorLineNumber.foreground': '#2b5a52' }
+            });
 
-    // ── Direct MP4 / WebM / OGG ──────────────────────────────
-    if (/\.(mp4|webm|ogg|mov)(\?.*)?$/i.test(url)) {
-      return { platform: 'Direktlink', tagClass: 'tag-unknown', type: 'video', src: url };
-    }
+            // Autocompletion
+            monaco.languages.registerCompletionItemProvider('jona', {
+                provideCompletionItems: function(model, position) {
+                    const suggestions = Object.entries(JONA_TO_PYTHON).map(([jona, py]) => {
+                        return {
+                            label: jona,
+                            kind: monaco.languages.CompletionItemKind.Keyword,
+                            insertText: jona,
+                            detail: `Python: ${py}`,
+                            documentation: `Jona Keyword für '${py}'`
+                        };
+                    });
+                    return { suggestions: suggestions };
+                }
+            });
 
-    // ── Instagram ────────────────────────────────────────────
-    if (url.includes('instagram.com')) {
-      return {
-        platform: 'Instagram', tagClass: 'tag-unknown', type: 'error',
-        message: 'Instagram blockiert das direkte Einbetten von Videos aus Datenschutzgründen. Bitte öffne den Link direkt in deinem Browser.'
-      };
-    }
+            editor = monaco.editor.create(document.getElementById('editor-container'), {
+                value: files[activeFile],
+                language: 'jona',
+                theme: 'jonaTheme',
+                automaticLayout: true,
+                fontSize: 15,
+                minimap: { enabled: false },
+                fontFamily: "'Fira Code', Consolas, monospace"
+            });
 
-    // ── Fallback: try generic iframe ─────────────────────────
-    try {
-      new URL(url); // validate
-      return {
-        platform: 'Webseite', tagClass: 'tag-unknown', type: 'iframe',
-        src: url,
-        notice: `ℹ️ Unbekannte Quelle — viele Seiten blockieren Einbettungen (X-Frame-Options). Falls nichts erscheint, öffne die URL direkt: <a href="${url}" target="_blank">Öffnen →</a>`
-      };
-    } catch {
-      return {
-        platform: 'Fehler', tagClass: 'tag-unknown', type: 'error',
-        message: 'Die eingegebene URL ist ungültig. Bitte überprüfe sie und versuche es erneut.'
-      };
-    }
-  }
-</script>
+            viewer = monaco.editor.create(document.getElementById('viewer-container'), {
+                value: "",
+                language: 'python',
+                theme: 'vs-dark',
+                automaticLayout: true,
+                readOnly: true,
+                fontSize: 14,
+                minimap: { enabled: false }
+            });
+
+            editor.onDidChangeModelContent(() => {
+                files[activeFile] = editor.getValue();
+                saveFiles();
+                updateLiveTranslation();
+            });
+
+            updateFileList();
+            updateLiveTranslation();
+        });
+
+        // --- LOGIC & UI ACTIONS ---
+
+        function updateFileList() {
+            const list = document.getElementById('file-list');
+            list.innerHTML = '';
+            for(let filename in files) {
+                const div = document.createElement('div');
+                div.className = `file-item px-4 py-2 text-sm flex justify-between group ${filename === activeFile ? 'active' : 'text-gray-400'}`;
+                
+                const nameSpan = document.createElement('span');
+                nameSpan.innerText = filename;
+                
+                const delBtn = document.createElement('button');
+                delBtn.innerHTML = '×';
+                delBtn.className = 'hidden group-hover:block text-red-500 hover:text-red-400 text-lg leading-none';
+                delBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    if(Object.keys(files).length === 1) return alert("Die letzte Datei kann nicht gelöscht werden.");
+                    if(confirm(`Datei ${filename} löschen?`)) {
+                        delete files[filename];
+                        if(activeFile === filename) activeFile = Object.keys(files)[0];
+                        switchFile(activeFile);
+                        updateFileList();
+                        saveFiles();
+                    }
+                };
+
+                div.onclick = () => switchFile(filename);
+                div.appendChild(nameSpan);
+                div.appendChild(delBtn);
+                list.appendChild(div);
+            }
+        }
+
+        function switchFile(filename) {
+            activeFile = filename;
+            if(editor) {
+                editor.setValue(files[filename] || "");
+                const isPy = filename.endsWith('.py');
+                monaco.editor.setModelLanguage(editor.getModel(), isPy ? 'python' : 'jona');
+                document.getElementById('primary-editor-label').innerText = filename;
+            }
+            updateFileList();
+            updateLiveTranslation();
+        }
+
+        document.getElementById('btn-new-file').onclick = () => {
+            let name = prompt("Dateiname (z.B. modul.jona oder script.py):");
+            if(name && !files[name]) {
+                if(!name.includes('.')) name += '.jona';
+                files[name] = "";
+                switchFile(name);
+                saveFiles();
+            }
+        };
+
+        // Live Translation Logic
+        let transTimeout;
+        function updateLiveTranslation() {
+            if(!pyodide || document.getElementById('split-pane').classList.contains('hidden')) return;
+            clearTimeout(transTimeout);
+            transTimeout = setTimeout(() => {
+                try {
+                    const code = editor.getValue();
+                    if(activeFile.endsWith('.jona')) {
+                        pyodide.globals.set("src", code);
+                        viewer.setValue(pyodide.runPython("jona_to_python(src)"));
+                        monaco.editor.setModelLanguage(viewer.getModel(), 'python');
+                    } else {
+                        pyodide.globals.set("src", code);
+                        viewer.setValue(pyodide.runPython("python_to_jona(src)"));
+                        monaco.editor.setModelLanguage(viewer.getModel(), 'jona');
+                    }
+                } catch(e) { /* ignore parse errors while typing */ }
+            }, 300);
+        }
+
+        document.getElementById('btn-split').onclick = () => {
+            const pane = document.getElementById('split-pane');
+            pane.classList.toggle('hidden');
+            if(!pane.classList.contains('hidden')) updateLiveTranslation();
+        };
+
+        // Execution Logic
+        document.getElementById('btn-run').onclick = async () => {
+            if(!pyodide) return;
+            terminal.writeln(`\x1b[1;34m> Führe ${activeFile} aus...\x1b[0m`);
+            
+            // 1. Compile all .jona files and mount them into Pyodide FS so imports work!
+            for(let filename in files) {
+                let pyCode = files[filename];
+                if(filename.endsWith('.jona')) {
+                    pyodide.globals.set("src", files[filename]);
+                    try {
+                        pyCode = pyodide.runPython("jona_to_python(src)");
+                    } catch(e) {
+                        terminal.writeln(`\x1b[31mKompilierungsfehler in ${filename}\x1b[0m`);
+                        continue;
+                    }
+                }
+                const pyFilename = filename.replace(/\.jona$/, '.py');
+                pyodide.FS.writeFile(pyFilename, pyCode);
+            }
+
+            // 2. Execute active file
+            let codeToRun = files[activeFile];
+            if(activeFile.endsWith('.jona')) {
+                pyodide.globals.set("src", codeToRun);
+                codeToRun = pyodide.runPython("jona_to_python(src)");
+            }
+            
+            try {
+                await pyodide.runPythonAsync(codeToRun);
+            } catch(e) {
+                // Handled by stderr redirect
+            }
+            promptTerm();
+        };
+
+        // File Convert Buttons
+        document.getElementById('btn-jona-to-py').onclick = () => {
+            if(!pyodide) return;
+            pyodide.globals.set("src", editor.getValue());
+            editor.setValue(pyodide.runPython("jona_to_python(src)"));
+            if(activeFile.endsWith('.jona')) {
+                const newName = activeFile.replace('.jona', '.py');
+                files[newName] = files[activeFile];
+                delete files[activeFile];
+                switchFile(newName);
+            }
+        };
+
+        document.getElementById('btn-py-to-jona').onclick = () => {
+            if(!pyodide) return;
+            pyodide.globals.set("src", editor.getValue());
+            editor.setValue(pyodide.runPython("python_to_jona(src)"));
+            if(activeFile.endsWith('.py')) {
+                const newName = activeFile.replace('.py', '.jona');
+                files[newName] = files[activeFile];
+                delete files[activeFile];
+                switchFile(newName);
+            }
+        };
+
+        document.getElementById('btn-download').onclick = () => {
+            const blob = new Blob([editor.getValue()], { type: "text/plain;charset=utf-8" });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = activeFile;
+            a.click();
+        };
+
+        document.getElementById('btn-share').onclick = () => {
+            const base64 = btoa(JSON.stringify(files));
+            window.history.replaceState(null, null, '#' + base64);
+            navigator.clipboard.writeText(window.location.href).then(() => {
+                alert("URL in die Zwischenablage kopiert! Schicke sie deinen Freunden.");
+            });
+        };
+
+        document.getElementById('btn-clear-term').onclick = () => {
+            terminal.clear();
+        };
+
+        window.addEventListener('resize', () => {
+            if(termFitAddon) termFitAddon.fit();
+        });
+
+        // Init
+        initTerminal();
+        initPyodide();
+    </script>
 </body>
-  </html>
+</html>
+
+```
