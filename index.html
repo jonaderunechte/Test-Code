@@ -1,837 +1,468 @@
-```react
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { 
-  Terminal, Folder, Settings, Calculator, FileText, 
-  Globe, Gamepad2, Grid, Wifi, Battery, Search, 
-  Maximize2, Minimize2, X, ChevronRight, Apple
-} from 'lucide-react';
-
-// ==========================================
-// 1. VIRTUAL FILE SYSTEM (VFS)
-// ==========================================
-
-const DEFAULT_FS = {
-  type: 'dir',
-  name: 'root',
-  children: {
-    'Home': {
-      type: 'dir',
-      children: {
-        'Dokumente': { type: 'dir', children: {} },
-        'Bilder': { type: 'dir', children: {} },
-        'notiz.txt': { type: 'file', content: 'Willkommen in MacWeb OS!\n\nDies ist eine Textdatei.' }
-      }
-    }
-  }
-};
-
-const useFileSystem = () => {
-  const [fs, setFs] = useState(() => {
-    const saved = localStorage.getItem('macweb_fs');
-    return saved ? JSON.parse(saved) : DEFAULT_FS;
-  });
-
-  useEffect(() => {
-    localStorage.setItem('macweb_fs', JSON.stringify(fs));
-  }, [fs]);
-
-  const resolvePath = (currentPath, targetPath) => {
-    if (!targetPath) return currentPath;
-    if (targetPath === '/') return '/Home';
-    
-    let parts = targetPath.startsWith('/') 
-      ? targetPath.split('/').filter(Boolean)
-      : [...currentPath.split('/').filter(Boolean), ...targetPath.split('/')];
-    
-    const resolved = [];
-    for (const part of parts) {
-      if (part === '..') resolved.pop();
-      else if (part !== '.' && part !== '') resolved.push(part);
-    }
-    return '/' + resolved.join('/');
-  };
-
-  const getNode = (path) => {
-    const parts = path.split('/').filter(Boolean);
-    let current = fs;
-    for (const part of parts) {
-      if (current.type !== 'dir' || !current.children[part]) return null;
-      current = current.children[part];
-    }
-    return current;
-  };
-
-  const createNode = (path, nodeInfo) => {
-    const parts = path.split('/').filter(Boolean);
-    const name = parts.pop();
-    const parentPath = '/' + parts.join('/');
-    const newFs = JSON.parse(JSON.stringify(fs));
-    
-    let current = newFs;
-    for (const part of parts) {
-      if (current.type !== 'dir' || !current.children[part]) return false;
-      current = current.children[part];
-    }
-    
-    current.children[name] = nodeInfo;
-    setFs(newFs);
-    return true;
-  };
-
-  const deleteNode = (path) => {
-    const parts = path.split('/').filter(Boolean);
-    if (parts.length === 0) return false; // Cannot delete root
-    const name = parts.pop();
-    const newFs = JSON.parse(JSON.stringify(fs));
-    
-    let current = newFs;
-    for (const part of parts) {
-      if (current.type !== 'dir' || !current.children[part]) return false;
-      current = current.children[part];
-    }
-    
-    if (current.children[name]) {
-      delete current.children[name];
-      setFs(newFs);
-      return true;
-    }
-    return false;
-  };
-
-  return { fs, getNode, createNode, deleteNode, resolvePath, setFs };
-};
-
-// ==========================================
-// 2. APPS & KOMPONENTEN
-// ==========================================
-
-// --- TERMINAL APP ---
-const TerminalApp = ({ vfs }) => {
-  const [history, setHistory] = useState([{ type: 'output', text: 'MacWeb OS Terminal v1.0\nTippe "help" für eine Liste der Befehle.' }]);
-  const [input, setInput] = useState('');
-  const [cwd, setCwd] = useState('/Home');
-  const inputRef = useRef(null);
-  const endRef = useRef(null);
-
-  useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [history]);
-
-  const print = (text) => setHistory(h => [...h, { type: 'output', text }]);
-
-  const handleCommand = (e) => {
-    if (e.key === 'Enter') {
-      const cmdStr = input.trim();
-      setInput('');
-      setHistory(h => [...h, { type: 'input', text: `${cwd} % ${cmdStr}` }]);
-      if (!cmdStr) return;
-
-      const args = cmdStr.split(' ');
-      const cmd = args[0].toLowerCase();
-
-      switch (cmd) {
-        case 'help':
-          print('Befehle: help, clear, pwd, ls, cd, mkdir, touch, rm, cat, echo, date, whoami');
-          break;
-        case 'clear':
-          setHistory([]);
-          break;
-        case 'pwd':
-          print(cwd);
-          break;
-        case 'ls':
-          const targetNode = vfs.getNode(vfs.resolvePath(cwd, args[1] || '.'));
-          if (!targetNode) print('ls: Verzeichnis nicht gefunden');
-          else if (targetNode.type === 'file') print(args[1]);
-          else {
-            const items = Object.keys(targetNode.children).map(k => targetNode.children[k].type === 'dir' ? `${k}/` : k);
-            print(items.join('  ') || '(leer)');
-          }
-          break;
-        case 'cd':
-          const newPath = vfs.resolvePath(cwd, args[1] || '/Home');
-          const node = vfs.getNode(newPath);
-          if (!node) print(`cd: ${args[1]}: Datei oder Verzeichnis nicht gefunden`);
-          else if (node.type !== 'dir') print(`cd: ${args[1]}: Ist kein Verzeichnis`);
-          else setCwd(newPath);
-          break;
-        case 'mkdir':
-          if (!args[1]) print('mkdir: Fehlender Operand');
-          else {
-            const p = vfs.resolvePath(cwd, args[1]);
-            if (vfs.getNode(p)) print(`mkdir: ${args[1]}: Verzeichnis existiert bereits`);
-            else vfs.createNode(p, { type: 'dir', children: {} });
-          }
-          break;
-        case 'touch':
-          if (!args[1]) print('touch: Fehlender Operand');
-          else {
-            const p = vfs.resolvePath(cwd, args[1]);
-            vfs.createNode(p, { type: 'file', content: '' });
-          }
-          break;
-        case 'rm':
-          if (!args[1]) print('rm: Fehlender Operand');
-          else {
-            const p = vfs.resolvePath(cwd, args[1]);
-            if (!vfs.deleteNode(p)) print(`rm: ${args[1]}: Konnte nicht gelöscht werden`);
-          }
-          break;
-        case 'cat':
-          if (!args[1]) print('cat: Fehlender Operand');
-          else {
-            const fileNode = vfs.getNode(vfs.resolvePath(cwd, args[1]));
-            if (!fileNode) print(`cat: ${args[1]}: Datei nicht gefunden`);
-            else if (fileNode.type === 'dir') print(`cat: ${args[1]}: Ist ein Verzeichnis`);
-            else print(fileNode.content);
-          }
-          break;
-        case 'echo':
-          const text = args.slice(1).join(' ').replace(/^"(.*)"$/, '$1');
-          print(text);
-          break;
-        case 'date':
-          print(new Date().toString());
-          break;
-        case 'whoami':
-          print('gast');
-          break;
-        default:
-          print(`Befehl nicht gefunden: ${cmd}`);
-      }
-    }
-  };
-
-  return (
-    <div className="h-full bg-black/90 text-green-400 font-mono text-sm p-2 overflow-y-auto" onClick={() => inputRef.current?.focus()}>
-      {history.map((line, i) => (
-        <div key={i} className="whitespace-pre-wrap break-words">
-          {line.text}
-        </div>
-      ))}
-      <div className="flex">
-        <span className="mr-2 text-blue-400">{cwd} %</span>
-        <input
-          ref={inputRef}
-          type="text"
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={handleCommand}
-          className="bg-transparent outline-none flex-1 text-green-400"
-          autoFocus
-        />
-      </div>
-      <div ref={endRef} />
-    </div>
-  );
-};
-
-// --- FINDER APP ---
-const FinderApp = ({ vfs, openApp }) => {
-  const [currentPath, setCurrentPath] = useState('/Home');
-  const [selected, setSelected] = useState(null);
-
-  const currentNode = vfs.getNode(currentPath);
-  const items = currentNode ? Object.keys(currentNode.children) : [];
-
-  const handleDoubleClick = (name) => {
-    const newPath = vfs.resolvePath(currentPath, name);
-    const node = vfs.getNode(newPath);
-    if (node.type === 'dir') {
-      setCurrentPath(newPath);
-      setSelected(null);
-    } else if (name.endsWith('.txt')) {
-      openApp('notepad', { filePath: newPath });
-    }
-  };
-
-  const goUp = () => {
-    if (currentPath !== '/Home' && currentPath !== '') {
-      setCurrentPath(vfs.resolvePath(currentPath, '..'));
-      setSelected(null);
-    }
-  };
-
-  return (
-    <div className="h-full flex flex-col bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200">
-      <div className="flex items-center p-2 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
-        <button onClick={goUp} disabled={currentPath === '/Home'} className="p-1 disabled:opacity-50 hover:bg-gray-200 dark:hover:bg-gray-700 rounded mr-2">
-          &lt; Zurück
-        </button>
-        <div className="flex-1 px-2 py-1 bg-white dark:bg-gray-900 rounded border border-gray-300 dark:border-gray-600 text-sm">
-          {currentPath}
-        </div>
-      </div>
-      <div className="flex-1 flex row">
-        <div className="w-1/4 bg-gray-50 dark:bg-gray-800/50 border-r border-gray-200 dark:border-gray-700 p-2 text-sm">
-          <div className="font-semibold text-xs text-gray-500 mb-2">FAVORITEN</div>
-          <div className="cursor-pointer p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded" onClick={() => setCurrentPath('/Home')}>Home</div>
-          <div className="cursor-pointer p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded" onClick={() => setCurrentPath('/Home/Dokumente')}>Dokumente</div>
-        </div>
-        <div className="flex-1 p-4 grid grid-cols-4 gap-4 content-start overflow-y-auto">
-          {items.map(name => {
-            const isDir = currentNode.children[name].type === 'dir';
-            return (
-              <div 
-                key={name}
-                onClick={() => setSelected(name)}
-                onDoubleClick={() => handleDoubleClick(name)}
-                className={`flex flex-col items-center p-2 rounded cursor-pointer ${selected === name ? 'bg-blue-100 dark:bg-blue-900/50' : 'hover:bg-gray-100 dark:hover:bg-gray-800'}`}
-              >
-                {isDir ? <Folder size={40} className="text-blue-400" /> : <FileText size={40} className="text-gray-400" />}
-                <span className="text-xs text-center mt-1 truncate w-full">{name}</span>
-              </div>
-            );
-          })}
-          {items.length === 0 && <div className="col-span-4 text-center text-gray-400 mt-10">Verzeichnis ist leer</div>}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-// --- CALCULATOR APP ---
-const CalculatorApp = () => {
-  const [display, setDisplay] = useState('0');
-  const [equation, setEquation] = useState('');
-
-  const handleBtn = (val) => {
-    if (val === 'C') { setDisplay('0'); setEquation(''); return; }
-    if (val === '=') {
-      try {
-        const res = eval(equation + display);
-        setDisplay(String(res));
-        setEquation('');
-      } catch { setDisplay('Fehler'); }
-      return;
-    }
-    if (['+','-','*','/'].includes(val)) {
-      setEquation(equation + display + val);
-      setDisplay('0');
-      return;
-    }
-    setDisplay(display === '0' ? val : display + val);
-  };
-
-  const btns = ['C','/','*','-','7','8','9','+','4','5','6','=','1','2','3','0','.'];
-
-  return (
-    <div className="h-full flex flex-col bg-gray-800 text-white p-2">
-      <div className="bg-gray-900 p-4 text-right text-3xl font-light mb-2 rounded shadow-inner truncate">
-        {display}
-      </div>
-      <div className="grid grid-cols-4 gap-2 flex-1">
-        {btns.map((b, i) => (
-          <button 
-            key={i} 
-            onClick={() => handleBtn(b)}
-            className={`rounded-full flex items-center justify-center text-xl font-medium active:bg-gray-500 hover:opacity-80 transition-opacity
-              ${b === 'C' ? 'col-span-3 bg-red-500' : 
-                b === '=' ? 'row-span-4 bg-orange-500' : 
-                b === '0' ? 'col-span-2 bg-gray-700' : 
-                ['+','-','*','/'].includes(b) ? 'bg-orange-500' : 'bg-gray-700'}`}
-          >
-            {b}
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-// --- NOTEPAD APP ---
-const NotepadApp = ({ vfs, initialProps }) => {
-  const [text, setText] = useState('');
-  const [path, setPath] = useState(initialProps?.filePath || '/Home/Dokumente/neue_notiz.txt');
-
-  useEffect(() => {
-    if (initialProps?.filePath) {
-      const node = vfs.getNode(initialProps.filePath);
-      if (node && node.type === 'file') setText(node.content);
-    }
-  }, [initialProps, vfs]);
-
-  const save = () => {
-    vfs.createNode(path, { type: 'file', content: text });
-    alert('Gespeichert unter: ' + path);
-  };
-
-  return (
-    <div className="h-full flex flex-col bg-white dark:bg-gray-900">
-      <div className="flex p-2 bg-gray-100 dark:bg-gray-800 border-b dark:border-gray-700 items-center">
-        <input 
-          value={path} 
-          onChange={e => setPath(e.target.value)} 
-          className="flex-1 bg-white dark:bg-gray-900 text-sm p-1 border dark:border-gray-600 rounded mr-2"
-        />
-        <button onClick={save} className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600">Speichern</button>
-      </div>
-      <textarea 
-        value={text} 
-        onChange={e => setText(e.target.value)}
-        className="flex-1 w-full p-4 resize-none outline-none dark:bg-gray-900 dark:text-gray-100"
-        placeholder="Schreibe hier etwas..."
-      />
-    </div>
-  );
-};
-
-// --- BROWSER APP ---
-const BrowserApp = () => {
-  const [url, setUrl] = useState('https://de.wikipedia.org/wiki/Spezial:Zufällige_Seite');
-  const [currentIframe, setCurrentIframe] = useState(url);
-
-  const go = (e) => {
-    e.preventDefault();
-    let finalUrl = url;
-    if (!finalUrl.startsWith('http')) finalUrl = 'https://' + finalUrl;
-    setCurrentIframe(finalUrl);
-  };
-
-  return (
-    <div className="h-full flex flex-col bg-white">
-      <form onSubmit={go} className="flex p-2 bg-gray-200 border-b items-center gap-2">
-        <Globe size={18} className="text-gray-600" />
-        <input 
-          value={url} 
-          onChange={e => setUrl(e.target.value)} 
-          className="flex-1 bg-white p-1 rounded px-2 text-sm text-black"
-          placeholder="URL eingeben (z.B. wikipedia.org)"
-        />
-      </form>
-      <div className="flex-1 bg-gray-50 relative">
-        <iframe src={currentIframe} className="w-full h-full border-none" title="browser" />
-      </div>
-    </div>
-  );
-};
-
-// --- SETTINGS APP ---
-const SettingsApp = ({ theme, setTheme }) => {
-  return (
-    <div className="h-full p-6 bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
-      <h2 className="text-2xl font-bold mb-6">Systemeinstellungen</h2>
-      
-      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border dark:border-gray-700">
-        <h3 className="font-semibold mb-4">Erscheinungsbild</h3>
-        <div className="flex items-center justify-between">
-          <span>Modus</span>
-          <select 
-            value={theme} 
-            onChange={(e) => setTheme(e.target.value)}
-            className="p-2 border rounded dark:bg-gray-700 dark:border-gray-600"
-          >
-            <option value="light">Light Mode</option>
-            <option value="dark">Dark Mode</option>
-          </select>
-        </div>
-      </div>
-      
-      <div className="mt-4 text-sm text-gray-500">
-        Hinweis: Das Dateisystem wird automatisch im LocalStorage gespeichert.
-      </div>
-    </div>
-  );
-};
-
-// --- SNAKE GAME ---
-const SnakeApp = () => {
-  const [snake, setSnake] = useState([[10, 10]]);
-  const [food, setFood] = useState([15, 15]);
-  const [dir, setDir] = useState([1, 0]);
-  const [gameOver, setGameOver] = useState(false);
-  const [score, setScore] = useState(0);
-
-  useEffect(() => {
-    const handleKey = (e) => {
-      switch(e.key) {
-        case 'ArrowUp': if(dir[1] !== 1) setDir([0, -1]); break;
-        case 'ArrowDown': if(dir[1] !== -1) setDir([0, 1]); break;
-        case 'ArrowLeft': if(dir[0] !== 1) setDir([-1, 0]); break;
-        case 'ArrowRight': if(dir[0] !== -1) setDir([1, 0]); break;
-      }
-    };
-    window.addEventListener('keydown', handleKey);
-    return () => window.removeEventListener('keydown', handleKey);
-  }, [dir]);
-
-  useEffect(() => {
-    if (gameOver) return;
-    const interval = setInterval(() => {
-      setSnake(s => {
-        const head = [s[0][0] + dir[0], s[0][1] + dir[1]];
-        if (head[0] < 0 || head[0] >= 20 || head[1] < 0 || head[1] >= 20 || s.some(seg => seg[0]===head[0] && seg[1]===head[1])) {
-          setGameOver(true);
-          return s;
-        }
-        const newSnake = [head, ...s];
-        if (head[0] === food[0] && head[1] === food[1]) {
-          setScore(sc => sc + 1);
-          setFood([Math.floor(Math.random() * 20), Math.floor(Math.random() * 20)]);
-        } else {
-          newSnake.pop();
-        }
-        return newSnake;
-      });
-    }, 150);
-    return () => clearInterval(interval);
-  }, [dir, food, gameOver]);
-
-  return (
-    <div className="h-full bg-gray-900 flex flex-col items-center justify-center relative">
-      <div className="text-white font-bold mb-2">Score: {score}</div>
-      <div className="w-[300px] h-[300px] bg-black relative border-2 border-gray-700">
-        {snake.map((seg, i) => (
-          <div key={i} className="absolute bg-green-500 w-[15px] h-[15px]" style={{ left: seg[0]*15, top: seg[1]*15 }} />
-        ))}
-        <div className="absolute bg-red-500 w-[15px] h-[15px]" style={{ left: food[0]*15, top: food[1]*15 }} />
-      </div>
-      {gameOver && (
-        <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center text-white">
-          <h2 className="text-2xl mb-4 text-red-500">Game Over</h2>
-          <button onClick={() => { setSnake([[10,10]]); setDir([1,0]); setGameOver(false); setScore(0); }} className="px-4 py-2 bg-green-600 rounded">Neustart</button>
-        </div>
-      )}
-    </div>
-  );
-};
-
-// --- MINESWEEPER GAME ---
-const MinesweeperApp = () => {
-  const rows = 10, cols = 10, mines = 10;
-  const [grid, setGrid] = useState([]);
-  const [gameOver, setGameOver] = useState(false);
-  const [win, setWin] = useState(false);
-
-  const initGrid = useCallback(() => {
-    let g = Array(rows).fill().map(() => Array(cols).fill().map(() => ({ val: 0, rev: false, flag: false })));
-    let placed = 0;
-    while(placed < mines) {
-      let r = Math.floor(Math.random()*rows), c = Math.floor(Math.random()*cols);
-      if(g[r][c].val !== 'X') { g[r][c].val = 'X'; placed++; }
-    }
-    for(let r=0; r<rows; r++) {
-      for(let c=0; c<cols; c++) {
-        if(g[r][c].val === 'X') continue;
-        let count = 0;
-        for(let i=-1; i<=1; i++) for(let j=-1; j<=1; j++) {
-          if(r+i>=0 && r+i<rows && c+j>=0 && c+j<cols && g[r+i][c+j].val === 'X') count++;
-        }
-        g[r][c].val = count;
-      }
-    }
-    setGrid(g); setGameOver(false); setWin(false);
-  }, []);
-
-  useEffect(() => initGrid(), [initGrid]);
-
-  const reveal = (r, c) => {
-    if(gameOver || win || grid[r][c].rev || grid[r][c].flag) return;
-    let newGrid = [...grid];
-    if(newGrid[r][c].val === 'X') {
-      newGrid[r][c].rev = true; setGrid(newGrid); setGameOver(true); return;
-    }
-    const floodFill = (nr, nc) => {
-      if(nr<0 || nr>=rows || nc<0 || nc>=cols || newGrid[nr][nc].rev) return;
-      newGrid[nr][nc].rev = true;
-      if(newGrid[nr][nc].val === 0) {
-        for(let i=-1; i<=1; i++) for(let j=-1; j<=1; j++) floodFill(nr+i, nc+j);
-      }
-    };
-    floodFill(r, c);
-    setGrid(newGrid);
-    
-    // Check win
-    let unrevealed = 0;
-    newGrid.forEach(row => row.forEach(cell => { if(!cell.rev) unrevealed++; }));
-    if(unrevealed === mines) setWin(true);
-  };
-
-  const toggleFlag = (e, r, c) => {
-    e.preventDefault();
-    if(gameOver || win || grid[r][c].rev) return;
-    let newGrid = [...grid];
-    newGrid[r][c].flag = !newGrid[r][c].flag;
-    setGrid(newGrid);
-  };
-
-  return (
-    <div className="h-full flex flex-col items-center justify-center bg-gray-300 select-none">
-      <div className="mb-4 text-xl font-bold">{gameOver ? '💥 BOOM!' : win ? '🎉 GEWONNEN!' : 'Minesweeper'}</div>
-      <div className="bg-gray-400 p-2 border-4 border-gray-500 rounded shadow-lg">
-        {grid.map((row, r) => (
-          <div key={r} className="flex">
-            {row.map((cell, c) => (
-              <div 
-                key={c}
-                onClick={() => reveal(r,c)}
-                onContextMenu={(e) => toggleFlag(e, r, c)}
-                className={`w-8 h-8 flex items-center justify-center font-bold text-sm border-2 
-                  ${cell.rev 
-                    ? 'bg-gray-200 border-gray-300' 
-                    : 'bg-gray-300 border-t-white border-l-white border-b-gray-600 border-r-gray-600 cursor-pointer hover:bg-gray-200'}
-                  ${cell.val === 'X' && cell.rev ? 'bg-red-500' : ''}`}
-              >
-                {cell.flag ? '🚩' : cell.rev ? (cell.val === 'X' ? '💣' : cell.val || '') : ''}
-              </div>
-            ))}
-          </div>
-        ))}
-      </div>
-      {(gameOver || win) && <button onClick={initGrid} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Neu starten</button>}
-    </div>
-  );
-};
-
-
-// ==========================================
-// 3. SYSTEM KOMPONENTEN (Windows, Dock, etc.)
-// ==========================================
-
-const APPS_CONFIG = {
-  finder: { title: 'Finder', icon: Folder, color: 'text-blue-500', component: FinderApp, width: 600, height: 400 },
-  terminal: { title: 'Terminal', icon: Terminal, color: 'text-gray-800 dark:text-gray-200', component: TerminalApp, width: 550, height: 350 },
-  calculator: { title: 'Rechner', icon: Calculator, color: 'text-orange-500', component: CalculatorApp, width: 300, height: 450 },
-  notepad: { title: 'Notizen', icon: FileText, color: 'text-yellow-500', component: NotepadApp, width: 500, height: 400 },
-  browser: { title: 'Browser', icon: Globe, color: 'text-blue-400', component: BrowserApp, width: 800, height: 500 },
-  snake: { title: 'Snake', icon: Gamepad2, color: 'text-green-500', component: SnakeApp, width: 400, height: 450 },
-  minesweeper: { title: 'Minesweeper', icon: Grid, color: 'text-red-500', component: MinesweeperApp, width: 400, height: 500 },
-  settings: { title: 'Einstellungen', icon: Settings, color: 'text-gray-500', component: SettingsApp, width: 500, height: 400 },
-};
-
-const Window = ({ id, appId, title, initialX, initialY, initialW, initialH, zIndex, isFocused, close, focus, component: AppComp, ...appProps }) => {
-  const [pos, setPos] = useState({ x: initialX, y: initialY });
-  const [isDragging, setIsDragging] = useState(false);
-  const dragRef = useRef({ startX: 0, startY: 0, initialX: 0, initialY: 0 });
-
-  const onPointerDown = (e) => {
-    focus(id);
-    setIsDragging(true);
-    dragRef.current = { startX: e.clientX, startY: e.clientY, initialX: pos.x, initialY: pos.y };
-    e.target.setPointerCapture(e.pointerId); // Capture for smooth dragging out of window
-  };
-
-  const onPointerMove = (e) => {
-    if (!isDragging) return;
-    const dx = e.clientX - dragRef.current.startX;
-    const dy = e.clientY - dragRef.current.startY;
-    setPos({ x: dragRef.current.initialX + dx, y: dragRef.current.initialY + dy });
-  };
-
-  const onPointerUp = (e) => {
-    setIsDragging(false);
-    e.target.releasePointerCapture(e.pointerId);
-  };
-
-  return (
-    <div 
-      style={{ left: pos.x, top: pos.y, width: initialW, height: initialH, zIndex }}
-      className={`absolute flex flex-col rounded-xl overflow-hidden shadow-2xl border ${isFocused ? 'border-gray-400/50 dark:border-gray-600/50' : 'border-transparent'} transition-shadow`}
-      onPointerDown={() => focus(id)}
-    >
-      {/* Title Bar */}
-      <div 
-        className={`h-8 px-3 flex items-center justify-between cursor-move select-none ${isFocused ? 'bg-gray-200 dark:bg-gray-800' : 'bg-gray-100 dark:bg-gray-900'} backdrop-blur-md`}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-      >
-        <div className="flex space-x-2">
-          <button onClick={() => close(id)} className="w-3.5 h-3.5 rounded-full bg-red-500 hover:bg-red-600" />
-          <button className="w-3.5 h-3.5 rounded-full bg-yellow-500 hover:bg-yellow-600" />
-          <button className="w-3.5 h-3.5 rounded-full bg-green-500 hover:bg-green-600" />
-        </div>
-        <div className={`text-xs font-medium absolute left-1/2 -translate-x-1/2 ${isFocused ? 'text-gray-800 dark:text-gray-200' : 'text-gray-500 dark:text-gray-600'}`}>
-          {title}
-        </div>
-        <div className="w-10"></div> {/* Spacer for symmetry */}
-      </div>
-      {/* App Content */}
-      <div className="flex-1 overflow-hidden relative bg-white dark:bg-black">
-         {/* Shield to prevent iframe from eating pointer events during drag */}
-         {isDragging && <div className="absolute inset-0 z-50" />}
-         <AppComp {...appProps} />
-      </div>
-    </div>
-  );
-};
-
-// ==========================================
-// 4. HAUPT-APP & BETRIEBSSYSTEM
-// ==========================================
-
-export default function MacWebOS() {
-  const [bootState, setBootState] = useState(0); // 0: off, 1: booting, 2: login, 3: desktop
-  const [theme, setTheme] = useState('light');
-  const [windows, setWindows] = useState([]);
-  const [topZ, setTopZ] = useState(10);
-  const [time, setTime] = useState(new Date());
-
-  const vfs = useFileSystem();
-
-  // Clock
-  useEffect(() => {
-    if (bootState === 3) {
-      const timer = setInterval(() => setTime(new Date()), 1000);
-      return () => clearInterval(timer);
-    }
-  }, [bootState]);
-
-  // Boot sequence simulation
-  useEffect(() => {
-    if (bootState === 0) {
-      setBootState(1);
-      setTimeout(() => setBootState(2), 2000); // 2s boot logo
-    }
-  }, [bootState]);
-
-  const openApp = (appId, props = {}) => {
-    const config = APPS_CONFIG[appId];
-    if (!config) return;
-    
-    // Check if single-instance app is already open
-    const existing = windows.find(w => w.appId === appId && !props.filePath);
-    if (existing && !props.filePath) {
-      focusWindow(existing.id);
-      return;
-    }
-
-    const newId = `${appId}_${Date.now()}`;
-    setWindows([...windows, {
-      id: newId,
-      appId,
-      title: props.filePath ? `${config.title} - ${props.filePath.split('/').pop()}` : config.title,
-      x: 100 + (windows.length * 30),
-      y: 100 + (windows.length * 30),
-      w: config.width,
-      h: config.height,
-      zIndex: topZ + 1,
-      props
-    }]);
-    setTopZ(z => z + 1);
-  };
-
-  const closeWindow = (id) => setWindows(ws => ws.filter(w => w.id !== id));
-  
-  const focusWindow = (id) => {
-    setWindows(ws => ws.map(w => w.id === id ? { ...w, zIndex: topZ + 1 } : w));
-    setTopZ(z => z + 1);
-  };
-
-  const activeApp = windows.length > 0 ? windows.reduce((prev, current) => (prev.zIndex > current.zIndex) ? prev : current) : null;
-
-  // --- RENDERING VIEWS ---
-
-  if (bootState === 1) return (
-    <div className="w-full h-screen bg-black flex flex-col items-center justify-center text-white">
-      <Apple size={80} className="mb-8" />
-      <div className="w-48 h-1 bg-gray-800 rounded overflow-hidden">
-        <div className="h-full bg-white animate-pulse" style={{ width: '60%', transition: 'width 2s' }}></div>
-      </div>
-    </div>
-  );
-
-  if (bootState === 2) return (
-    <div className="w-full h-screen bg-cover bg-center flex flex-col items-center justify-center relative" 
-         style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&q=80&w=2000")' }}>
-      <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" />
-      <div className="relative z-10 flex flex-col items-center">
-        <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mb-4 shadow-xl">
-          <span className="text-4xl text-gray-500">👤</span>
-        </div>
-        <h1 className="text-white text-2xl font-medium mb-6 drop-shadow-md">Gastnutzer</h1>
-        <form onSubmit={(e) => { e.preventDefault(); setBootState(3); }} className="relative">
-          <input 
-            type="password" 
-            placeholder="Passwort (leer lassen)" 
-            className="px-4 py-2 rounded-full bg-white/20 border border-white/40 text-white placeholder-white/70 outline-none backdrop-blur-md text-center w-64"
-            autoFocus
-          />
-          <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white">
-            <ChevronRight size={20} />
-          </button>
-        </form>
-      </div>
-    </div>
-  );
-
-  return (
-    <div className={`w-full h-screen overflow-hidden ${theme === 'dark' ? 'dark' : ''}`}>
-      <div className="w-full h-full bg-cover bg-center flex flex-col relative transition-colors duration-500"
-           style={{ 
-             backgroundImage: theme === 'dark' 
-               ? 'url("https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=2000")' // Dark mode BG
-               : 'url("https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&q=80&w=2000")'  // Light mode BG
-           }}>
+```html
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MacWeb OS</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- React & ReactDOM -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
         
-        {/* MENU BAR */}
-        <div className="h-7 w-full bg-white/70 dark:bg-black/70 backdrop-blur-md flex items-center justify-between px-4 text-sm font-medium z-50 text-gray-800 dark:text-gray-200 select-none">
-          <div className="flex items-center space-x-4">
-            <Apple size={16} className="cursor-pointer hover:text-black dark:hover:text-white" />
-            <span className="font-bold">{activeApp ? activeApp.title : 'MacWeb'}</span>
-            <span className="cursor-pointer hover:opacity-70">Ablage</span>
-            <span className="cursor-pointer hover:opacity-70">Bearbeiten</span>
-            <span className="cursor-pointer hover:opacity-70">Hilfe</span>
-          </div>
-          <div className="flex items-center space-x-4">
-            <Wifi size={14} />
-            <Battery size={16} />
-            <Search size={14} />
-            <span>{time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-          </div>
-        </div>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            overflow: hidden;
+            background: #000;
+        }
 
-        {/* DESKTOP AREA (Window Manager) */}
-        <div className="flex-1 relative overflow-hidden" onClick={() => setTopZ(topZ)}>
-          {windows.map(win => (
-            <Window 
-              key={win.id}
-              {...win}
-              initialX={win.x}
-              initialY={win.y}
-              initialW={win.w}
-              initialH={win.h}
-              isFocused={activeApp?.id === win.id}
-              close={closeWindow}
-              focus={focusWindow}
-              component={APPS_CONFIG[win.appId].component}
-              vfs={vfs}
-              openApp={openApp}
-              theme={theme}
-              setTheme={setTheme}
-              {...win.props}
-            />
-          ))}
-        </div>
+        /* Glassmorphism utility */
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
 
-        {/* DOCK */}
-        <div className="pb-2 w-full flex justify-center z-50 select-none absolute bottom-0">
-          <div className="flex items-end px-3 py-2 space-x-2 bg-white/40 dark:bg-black/40 backdrop-blur-xl rounded-2xl border border-white/20 shadow-2xl">
-            {Object.entries(APPS_CONFIG).map(([id, app]) => {
-              const isOpen = windows.some(w => w.appId === id);
-              const Icon = app.icon;
-              return (
-                <div key={id} className="relative group flex flex-col items-center">
-                  <div 
-                    className="absolute -top-10 bg-black/80 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none"
-                  >
-                    {app.title}
-                  </div>
-                  <button 
-                    onClick={() => openApp(id)}
-                    className="w-12 h-12 bg-white dark:bg-gray-800 rounded-xl shadow-lg flex items-center justify-center transform transition-all duration-200 hover:-translate-y-2 hover:scale-110 focus:outline-none"
-                  >
-                    <Icon size={28} className={app.color} />
-                  </button>
-                  {isOpen && <div className="absolute -bottom-1 w-1 h-1 bg-black dark:bg-white rounded-full mt-1" />}
+        .dark .glass {
+            background: rgba(30, 30, 30, 0.7);
+        }
+
+        /* Standard scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(0,0,0,0.2);
+            border-radius: 10px;
+        }
+        .dark ::-webkit-scrollbar-thumb {
+            background: rgba(255,255,255,0.2);
+        }
+
+        /* Animations */
+        @keyframes bootFade {
+            0% { opacity: 0; transform: scale(0.9); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+        .animate-boot { animation: bootFade 1.5s ease-out forwards; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+        // --- ICONS WRAPPER ---
+        const Icon = ({ name, size = 20, className = "" }) => {
+            const LucideIcon = lucide.icons[name];
+            if (!LucideIcon) return null;
+            return <i data-lucide={name.toLowerCase()} style={{ width: size, height: size }} className={className}></i>;
+        };
+
+        useEffect(() => {
+            lucide.createIcons();
+        });
+
+        // ==========================================
+        // 1. FILE SYSTEM LOGIC
+        // ==========================================
+        const INITIAL_FS = {
+            type: 'dir',
+            name: 'root',
+            children: {
+                'Home': {
+                    type: 'dir',
+                    children: {
+                        'Dokumente': { type: 'dir', children: {} },
+                        'Notizen': { type: 'dir', children: {} },
+                        'readme.txt': { type: 'file', content: 'Willkommen bei MacWeb OS!\nNutze das Terminal oder den Finder.' }
+                    }
+                }
+            }
+        };
+
+        const useVFS = () => {
+            const [fs, setFs] = useState(() => {
+                const saved = localStorage.getItem('mac_web_fs');
+                return saved ? JSON.parse(saved) : INITIAL_FS;
+            });
+
+            useEffect(() => {
+                localStorage.setItem('mac_web_fs', JSON.stringify(fs));
+            }, [fs]);
+
+            const getNode = (path, currentFs = fs) => {
+                const parts = path.split('/').filter(Boolean);
+                let current = currentFs;
+                for (const part of parts) {
+                    if (!current.children || !current.children[part]) return null;
+                    current = current.children[part];
+                }
+                return current;
+            };
+
+            const createNode = (path, nodeData) => {
+                const newFs = { ...fs };
+                const parts = path.split('/').filter(Boolean);
+                const name = parts.pop();
+                let current = newFs;
+                for (const part of parts) {
+                    current.children[part] = { ...current.children[part] };
+                    current = current.children[part];
+                }
+                current.children[name] = nodeData;
+                setFs(newFs);
+            };
+
+            const deleteNode = (path) => {
+                const newFs = { ...fs };
+                const parts = path.split('/').filter(Boolean);
+                const name = parts.pop();
+                let current = newFs;
+                for (const part of parts) {
+                    current.children[part] = { ...current.children[part] };
+                    current = current.children[part];
+                }
+                delete current.children[name];
+                setFs(newFs);
+            };
+
+            return { fs, getNode, createNode, deleteNode };
+        };
+
+        // ==========================================
+        // 2. APPS
+        // ==========================================
+
+        const TerminalApp = ({ vfs }) => {
+            const [history, setHistory] = useState([{ type: 'out', text: 'MacWeb OS Shell v1.0.0' }]);
+            const [input, setInput] = useState('');
+            const [cwd, setCwd] = useState('/Home');
+            const endRef = useRef(null);
+
+            useEffect(() => endRef.current?.scrollIntoView(), [history]);
+
+            const exec = (e) => {
+                if (e.key !== 'Enter') return;
+                const fullCmd = input.trim();
+                setHistory(h => [...h, { type: 'in', text: `${cwd} $ ${fullCmd}` }]);
+                setInput('');
+                
+                const [cmd, ...args] = fullCmd.split(' ');
+                
+                switch(cmd.toLowerCase()) {
+                    case 'help': 
+                        setHistory(h => [...h, { type: 'out', text: 'Befehle: ls, cd, pwd, mkdir, touch, rm, cat, clear, date, help' }]);
+                        break;
+                    case 'ls':
+                        const node = vfs.getNode(cwd);
+                        setHistory(h => [...h, { type: 'out', text: Object.keys(node.children).join('  ') }]);
+                        break;
+                    case 'pwd':
+                        setHistory(h => [...h, { type: 'out', text: cwd }]);
+                        break;
+                    case 'clear': setHistory([]); break;
+                    case 'date': setHistory(h => [...h, { type: 'out', text: new Date().toString() }]); break;
+                    case 'mkdir':
+                        vfs.createNode(`${cwd}/${args[0]}`, { type: 'dir', children: {} });
+                        break;
+                    case 'touch':
+                        vfs.createNode(`${cwd}/${args[0]}`, { type: 'file', content: '' });
+                        break;
+                    case 'cat':
+                        const file = vfs.getNode(`${cwd}/${args[0]}`);
+                        setHistory(h => [...h, { type: 'out', text: file?.content || 'Datei nicht gefunden' }]);
+                        break;
+                    case 'cd':
+                        if (args[0] === '..') setCwd('/Home');
+                        else if (vfs.getNode(`${cwd}/${args[0]}`)) setCwd(`${cwd}/${args[0]}`);
+                        break;
+                    default: 
+                        if(cmd) setHistory(h => [...h, { type: 'out', text: `Command not found: ${cmd}` }]);
+                }
+            };
+
+            return (
+                <div className="h-full bg-[#1e1e1e] text-[#f0f0f0] font-mono p-3 overflow-y-auto text-sm">
+                    {history.map((l, i) => <div key={i} className={l.type === 'in' ? 'text-blue-400' : ''}>{l.text}</div>)}
+                    <div className="flex">
+                        <span className="text-green-400 mr-2">{cwd} $</span>
+                        <input autoFocus className="bg-transparent outline-none flex-1" value={input} onChange={e => setInput(e.target.value)} onKeyDown={exec} />
+                    </div>
+                    <div ref={endRef} />
                 </div>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
+            );
+        };
+
+        const CalculatorApp = () => {
+            const [val, setVal] = useState('0');
+            const ops = ['/', '*', '-', '+', '='];
+            const handle = (btn) => {
+                if (btn === '=') setVal(String(eval(val)));
+                else if (btn === 'C') setVal('0');
+                else setVal(val === '0' ? btn : val + btn);
+            };
+            return (
+                <div className="h-full bg-black text-white p-4 flex flex-col">
+                    <div className="text-4xl text-right mb-4 mt-auto overflow-hidden">{val}</div>
+                    <div className="grid grid-cols-4 gap-2">
+                        {['7','8','9','/','4','5','6','*','1','2','3','-','C','0','=','+'].map(b => (
+                            <button key={b} onClick={() => handle(b)} className={`h-12 rounded-full text-xl ${ops.includes(b) ? 'bg-orange-500' : 'bg-gray-700'}`}>{b}</button>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        const SnakeApp = () => {
+            const [snake, setSnake] = useState([[10, 10]]);
+            const [food, setFood] = useState([5, 5]);
+            const [dir, setDir] = useState([1, 0]);
+            const [over, setOver] = useState(false);
+
+            useEffect(() => {
+                const interval = setInterval(() => {
+                    if(over) return;
+                    setSnake(s => {
+                        const head = [s[0][0] + dir[0], s[0][1] + dir[1]];
+                        if(head[0] < 0 || head[0] > 19 || head[1] < 0 || head[1] > 19) { setOver(true); return s; }
+                        const newS = [head, ...s];
+                        if(head[0] === food[0] && head[1] === food[1]) {
+                            setFood([Math.floor(Math.random()*20), Math.floor(Math.random()*20)]);
+                        } else newS.pop();
+                        return newS;
+                    });
+                }, 150);
+                return () => clearInterval(interval);
+            }, [dir, food, over]);
+
+            useEffect(() => {
+                const move = (e) => {
+                    if(e.key === 'ArrowUp') setDir([0, -1]);
+                    if(e.key === 'ArrowDown') setDir([0, 1]);
+                    if(e.key === 'ArrowLeft') setDir([-1, 0]);
+                    if(e.key === 'ArrowRight') setDir([1, 0]);
+                };
+                window.addEventListener('keydown', move);
+                return () => window.removeEventListener('keydown', move);
+            }, []);
+
+            return (
+                <div className="h-full bg-black flex flex-col items-center justify-center">
+                    <div className="relative w-64 h-64 border border-gray-600">
+                        {snake.map((p, i) => <div key={i} className="absolute bg-green-500 w-3 h-3" style={{left: p[0]*12.8, top: p[1]*12.8}} />)}
+                        <div className="absolute bg-red-500 w-3 h-3" style={{left: food[0]*12.8, top: food[1]*12.8}} />
+                    </div>
+                    {over && <button onClick={() => {setSnake([[10,10]]); setOver(false)}} className="mt-2 text-white bg-blue-600 px-4 py-1 rounded">Reset</button>}
+                </div>
+            );
+        };
+
+        const MinesweeperApp = () => {
+            const [grid, setGrid] = useState(Array(100).fill(0).map(() => ({ mine: Math.random() < 0.15, rev: false })));
+            const reveal = (i) => {
+                const newG = [...grid];
+                newG[i].rev = true;
+                setGrid(newG);
+            };
+            return (
+                <div className="h-full bg-gray-200 p-4 flex flex-wrap content-start">
+                    {grid.map((c, i) => (
+                        <div key={i} onClick={() => reveal(i)} className={`w-[10%] h-[10%] border border-gray-400 flex items-center justify-center cursor-pointer ${c.rev ? 'bg-white' : 'bg-gray-400'}`}>
+                            {c.rev && (c.mine ? '💣' : '•')}
+                        </div>
+                    ))}
+                </div>
+            );
+        };
+
+        const FinderApp = ({ vfs }) => {
+            const [path, setPath] = useState('/Home');
+            const node = vfs.getNode(path);
+            return (
+                <div className="h-full bg-white flex flex-col">
+                    <div className="p-2 border-b flex gap-2 text-xs bg-gray-100">
+                        <button onClick={() => setPath('/Home')}>Home</button>
+                        <span className="text-gray-400">/</span>
+                        <span>{path}</span>
+                    </div>
+                    <div className="flex-1 p-4 flex flex-wrap gap-6 overflow-y-auto">
+                        {Object.keys(node.children).map(name => (
+                            <div key={name} onDoubleClick={() => node.children[name].type === 'dir' && setPath(`${path}/${name}`)} className="flex flex-col items-center w-16 gap-1 group cursor-pointer">
+                                <div className={`p-2 rounded group-hover:bg-blue-100 ${node.children[name].type === 'dir' ? 'text-blue-500' : 'text-gray-500'}`}>
+                                    <Icon name={node.children[name].type === 'dir' ? 'Folder' : 'FileText'} size={32} />
+                                </div>
+                                <span className="text-[10px] text-center truncate w-full">{name}</span>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        const NotepadApp = ({ vfs }) => {
+            const [text, setText] = useState('Hallo Welt...');
+            return <textarea className="w-full h-full p-4 outline-none resize-none" value={text} onChange={e => setText(e.target.value)} placeholder="Schreib etwas..." />;
+        };
+
+        const BrowserApp = () => {
+            const [url, setUrl] = useState('https://de.wikipedia.org');
+            const [src, setSrc] = useState(url);
+            return (
+                <div className="h-full flex flex-col">
+                    <div className="p-2 bg-gray-200 flex gap-2">
+                        <input className="flex-1 px-2 py-1 rounded border text-sm" value={url} onChange={e => setUrl(e.target.value)} onKeyDown={e => e.key === 'Enter' && setSrc(url)} />
+                    </div>
+                    <iframe className="flex-1 bg-white" src={src} />
+                </div>
+            );
+        };
+
+        const SettingsApp = ({ theme, setTheme }) => (
+            <div className="h-full p-6 bg-white dark:bg-gray-900 dark:text-white">
+                <h2 className="text-xl font-bold mb-4">Einstellungen</h2>
+                <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-800 rounded">
+                    <span>Dunkler Modus</span>
+                    <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className={`w-12 h-6 rounded-full relative transition-colors ${theme === 'dark' ? 'bg-blue-500' : 'bg-gray-400'}`}>
+                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${theme === 'dark' ? 'left-7' : 'left-1'}`} />
+                    </button>
+                </div>
+            </div>
+        );
+
+        // ==========================================
+        // 3. CORE SYSTEM
+        // ==========================================
+
+        const APP_CONFIG = {
+            finder: { title: 'Finder', icon: 'Folder', color: 'text-blue-500', comp: FinderApp },
+            terminal: { title: 'Terminal', icon: 'Terminal', color: 'text-gray-700', comp: TerminalApp },
+            notes: { title: 'Notizen', icon: 'FileText', color: 'text-yellow-500', comp: NotepadApp },
+            calc: { title: 'Rechner', icon: 'Calculator', color: 'text-orange-500', comp: CalculatorApp },
+            browser: { title: 'Browser', icon: 'Globe', color: 'text-blue-400', comp: BrowserApp },
+            snake: { title: 'Snake', icon: 'Gamepad2', color: 'text-green-500', comp: SnakeApp },
+            mines: { title: 'Minesweeper', icon: 'Grid', color: 'text-red-500', comp: MinesweeperApp },
+            settings: { title: 'Einstellungen', icon: 'Settings', color: 'text-gray-400', comp: SettingsApp }
+        };
+
+        function App() {
+            const [booting, setBooting] = useState(true);
+            const [loggedIn, setLoggedIn] = useState(false);
+            const [theme, setTheme] = useState('light');
+            const [windows, setWindows] = useState([]);
+            const [focused, setFocused] = useState(null);
+            const [time, setTime] = useState(new Date());
+            const vfs = useVFS();
+
+            useEffect(() => {
+                setTimeout(() => setBooting(false), 2500);
+                const t = setInterval(() => setTime(new Date()), 1000);
+                return () => clearInterval(t);
+            }, []);
+
+            const open = (id) => {
+                if (windows.find(w => w.appId === id)) {
+                    setFocused(id);
+                    return;
+                }
+                const conf = APP_CONFIG[id];
+                setWindows([...windows, { appId: id, ...conf, x: 100 + windows.length*20, y: 80 + windows.length*20 }]);
+                setFocused(id);
+            };
+
+            const close = (id) => setWindows(windows.filter(w => w.appId !== id));
+
+            if (booting) return (
+                <div className="h-screen w-full bg-black flex flex-col items-center justify-center text-white">
+                    <Icon name="Apple" size={80} className="mb-8" />
+                    <div className="w-48 h-1 bg-gray-800 rounded overflow-hidden">
+                        <div className="h-full bg-white transition-all duration-[2s] w-full"></div>
+                    </div>
+                </div>
+            );
+
+            if (!loggedIn) return (
+                <div className="h-screen w-full bg-cover bg-center flex flex-col items-center justify-center" style={{backgroundImage: 'url(https://images.unsplash.com/photo-1519750783826-e2420f4d687f?q=80&w=2000)'}}>
+                    <div className="absolute inset-0 bg-black/30 backdrop-blur-md" />
+                    <div className="relative z-10 flex flex-col items-center animate-boot">
+                        <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center text-4xl mb-4 shadow-xl">👤</div>
+                        <h2 className="text-white text-xl font-medium mb-4">Gast</h2>
+                        <button onClick={() => setLoggedIn(true)} className="px-6 py-2 bg-white/20 hover:bg-white/30 text-white border border-white/40 rounded-full backdrop-blur-md">Anmelden</button>
+                    </div>
+                </div>
+            );
+
+            return (
+                <div className={`h-screen w-full relative overflow-hidden flex flex-col transition-all ${theme === 'dark' ? 'dark' : ''}`}>
+                    {/* Desktop BG */}
+                    <div className="absolute inset-0 bg-cover bg-center" style={{backgroundImage: theme === 'dark' ? 'url(https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2000)' : 'url(https://images.unsplash.com/photo-1519750783826-e2420f4d687f?q=80&w=2000)'}} />
+                    
+                    {/* Menu Bar */}
+                    <div className="h-7 w-full glass z-[100] flex items-center justify-between px-4 text-xs font-semibold select-none dark:text-white">
+                        <div className="flex items-center gap-4">
+                            <Icon name="Apple" size={14} />
+                            <span>{focused ? APP_CONFIG[focused].title : 'Finder'}</span>
+                            <span className="font-normal opacity-70">Ablage</span>
+                            <span className="font-normal opacity-70">Bearbeiten</span>
+                        </div>
+                        <div className="flex items-center gap-4">
+                            <Icon name="Wifi" size={14} />
+                            <Icon name="Battery" size={14} />
+                            <span>{time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                        </div>
+                    </div>
+
+                    {/* Window Area */}
+                    <div className="flex-1 relative">
+                        {windows.map(win => (
+                            <div key={win.appId} 
+                                 onClick={() => setFocused(win.appId)}
+                                 style={{ left: win.x, top: win.y, zIndex: focused === win.appId ? 50 : 10 }}
+                                 className="absolute w-[600px] h-[400px] bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col border dark:border-gray-700">
+                                <div className="h-8 bg-gray-100 dark:bg-gray-800 flex items-center px-3 gap-2 select-none group">
+                                    <div onClick={(e) => { e.stopPropagation(); close(win.appId); }} className="w-3 h-3 bg-red-500 rounded-full cursor-pointer" />
+                                    <div className="w-3 h-3 bg-yellow-500 rounded-full" />
+                                    <div className="w-3 h-3 bg-green-500 rounded-full" />
+                                    <span className="flex-1 text-center text-xs font-bold opacity-50">{win.title}</span>
+                                </div>
+                                <div className="flex-1 overflow-hidden">
+                                    <win.comp vfs={vfs} theme={theme} setTheme={setTheme} />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Dock */}
+                    <div className="h-16 flex justify-center pb-2 z-[100]">
+                        <div className="glass px-2 py-2 flex gap-3 rounded-2xl border border-white/20 shadow-xl items-end">
+                            {Object.entries(APP_CONFIG).map(([id, conf]) => (
+                                <div key={id} onClick={() => open(id)} className="w-12 h-12 bg-white/80 dark:bg-gray-800 rounded-xl flex items-center justify-center shadow-lg transform hover:scale-125 transition-all cursor-pointer group">
+                                    <Icon name={conf.icon} size={28} className={conf.color} />
+                                    <div className="absolute -top-10 bg-black/80 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none">{conf.title}</div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
 
 ```
