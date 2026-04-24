@@ -1,589 +1,837 @@
-```html
-<!DOCTYPE html>
-<html lang="de">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jona Web Studio</title>
+```react
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { 
+  Terminal, Folder, Settings, Calculator, FileText, 
+  Globe, Gamepad2, Grid, Wifi, Battery, Search, 
+  Maximize2, Minimize2, X, ChevronRight, Apple
+} from 'lucide-react';
+
+// ==========================================
+// 1. VIRTUAL FILE SYSTEM (VFS)
+// ==========================================
+
+const DEFAULT_FS = {
+  type: 'dir',
+  name: 'root',
+  children: {
+    'Home': {
+      type: 'dir',
+      children: {
+        'Dokumente': { type: 'dir', children: {} },
+        'Bilder': { type: 'dir', children: {} },
+        'notiz.txt': { type: 'file', content: 'Willkommen in MacWeb OS!\n\nDies ist eine Textdatei.' }
+      }
+    }
+  }
+};
+
+const useFileSystem = () => {
+  const [fs, setFs] = useState(() => {
+    const saved = localStorage.getItem('macweb_fs');
+    return saved ? JSON.parse(saved) : DEFAULT_FS;
+  });
+
+  useEffect(() => {
+    localStorage.setItem('macweb_fs', JSON.stringify(fs));
+  }, [fs]);
+
+  const resolvePath = (currentPath, targetPath) => {
+    if (!targetPath) return currentPath;
+    if (targetPath === '/') return '/Home';
     
-    <!-- Tailwind CSS for styling -->
-    <script src="https://cdn.tailwindcss.com"></script>
+    let parts = targetPath.startsWith('/') 
+      ? targetPath.split('/').filter(Boolean)
+      : [...currentPath.split('/').filter(Boolean), ...targetPath.split('/')];
     
-    <!-- xterm.js for Terminal -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/xterm@5.3.0/css/xterm.css" />
-    <script src="https://cdn.jsdelivr.net/npm/xterm@5.3.0/lib/xterm.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.8.0/lib/xterm-addon-fit.js"></script>
+    const resolved = [];
+    for (const part of parts) {
+      if (part === '..') resolved.pop();
+      else if (part !== '.' && part !== '') resolved.push(part);
+    }
+    return '/' + resolved.join('/');
+  };
 
-    <!-- Pyodide for Browser Python Execution -->
-    <script src="https://cdn.jsdelivr.net/pyodide/v0.24.1/full/pyodide.js"></script>
+  const getNode = (path) => {
+    const parts = path.split('/').filter(Boolean);
+    let current = fs;
+    for (const part of parts) {
+      if (current.type !== 'dir' || !current.children[part]) return null;
+      current = current.children[part];
+    }
+    return current;
+  };
 
-    <style>
-        :root {
-            --bg-dark: #070f14;
-            --bg-panel: #0d1a21;
-            --accent-green: #39ff14;
-            --accent-blue: #00ffcc;
-            --text-main: #e0f8f5;
-        }
-        body {
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            overflow: hidden;
-        }
-        .jona-border { border-color: rgba(0, 255, 204, 0.2); }
-        .btn {
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-        .btn:hover:not(:disabled) {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(57, 255, 20, 0.2);
-        }
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        .file-item {
-            cursor: pointer;
-            border-left: 2px solid transparent;
-        }
-        .file-item:hover { background-color: rgba(255,255,255,0.05); }
-        .file-item.active {
-            background-color: rgba(0, 255, 204, 0.1);
-            border-left: 2px solid var(--accent-green);
-            color: var(--accent-green);
-        }
-        
-        #loader {
-            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(7, 15, 20, 0.95);
-            z-index: 50; display: flex; flex-direction: column;
-            justify-content: center; align-items: center;
-        }
-        .spinner {
-            width: 50px; height: 50px;
-            border: 3px solid rgba(0, 255, 204, 0.3);
-            border-top-color: var(--accent-green);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin { 100% { transform: rotate(360deg); } }
-        
-        /* Monaco custom tooltip fix */
-        .monaco-editor .suggest-widget .monaco-list .monaco-list-row { color: #ccc; }
-    </style>
-</head>
-<body class="flex flex-col h-screen">
+  const createNode = (path, nodeInfo) => {
+    const parts = path.split('/').filter(Boolean);
+    const name = parts.pop();
+    const parentPath = '/' + parts.join('/');
+    const newFs = JSON.parse(JSON.stringify(fs));
+    
+    let current = newFs;
+    for (const part of parts) {
+      if (current.type !== 'dir' || !current.children[part]) return false;
+      current = current.children[part];
+    }
+    
+    current.children[name] = nodeInfo;
+    setFs(newFs);
+    return true;
+  };
 
-    <!-- Loading Screen -->
-    <div id="loader">
-        <div class="spinner mb-4"></div>
-        <h2 class="text-2xl font-bold text-[#39ff14] mb-2 tracking-widest">JONA KERNEL</h2>
-        <p class="text-[#00ffcc] animate-pulse">Initialisiere Pyodide Compiler & Virtuelles Dateisystem...</p>
+  const deleteNode = (path) => {
+    const parts = path.split('/').filter(Boolean);
+    if (parts.length === 0) return false; // Cannot delete root
+    const name = parts.pop();
+    const newFs = JSON.parse(JSON.stringify(fs));
+    
+    let current = newFs;
+    for (const part of parts) {
+      if (current.type !== 'dir' || !current.children[part]) return false;
+      current = current.children[part];
+    }
+    
+    if (current.children[name]) {
+      delete current.children[name];
+      setFs(newFs);
+      return true;
+    }
+    return false;
+  };
+
+  return { fs, getNode, createNode, deleteNode, resolvePath, setFs };
+};
+
+// ==========================================
+// 2. APPS & KOMPONENTEN
+// ==========================================
+
+// --- TERMINAL APP ---
+const TerminalApp = ({ vfs }) => {
+  const [history, setHistory] = useState([{ type: 'output', text: 'MacWeb OS Terminal v1.0\nTippe "help" für eine Liste der Befehle.' }]);
+  const [input, setInput] = useState('');
+  const [cwd, setCwd] = useState('/Home');
+  const inputRef = useRef(null);
+  const endRef = useRef(null);
+
+  useEffect(() => {
+    endRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [history]);
+
+  const print = (text) => setHistory(h => [...h, { type: 'output', text }]);
+
+  const handleCommand = (e) => {
+    if (e.key === 'Enter') {
+      const cmdStr = input.trim();
+      setInput('');
+      setHistory(h => [...h, { type: 'input', text: `${cwd} % ${cmdStr}` }]);
+      if (!cmdStr) return;
+
+      const args = cmdStr.split(' ');
+      const cmd = args[0].toLowerCase();
+
+      switch (cmd) {
+        case 'help':
+          print('Befehle: help, clear, pwd, ls, cd, mkdir, touch, rm, cat, echo, date, whoami');
+          break;
+        case 'clear':
+          setHistory([]);
+          break;
+        case 'pwd':
+          print(cwd);
+          break;
+        case 'ls':
+          const targetNode = vfs.getNode(vfs.resolvePath(cwd, args[1] || '.'));
+          if (!targetNode) print('ls: Verzeichnis nicht gefunden');
+          else if (targetNode.type === 'file') print(args[1]);
+          else {
+            const items = Object.keys(targetNode.children).map(k => targetNode.children[k].type === 'dir' ? `${k}/` : k);
+            print(items.join('  ') || '(leer)');
+          }
+          break;
+        case 'cd':
+          const newPath = vfs.resolvePath(cwd, args[1] || '/Home');
+          const node = vfs.getNode(newPath);
+          if (!node) print(`cd: ${args[1]}: Datei oder Verzeichnis nicht gefunden`);
+          else if (node.type !== 'dir') print(`cd: ${args[1]}: Ist kein Verzeichnis`);
+          else setCwd(newPath);
+          break;
+        case 'mkdir':
+          if (!args[1]) print('mkdir: Fehlender Operand');
+          else {
+            const p = vfs.resolvePath(cwd, args[1]);
+            if (vfs.getNode(p)) print(`mkdir: ${args[1]}: Verzeichnis existiert bereits`);
+            else vfs.createNode(p, { type: 'dir', children: {} });
+          }
+          break;
+        case 'touch':
+          if (!args[1]) print('touch: Fehlender Operand');
+          else {
+            const p = vfs.resolvePath(cwd, args[1]);
+            vfs.createNode(p, { type: 'file', content: '' });
+          }
+          break;
+        case 'rm':
+          if (!args[1]) print('rm: Fehlender Operand');
+          else {
+            const p = vfs.resolvePath(cwd, args[1]);
+            if (!vfs.deleteNode(p)) print(`rm: ${args[1]}: Konnte nicht gelöscht werden`);
+          }
+          break;
+        case 'cat':
+          if (!args[1]) print('cat: Fehlender Operand');
+          else {
+            const fileNode = vfs.getNode(vfs.resolvePath(cwd, args[1]));
+            if (!fileNode) print(`cat: ${args[1]}: Datei nicht gefunden`);
+            else if (fileNode.type === 'dir') print(`cat: ${args[1]}: Ist ein Verzeichnis`);
+            else print(fileNode.content);
+          }
+          break;
+        case 'echo':
+          const text = args.slice(1).join(' ').replace(/^"(.*)"$/, '$1');
+          print(text);
+          break;
+        case 'date':
+          print(new Date().toString());
+          break;
+        case 'whoami':
+          print('gast');
+          break;
+        default:
+          print(`Befehl nicht gefunden: ${cmd}`);
+      }
+    }
+  };
+
+  return (
+    <div className="h-full bg-black/90 text-green-400 font-mono text-sm p-2 overflow-y-auto" onClick={() => inputRef.current?.focus()}>
+      {history.map((line, i) => (
+        <div key={i} className="whitespace-pre-wrap break-words">
+          {line.text}
+        </div>
+      ))}
+      <div className="flex">
+        <span className="mr-2 text-blue-400">{cwd} %</span>
+        <input
+          ref={inputRef}
+          type="text"
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={handleCommand}
+          className="bg-transparent outline-none flex-1 text-green-400"
+          autoFocus
+        />
+      </div>
+      <div ref={endRef} />
     </div>
+  );
+};
 
-    <!-- Header / Toolbar -->
-    <header class="h-14 bg-opacity-50 bg-[#0d1a21] border-b jona-border flex items-center justify-between px-4 shrink-0">
-        <div class="flex items-center gap-4">
-            <h1 class="text-xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#39ff14] to-[#00ffcc] tracking-widest">
-                JONA STUDIO
-            </h1>
-            <div class="h-6 w-px bg-gray-700 mx-2"></div>
-            <button id="btn-run" class="btn bg-green-900/40 text-[#39ff14] border border-[#39ff14]/50 px-4 py-1.5 rounded text-sm font-bold disabled:opacity-50" disabled>
-                ▶ Run
-            </button>
-            <button id="btn-split" class="btn bg-[#0d1a21] text-[#00ffcc] border border-[#00ffcc]/30 px-3 py-1.5 rounded text-sm hover:bg-[#00ffcc]/10">
-                ◫ Live Split
-            </button>
-        </div>
-        <div class="flex items-center gap-3">
-            <button id="btn-jona-to-py" class="btn bg-[#0d1a21] text-gray-300 border border-gray-600 px-3 py-1.5 rounded text-sm hover:bg-gray-800" title="Aktuelle Datei nach Python übersetzen">
-                Jona → Py
-            </button>
-            <button id="btn-py-to-jona" class="btn bg-[#0d1a21] text-gray-300 border border-gray-600 px-3 py-1.5 rounded text-sm hover:bg-gray-800" title="Aktuelle Datei nach Jona übersetzen">
-                Py → Jona
-            </button>
-            <div class="h-6 w-px bg-gray-700 mx-1"></div>
-            <button id="btn-download" class="btn text-gray-400 hover:text-white px-2 py-1.5" title="Datei Herunterladen">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-            </button>
-            <button id="btn-share" class="btn text-gray-400 hover:text-white px-2 py-1.5" title="Code als Link teilen">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
-            </button>
-        </div>
-    </header>
+// --- FINDER APP ---
+const FinderApp = ({ vfs, openApp }) => {
+  const [currentPath, setCurrentPath] = useState('/Home');
+  const [selected, setSelected] = useState(null);
 
-    <!-- Main Workspace -->
-    <div class="flex-1 flex overflow-hidden">
-        
-        <!-- Sidebar (File Explorer) -->
-        <div class="w-64 bg-[#0a141a] border-r jona-border flex flex-col shrink-0">
-            <div class="px-4 py-3 border-b border-gray-800 flex justify-between items-center">
-                <span class="text-xs font-bold text-gray-400 uppercase tracking-wider">Explorer</span>
-                <button id="btn-new-file" class="text-[#00ffcc] hover:text-[#39ff14]" title="Neue Datei">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                </button>
-            </div>
-            <div id="file-list" class="flex-1 overflow-y-auto py-2">
-                <!-- File items injected here -->
-            </div>
-        </div>
+  const currentNode = vfs.getNode(currentPath);
+  const items = currentNode ? Object.keys(currentNode.children) : [];
 
-        <!-- Editor Area -->
-        <div class="flex-1 flex flex-col min-w-0">
-            <!-- Editors (Split View possible) -->
-            <div class="flex-1 flex overflow-hidden">
-                <!-- Primary Editor -->
-                <div class="flex-1 relative border-r border-gray-800">
-                    <div class="absolute top-0 right-0 bg-[#0d1a21] text-xs text-gray-500 px-2 py-1 border-b border-l border-gray-800 z-10" id="primary-editor-label">main.jona</div>
-                    <div id="editor-container" class="w-full h-full"></div>
-                </div>
-                <!-- Secondary Editor (Live Translation) -->
-                <div id="split-pane" class="flex-1 relative hidden bg-[#050a0d]">
-                    <div class="absolute top-0 right-0 bg-[#0d1a21] text-xs text-gray-500 px-2 py-1 border-b border-l border-gray-800 z-10 text-[#00ffcc]">Python Translation</div>
-                    <div id="viewer-container" class="w-full h-full"></div>
-                </div>
-            </div>
+  const handleDoubleClick = (name) => {
+    const newPath = vfs.resolvePath(currentPath, name);
+    const node = vfs.getNode(newPath);
+    if (node.type === 'dir') {
+      setCurrentPath(newPath);
+      setSelected(null);
+    } else if (name.endsWith('.txt')) {
+      openApp('notepad', { filePath: newPath });
+    }
+  };
 
-            <!-- Terminal Area -->
-            <div class="h-64 border-t jona-border bg-black flex flex-col shrink-0 relative">
-                <div class="bg-[#0a141a] px-4 py-1.5 text-xs text-gray-400 flex justify-between items-center border-b border-gray-800">
-                    <span>Terminal / REPL</span>
-                    <button id="btn-clear-term" class="hover:text-white" title="Terminal leeren">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                    </button>
-                </div>
-                <div id="terminal" class="flex-1 p-2"></div>
-            </div>
+  const goUp = () => {
+    if (currentPath !== '/Home' && currentPath !== '') {
+      setCurrentPath(vfs.resolvePath(currentPath, '..'));
+      setSelected(null);
+    }
+  };
+
+  return (
+    <div className="h-full flex flex-col bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200">
+      <div className="flex items-center p-2 bg-gray-100 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+        <button onClick={goUp} disabled={currentPath === '/Home'} className="p-1 disabled:opacity-50 hover:bg-gray-200 dark:hover:bg-gray-700 rounded mr-2">
+          &lt; Zurück
+        </button>
+        <div className="flex-1 px-2 py-1 bg-white dark:bg-gray-900 rounded border border-gray-300 dark:border-gray-600 text-sm">
+          {currentPath}
         </div>
+      </div>
+      <div className="flex-1 flex row">
+        <div className="w-1/4 bg-gray-50 dark:bg-gray-800/50 border-r border-gray-200 dark:border-gray-700 p-2 text-sm">
+          <div className="font-semibold text-xs text-gray-500 mb-2">FAVORITEN</div>
+          <div className="cursor-pointer p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded" onClick={() => setCurrentPath('/Home')}>Home</div>
+          <div className="cursor-pointer p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded" onClick={() => setCurrentPath('/Home/Dokumente')}>Dokumente</div>
+        </div>
+        <div className="flex-1 p-4 grid grid-cols-4 gap-4 content-start overflow-y-auto">
+          {items.map(name => {
+            const isDir = currentNode.children[name].type === 'dir';
+            return (
+              <div 
+                key={name}
+                onClick={() => setSelected(name)}
+                onDoubleClick={() => handleDoubleClick(name)}
+                className={`flex flex-col items-center p-2 rounded cursor-pointer ${selected === name ? 'bg-blue-100 dark:bg-blue-900/50' : 'hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+              >
+                {isDir ? <Folder size={40} className="text-blue-400" /> : <FileText size={40} className="text-gray-400" />}
+                <span className="text-xs text-center mt-1 truncate w-full">{name}</span>
+              </div>
+            );
+          })}
+          {items.length === 0 && <div className="col-span-4 text-center text-gray-400 mt-10">Verzeichnis ist leer</div>}
+        </div>
+      </div>
     </div>
+  );
+};
 
-    <!-- Monaco Editor Loader -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs/loader.min.js"></script>
-    
-    <script>
-        // --- JONA LANGUAGE DEFINITIONS ---
-        const JONA_TO_PYTHON = {
-            "jona": "print", "Jona": "while", "JONA": "for", "jona_jona": "if",
-            "Jona_jona": "elif", "JONA_jona": "else", "jonA": "pass", "JoNA": "break",
-            "JOnNA": "continue", "jonaJona": "def", "JonaJona": "class", "jonaJONA": "return",
-            "JONA_JONA": "import", "jona_JONA": "from", "JOna": "as", "joNa": "in",
-            "JoNa": "is", "JOnA": "not", "jOnA": "and", "jONa": "or", "joNAna": "try",
-            "JONAJONA": "except", "jonaJonaJona": "finally", "JONAjona": "raise",
-            "JonaJONA": "with", "JONAJona": "global", "jonaJONAjona": "nonlocal",
-            "jOna": "del", "JonaJOna": "assert", "jonaJona_jona": "lambda",
-            "JonaJona_JONA": "yield", "Jona_Jona": "True", "JONA_jonaJona": "False",
-            "jonajonaJona": "None"
-        };
-        const PYTHON_TO_JONA = Object.fromEntries(Object.entries(JONA_TO_PYTHON).map(([k, v]) => [v, k]));
+// --- CALCULATOR APP ---
+const CalculatorApp = () => {
+  const [display, setDisplay] = useState('0');
+  const [equation, setEquation] = useState('');
 
-        // --- PYTHON COMPILER SCRIPT (Injected into Pyodide) ---
-        const pythonCompilerCode = `
-import re
-import sys
+  const handleBtn = (val) => {
+    if (val === 'C') { setDisplay('0'); setEquation(''); return; }
+    if (val === '=') {
+      try {
+        const res = eval(equation + display);
+        setDisplay(String(res));
+        setEquation('');
+      } catch { setDisplay('Fehler'); }
+      return;
+    }
+    if (['+','-','*','/'].includes(val)) {
+      setEquation(equation + display + val);
+      setDisplay('0');
+      return;
+    }
+    setDisplay(display === '0' ? val : display + val);
+  };
 
-JONA_TO_PYTHON = ${JSON.stringify(JONA_TO_PYTHON)}
-PYTHON_TO_JONA = ${JSON.stringify(PYTHON_TO_JONA)}
+  const btns = ['C','/','*','-','7','8','9','+','4','5','6','=','1','2','3','0','.'];
 
-_SORTED_JONA_KEYS = sorted(JONA_TO_PYTHON.keys(), key=len, reverse=True)
-_SORTED_PY_KEYS   = sorted(PYTHON_TO_JONA.keys(),  key=len, reverse=True)
+  return (
+    <div className="h-full flex flex-col bg-gray-800 text-white p-2">
+      <div className="bg-gray-900 p-4 text-right text-3xl font-light mb-2 rounded shadow-inner truncate">
+        {display}
+      </div>
+      <div className="grid grid-cols-4 gap-2 flex-1">
+        {btns.map((b, i) => (
+          <button 
+            key={i} 
+            onClick={() => handleBtn(b)}
+            className={`rounded-full flex items-center justify-center text-xl font-medium active:bg-gray-500 hover:opacity-80 transition-opacity
+              ${b === 'C' ? 'col-span-3 bg-red-500' : 
+                b === '=' ? 'row-span-4 bg-orange-500' : 
+                b === '0' ? 'col-span-2 bg-gray-700' : 
+                ['+','-','*','/'].includes(b) ? 'bg-orange-500' : 'bg-gray-700'}`}
+          >
+            {b}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};
 
-def _build_pattern(keywords):
-    escaped = [re.escape(k) for k in keywords]
-    return re.compile(r'\\b(' + '|'.join(escaped) + r')\\b')
+// --- NOTEPAD APP ---
+const NotepadApp = ({ vfs, initialProps }) => {
+  const [text, setText] = useState('');
+  const [path, setPath] = useState(initialProps?.filePath || '/Home/Dokumente/neue_notiz.txt');
 
-_JONA_PATTERN = _build_pattern(_SORTED_JONA_KEYS)
-_PY_PATTERN   = _build_pattern(_SORTED_PY_KEYS)
+  useEffect(() => {
+    if (initialProps?.filePath) {
+      const node = vfs.getNode(initialProps.filePath);
+      if (node && node.type === 'file') setText(node.content);
+    }
+  }, [initialProps, vfs]);
 
-def _protect_and_replace(source: str, pattern, mapping: dict) -> str:
-    STRING_OR_COMMENT = re.compile(
-        r'(\"\"\"[\\s\\S]*?\"\"\"|'
-        r"'''[\\s\\S]*?'''|"
-        r'\"(?:[^\"\\\\]|\\\\.)*\"|'
-        r"'(?:[^'\\\\]|\\\\.)*'|"
-        r'f\"\"\"[\\s\\S]*?\"\"\"|'
-        r"f'''[\\s\\S]*?'''|"
-        r'f\"(?:[^\"\\\\]|\\\\.)*\"|'
-        r"f'(?:[^'\\\\]|\\\\.)*'|"
-        r'#[^\\n]*)'
-    )
-    result = []
-    last = 0
-    for m in STRING_OR_COMMENT.finditer(source):
-        code_seg = source[last:m.start()]
-        translated = pattern.sub(lambda km: mapping[km.group(0)], code_seg)
-        result.append(translated)
-        result.append(m.group(0))
-        last = m.end()
-    code_seg = source[last:]
-    translated = pattern.sub(lambda km: mapping[km.group(0)], code_seg)
-    result.append(translated)
-    return "".join(result)
+  const save = () => {
+    vfs.createNode(path, { type: 'file', content: text });
+    alert('Gespeichert unter: ' + path);
+  };
 
-def jona_to_python(source: str) -> str:
-    return _protect_and_replace(source, _JONA_PATTERN, JONA_TO_PYTHON)
+  return (
+    <div className="h-full flex flex-col bg-white dark:bg-gray-900">
+      <div className="flex p-2 bg-gray-100 dark:bg-gray-800 border-b dark:border-gray-700 items-center">
+        <input 
+          value={path} 
+          onChange={e => setPath(e.target.value)} 
+          className="flex-1 bg-white dark:bg-gray-900 text-sm p-1 border dark:border-gray-600 rounded mr-2"
+        />
+        <button onClick={save} className="bg-blue-500 text-white px-3 py-1 rounded text-sm hover:bg-blue-600">Speichern</button>
+      </div>
+      <textarea 
+        value={text} 
+        onChange={e => setText(e.target.value)}
+        className="flex-1 w-full p-4 resize-none outline-none dark:bg-gray-900 dark:text-gray-100"
+        placeholder="Schreibe hier etwas..."
+      />
+    </div>
+  );
+};
 
-def python_to_jona(source: str) -> str:
-    return _protect_and_replace(source, _PY_PATTERN, PYTHON_TO_JONA)
-`;
+// --- BROWSER APP ---
+const BrowserApp = () => {
+  const [url, setUrl] = useState('https://de.wikipedia.org/wiki/Spezial:Zufällige_Seite');
+  const [currentIframe, setCurrentIframe] = useState(url);
 
-        // --- STATE & FILE SYSTEM ---
-        let files = {
-            "main.jona": "JONA_JONA math\n\njonaJona berechne_wurzel(zahl):\n    jona_jona zahl < 0:\n        JONAjona ValueError(\"Keine negativen Zahlen!\")\n    jonaJONA math.sqrt(zahl)\n\njoNAna:\n    ergebnis = berechne_wurzel(16)\n    jona(f\"Die Wurzel aus 16 ist {ergebnis}\")\n    \n    jona_jona Jona_Jona:\n        jona(\"Alles funktioniert! JONA = Python\")\nJONAJONA Exception JOna e:\n    jona(\"Fehler:\", e)\n"
-        };
-        let activeFile = "main.jona";
-        let pyodide = null;
-        let editor = null;
-        let viewer = null;
-        let terminal = null;
-        let termFitAddon = null;
-        
-        // --- LOAD FROM URL OR LOCALSTORAGE ---
-        const urlHash = window.location.hash.substring(1);
-        if (urlHash) {
-            try { files = JSON.parse(atob(urlHash)); } catch(e) { console.error("URL Load Error"); }
+  const go = (e) => {
+    e.preventDefault();
+    let finalUrl = url;
+    if (!finalUrl.startsWith('http')) finalUrl = 'https://' + finalUrl;
+    setCurrentIframe(finalUrl);
+  };
+
+  return (
+    <div className="h-full flex flex-col bg-white">
+      <form onSubmit={go} className="flex p-2 bg-gray-200 border-b items-center gap-2">
+        <Globe size={18} className="text-gray-600" />
+        <input 
+          value={url} 
+          onChange={e => setUrl(e.target.value)} 
+          className="flex-1 bg-white p-1 rounded px-2 text-sm text-black"
+          placeholder="URL eingeben (z.B. wikipedia.org)"
+        />
+      </form>
+      <div className="flex-1 bg-gray-50 relative">
+        <iframe src={currentIframe} className="w-full h-full border-none" title="browser" />
+      </div>
+    </div>
+  );
+};
+
+// --- SETTINGS APP ---
+const SettingsApp = ({ theme, setTheme }) => {
+  return (
+    <div className="h-full p-6 bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200">
+      <h2 className="text-2xl font-bold mb-6">Systemeinstellungen</h2>
+      
+      <div className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow-sm border dark:border-gray-700">
+        <h3 className="font-semibold mb-4">Erscheinungsbild</h3>
+        <div className="flex items-center justify-between">
+          <span>Modus</span>
+          <select 
+            value={theme} 
+            onChange={(e) => setTheme(e.target.value)}
+            className="p-2 border rounded dark:bg-gray-700 dark:border-gray-600"
+          >
+            <option value="light">Light Mode</option>
+            <option value="dark">Dark Mode</option>
+          </select>
+        </div>
+      </div>
+      
+      <div className="mt-4 text-sm text-gray-500">
+        Hinweis: Das Dateisystem wird automatisch im LocalStorage gespeichert.
+      </div>
+    </div>
+  );
+};
+
+// --- SNAKE GAME ---
+const SnakeApp = () => {
+  const [snake, setSnake] = useState([[10, 10]]);
+  const [food, setFood] = useState([15, 15]);
+  const [dir, setDir] = useState([1, 0]);
+  const [gameOver, setGameOver] = useState(false);
+  const [score, setScore] = useState(0);
+
+  useEffect(() => {
+    const handleKey = (e) => {
+      switch(e.key) {
+        case 'ArrowUp': if(dir[1] !== 1) setDir([0, -1]); break;
+        case 'ArrowDown': if(dir[1] !== -1) setDir([0, 1]); break;
+        case 'ArrowLeft': if(dir[0] !== 1) setDir([-1, 0]); break;
+        case 'ArrowRight': if(dir[0] !== -1) setDir([1, 0]); break;
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [dir]);
+
+  useEffect(() => {
+    if (gameOver) return;
+    const interval = setInterval(() => {
+      setSnake(s => {
+        const head = [s[0][0] + dir[0], s[0][1] + dir[1]];
+        if (head[0] < 0 || head[0] >= 20 || head[1] < 0 || head[1] >= 20 || s.some(seg => seg[0]===head[0] && seg[1]===head[1])) {
+          setGameOver(true);
+          return s;
+        }
+        const newSnake = [head, ...s];
+        if (head[0] === food[0] && head[1] === food[1]) {
+          setScore(sc => sc + 1);
+          setFood([Math.floor(Math.random() * 20), Math.floor(Math.random() * 20)]);
         } else {
-            const saved = localStorage.getItem('jona_files');
-            if (saved) files = JSON.parse(saved);
+          newSnake.pop();
         }
-        if (!files[activeFile]) activeFile = Object.keys(files)[0];
+        return newSnake;
+      });
+    }, 150);
+    return () => clearInterval(interval);
+  }, [dir, food, gameOver]);
 
-        function saveFiles() {
-            localStorage.setItem('jona_files', JSON.stringify(files));
+  return (
+    <div className="h-full bg-gray-900 flex flex-col items-center justify-center relative">
+      <div className="text-white font-bold mb-2">Score: {score}</div>
+      <div className="w-[300px] h-[300px] bg-black relative border-2 border-gray-700">
+        {snake.map((seg, i) => (
+          <div key={i} className="absolute bg-green-500 w-[15px] h-[15px]" style={{ left: seg[0]*15, top: seg[1]*15 }} />
+        ))}
+        <div className="absolute bg-red-500 w-[15px] h-[15px]" style={{ left: food[0]*15, top: food[1]*15 }} />
+      </div>
+      {gameOver && (
+        <div className="absolute inset-0 bg-black/80 flex flex-col items-center justify-center text-white">
+          <h2 className="text-2xl mb-4 text-red-500">Game Over</h2>
+          <button onClick={() => { setSnake([[10,10]]); setDir([1,0]); setGameOver(false); setScore(0); }} className="px-4 py-2 bg-green-600 rounded">Neustart</button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// --- MINESWEEPER GAME ---
+const MinesweeperApp = () => {
+  const rows = 10, cols = 10, mines = 10;
+  const [grid, setGrid] = useState([]);
+  const [gameOver, setGameOver] = useState(false);
+  const [win, setWin] = useState(false);
+
+  const initGrid = useCallback(() => {
+    let g = Array(rows).fill().map(() => Array(cols).fill().map(() => ({ val: 0, rev: false, flag: false })));
+    let placed = 0;
+    while(placed < mines) {
+      let r = Math.floor(Math.random()*rows), c = Math.floor(Math.random()*cols);
+      if(g[r][c].val !== 'X') { g[r][c].val = 'X'; placed++; }
+    }
+    for(let r=0; r<rows; r++) {
+      for(let c=0; c<cols; c++) {
+        if(g[r][c].val === 'X') continue;
+        let count = 0;
+        for(let i=-1; i<=1; i++) for(let j=-1; j<=1; j++) {
+          if(r+i>=0 && r+i<rows && c+j>=0 && c+j<cols && g[r+i][c+j].val === 'X') count++;
         }
+        g[r][c].val = count;
+      }
+    }
+    setGrid(g); setGameOver(false); setWin(false);
+  }, []);
 
-        // --- TERMINAL SETUP ---
-        function initTerminal() {
-            terminal = new Terminal({
-                theme: { background: '#000000', foreground: '#00ffcc', cursor: '#39ff14' },
-                fontFamily: 'Consolas, "Courier New", monospace',
-                fontSize: 14, cursorBlink: true
-            });
-            termFitAddon = new FitAddon.FitAddon();
-            terminal.loadAddon(termFitAddon);
-            terminal.open(document.getElementById('terminal'));
-            termFitAddon.fit();
-            terminal.writeln("\x1b[1;32m=== JONA REPL & TERMINAL ===\x1b[0m");
-            terminal.writeln("\x1b[38;5;240m(Schreibe Jona-Code und drücke Enter)\x1b[0m");
-            promptTerm();
+  useEffect(() => initGrid(), [initGrid]);
 
-            let currentLine = "";
-            terminal.onData(e => {
-                if (e === '\r') {
-                    terminal.write('\r\n');
-                    handleReplLine(currentLine);
-                    currentLine = "";
-                } else if (e === '\u007F') { // Backspace
-                    if (currentLine.length > 0) {
-                        currentLine = currentLine.slice(0, -1);
-                        terminal.write('\b \b');
-                    }
-                } else {
-                    currentLine += e;
-                    terminal.write(e);
-                }
-            });
-        }
+  const reveal = (r, c) => {
+    if(gameOver || win || grid[r][c].rev || grid[r][c].flag) return;
+    let newGrid = [...grid];
+    if(newGrid[r][c].val === 'X') {
+      newGrid[r][c].rev = true; setGrid(newGrid); setGameOver(true); return;
+    }
+    const floodFill = (nr, nc) => {
+      if(nr<0 || nr>=rows || nc<0 || nc>=cols || newGrid[nr][nc].rev) return;
+      newGrid[nr][nc].rev = true;
+      if(newGrid[nr][nc].val === 0) {
+        for(let i=-1; i<=1; i++) for(let j=-1; j<=1; j++) floodFill(nr+i, nc+j);
+      }
+    };
+    floodFill(r, c);
+    setGrid(newGrid);
+    
+    // Check win
+    let unrevealed = 0;
+    newGrid.forEach(row => row.forEach(cell => { if(!cell.rev) unrevealed++; }));
+    if(unrevealed === mines) setWin(true);
+  };
 
-        function promptTerm() { terminal.write('\r\n\x1b[1;36mJona>\x1b[0m '); }
+  const toggleFlag = (e, r, c) => {
+    e.preventDefault();
+    if(gameOver || win || grid[r][c].rev) return;
+    let newGrid = [...grid];
+    newGrid[r][c].flag = !newGrid[r][c].flag;
+    setGrid(newGrid);
+  };
 
-        async function handleReplLine(line) {
-            if(!line.trim()) return promptTerm();
-            if(!pyodide) { terminal.writeln("\x1b[31mSystem noch nicht bereit.\x1b[0m"); return promptTerm(); }
-            
-            try {
-                // Translate
-                pyodide.globals.set("repl_input", line);
-                let pyCode = pyodide.runPython("jona_to_python(repl_input)");
-                // Execute
-                let result = await pyodide.runPythonAsync(`
-try:
-    _repl_res = eval(${JSON.stringify(pyCode)})
-    if _repl_res is not None: print(repr(_repl_res))
-except SyntaxError:
-    exec(${JSON.stringify(pyCode)})
-`);
-            } catch (err) {
-                // StdErr handler will print the error in red automatically
-            }
-            promptTerm();
-        }
+  return (
+    <div className="h-full flex flex-col items-center justify-center bg-gray-300 select-none">
+      <div className="mb-4 text-xl font-bold">{gameOver ? '💥 BOOM!' : win ? '🎉 GEWONNEN!' : 'Minesweeper'}</div>
+      <div className="bg-gray-400 p-2 border-4 border-gray-500 rounded shadow-lg">
+        {grid.map((row, r) => (
+          <div key={r} className="flex">
+            {row.map((cell, c) => (
+              <div 
+                key={c}
+                onClick={() => reveal(r,c)}
+                onContextMenu={(e) => toggleFlag(e, r, c)}
+                className={`w-8 h-8 flex items-center justify-center font-bold text-sm border-2 
+                  ${cell.rev 
+                    ? 'bg-gray-200 border-gray-300' 
+                    : 'bg-gray-300 border-t-white border-l-white border-b-gray-600 border-r-gray-600 cursor-pointer hover:bg-gray-200'}
+                  ${cell.val === 'X' && cell.rev ? 'bg-red-500' : ''}`}
+              >
+                {cell.flag ? '🚩' : cell.rev ? (cell.val === 'X' ? '💣' : cell.val || '') : ''}
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+      {(gameOver || win) && <button onClick={initGrid} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">Neu starten</button>}
+    </div>
+  );
+};
 
-        // --- PYODIDE INITIALIZATION ---
-        async function initPyodide() {
-            pyodide = await loadPyodide({
-                stdout: (text) => terminal.writeln(text),
-                stderr: (text) => terminal.writeln('\x1b[31m' + text + '\x1b[0m') // Error Highlighting
-            });
-            await pyodide.runPythonAsync(pythonCompilerCode);
-            document.getElementById('loader').style.display = 'none';
-            document.getElementById('btn-run').disabled = false;
-        }
 
-        // --- MONACO EDITOR SETUP ---
-        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.36.1/min/vs' }});
-        require(['vs/editor/editor.main'], function() {
-            
-            // Register Jona Language
-            monaco.languages.register({ id: 'jona' });
-            
-            // Syntax Highlighting Tokens
-            monaco.languages.setMonarchTokensProvider('jona', {
-                tokenizer: {
-                    root: [
-                        [/\b(jona_jona|Jona_jona|JONA_jona|Jona|JONA|jonA|JoNA|JOnNA|joNAna|JONAJONA|jonaJonaJona|JONAjona|JonaJONA)\b/, 'keyword.control'],
-                        [/\b(jonaJona|JonaJona|jonaJONA|jonaJona_jona|JonaJona_JONA)\b/, 'keyword.function'],
-                        [/\b(joNa|JoNa|JOnA|jOnA|jONa)\b/, 'keyword.operator'],
-                        [/\b(Jona_Jona|JONA_jonaJona|jonajonaJona)\b/, 'constant.language'],
-                        [/\b(JONA_JONA|jona_JONA|JOna|JONAJona|jonaJONAjona|jOna|JonaJOna)\b/, 'keyword.other'],
-                        [/\b(jona)\b/, 'support.function'],
-                        [/".*?"/, 'string'],
-                        [/'.*?'/, 'string'],
-                        [/#.*/, 'comment'],
-                        [/\d+/, 'number'],
-                    ]
-                }
-            });
+// ==========================================
+// 3. SYSTEM KOMPONENTEN (Windows, Dock, etc.)
+// ==========================================
 
-            // Cyberpunk Theme
-            monaco.editor.defineTheme('jonaTheme', {
-                base: 'vs-dark',
-                inherit: true,
-                rules: [
-                    { token: 'keyword.control', foreground: '00ffcc', fontStyle: 'bold' },
-                    { token: 'keyword.function', foreground: '39ff14', fontStyle: 'bold' },
-                    { token: 'keyword.operator', foreground: 'ff00ff' },
-                    { token: 'constant.language', foreground: 'ffff00' },
-                    { token: 'keyword.other', foreground: 'ff9900' },
-                    { token: 'support.function', foreground: '39ff14' },
-                    { token: 'comment', foreground: '666666', fontStyle: 'italic' },
-                    { token: 'string', foreground: 'ffaaaa' }
-                ],
-                colors: { 'editor.background': '#070f14', 'editorLineNumber.foreground': '#2b5a52' }
-            });
+const APPS_CONFIG = {
+  finder: { title: 'Finder', icon: Folder, color: 'text-blue-500', component: FinderApp, width: 600, height: 400 },
+  terminal: { title: 'Terminal', icon: Terminal, color: 'text-gray-800 dark:text-gray-200', component: TerminalApp, width: 550, height: 350 },
+  calculator: { title: 'Rechner', icon: Calculator, color: 'text-orange-500', component: CalculatorApp, width: 300, height: 450 },
+  notepad: { title: 'Notizen', icon: FileText, color: 'text-yellow-500', component: NotepadApp, width: 500, height: 400 },
+  browser: { title: 'Browser', icon: Globe, color: 'text-blue-400', component: BrowserApp, width: 800, height: 500 },
+  snake: { title: 'Snake', icon: Gamepad2, color: 'text-green-500', component: SnakeApp, width: 400, height: 450 },
+  minesweeper: { title: 'Minesweeper', icon: Grid, color: 'text-red-500', component: MinesweeperApp, width: 400, height: 500 },
+  settings: { title: 'Einstellungen', icon: Settings, color: 'text-gray-500', component: SettingsApp, width: 500, height: 400 },
+};
 
-            // Autocompletion
-            monaco.languages.registerCompletionItemProvider('jona', {
-                provideCompletionItems: function(model, position) {
-                    const suggestions = Object.entries(JONA_TO_PYTHON).map(([jona, py]) => {
-                        return {
-                            label: jona,
-                            kind: monaco.languages.CompletionItemKind.Keyword,
-                            insertText: jona,
-                            detail: `Python: ${py}`,
-                            documentation: `Jona Keyword für '${py}'`
-                        };
-                    });
-                    return { suggestions: suggestions };
-                }
-            });
+const Window = ({ id, appId, title, initialX, initialY, initialW, initialH, zIndex, isFocused, close, focus, component: AppComp, ...appProps }) => {
+  const [pos, setPos] = useState({ x: initialX, y: initialY });
+  const [isDragging, setIsDragging] = useState(false);
+  const dragRef = useRef({ startX: 0, startY: 0, initialX: 0, initialY: 0 });
 
-            editor = monaco.editor.create(document.getElementById('editor-container'), {
-                value: files[activeFile],
-                language: 'jona',
-                theme: 'jonaTheme',
-                automaticLayout: true,
-                fontSize: 15,
-                minimap: { enabled: false },
-                fontFamily: "'Fira Code', Consolas, monospace"
-            });
+  const onPointerDown = (e) => {
+    focus(id);
+    setIsDragging(true);
+    dragRef.current = { startX: e.clientX, startY: e.clientY, initialX: pos.x, initialY: pos.y };
+    e.target.setPointerCapture(e.pointerId); // Capture for smooth dragging out of window
+  };
 
-            viewer = monaco.editor.create(document.getElementById('viewer-container'), {
-                value: "",
-                language: 'python',
-                theme: 'vs-dark',
-                automaticLayout: true,
-                readOnly: true,
-                fontSize: 14,
-                minimap: { enabled: false }
-            });
+  const onPointerMove = (e) => {
+    if (!isDragging) return;
+    const dx = e.clientX - dragRef.current.startX;
+    const dy = e.clientY - dragRef.current.startY;
+    setPos({ x: dragRef.current.initialX + dx, y: dragRef.current.initialY + dy });
+  };
 
-            editor.onDidChangeModelContent(() => {
-                files[activeFile] = editor.getValue();
-                saveFiles();
-                updateLiveTranslation();
-            });
+  const onPointerUp = (e) => {
+    setIsDragging(false);
+    e.target.releasePointerCapture(e.pointerId);
+  };
 
-            updateFileList();
-            updateLiveTranslation();
-        });
+  return (
+    <div 
+      style={{ left: pos.x, top: pos.y, width: initialW, height: initialH, zIndex }}
+      className={`absolute flex flex-col rounded-xl overflow-hidden shadow-2xl border ${isFocused ? 'border-gray-400/50 dark:border-gray-600/50' : 'border-transparent'} transition-shadow`}
+      onPointerDown={() => focus(id)}
+    >
+      {/* Title Bar */}
+      <div 
+        className={`h-8 px-3 flex items-center justify-between cursor-move select-none ${isFocused ? 'bg-gray-200 dark:bg-gray-800' : 'bg-gray-100 dark:bg-gray-900'} backdrop-blur-md`}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+      >
+        <div className="flex space-x-2">
+          <button onClick={() => close(id)} className="w-3.5 h-3.5 rounded-full bg-red-500 hover:bg-red-600" />
+          <button className="w-3.5 h-3.5 rounded-full bg-yellow-500 hover:bg-yellow-600" />
+          <button className="w-3.5 h-3.5 rounded-full bg-green-500 hover:bg-green-600" />
+        </div>
+        <div className={`text-xs font-medium absolute left-1/2 -translate-x-1/2 ${isFocused ? 'text-gray-800 dark:text-gray-200' : 'text-gray-500 dark:text-gray-600'}`}>
+          {title}
+        </div>
+        <div className="w-10"></div> {/* Spacer for symmetry */}
+      </div>
+      {/* App Content */}
+      <div className="flex-1 overflow-hidden relative bg-white dark:bg-black">
+         {/* Shield to prevent iframe from eating pointer events during drag */}
+         {isDragging && <div className="absolute inset-0 z-50" />}
+         <AppComp {...appProps} />
+      </div>
+    </div>
+  );
+};
 
-        // --- LOGIC & UI ACTIONS ---
+// ==========================================
+// 4. HAUPT-APP & BETRIEBSSYSTEM
+// ==========================================
 
-        function updateFileList() {
-            const list = document.getElementById('file-list');
-            list.innerHTML = '';
-            for(let filename in files) {
-                const div = document.createElement('div');
-                div.className = `file-item px-4 py-2 text-sm flex justify-between group ${filename === activeFile ? 'active' : 'text-gray-400'}`;
-                
-                const nameSpan = document.createElement('span');
-                nameSpan.innerText = filename;
-                
-                const delBtn = document.createElement('button');
-                delBtn.innerHTML = '×';
-                delBtn.className = 'hidden group-hover:block text-red-500 hover:text-red-400 text-lg leading-none';
-                delBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    if(Object.keys(files).length === 1) return alert("Die letzte Datei kann nicht gelöscht werden.");
-                    if(confirm(`Datei ${filename} löschen?`)) {
-                        delete files[filename];
-                        if(activeFile === filename) activeFile = Object.keys(files)[0];
-                        switchFile(activeFile);
-                        updateFileList();
-                        saveFiles();
-                    }
-                };
+export default function MacWebOS() {
+  const [bootState, setBootState] = useState(0); // 0: off, 1: booting, 2: login, 3: desktop
+  const [theme, setTheme] = useState('light');
+  const [windows, setWindows] = useState([]);
+  const [topZ, setTopZ] = useState(10);
+  const [time, setTime] = useState(new Date());
 
-                div.onclick = () => switchFile(filename);
-                div.appendChild(nameSpan);
-                div.appendChild(delBtn);
-                list.appendChild(div);
-            }
-        }
+  const vfs = useFileSystem();
 
-        function switchFile(filename) {
-            activeFile = filename;
-            if(editor) {
-                editor.setValue(files[filename] || "");
-                const isPy = filename.endsWith('.py');
-                monaco.editor.setModelLanguage(editor.getModel(), isPy ? 'python' : 'jona');
-                document.getElementById('primary-editor-label').innerText = filename;
-            }
-            updateFileList();
-            updateLiveTranslation();
-        }
+  // Clock
+  useEffect(() => {
+    if (bootState === 3) {
+      const timer = setInterval(() => setTime(new Date()), 1000);
+      return () => clearInterval(timer);
+    }
+  }, [bootState]);
 
-        document.getElementById('btn-new-file').onclick = () => {
-            let name = prompt("Dateiname (z.B. modul.jona oder script.py):");
-            if(name && !files[name]) {
-                if(!name.includes('.')) name += '.jona';
-                files[name] = "";
-                switchFile(name);
-                saveFiles();
-            }
-        };
+  // Boot sequence simulation
+  useEffect(() => {
+    if (bootState === 0) {
+      setBootState(1);
+      setTimeout(() => setBootState(2), 2000); // 2s boot logo
+    }
+  }, [bootState]);
 
-        // Live Translation Logic
-        let transTimeout;
-        function updateLiveTranslation() {
-            if(!pyodide || document.getElementById('split-pane').classList.contains('hidden')) return;
-            clearTimeout(transTimeout);
-            transTimeout = setTimeout(() => {
-                try {
-                    const code = editor.getValue();
-                    if(activeFile.endsWith('.jona')) {
-                        pyodide.globals.set("src", code);
-                        viewer.setValue(pyodide.runPython("jona_to_python(src)"));
-                        monaco.editor.setModelLanguage(viewer.getModel(), 'python');
-                    } else {
-                        pyodide.globals.set("src", code);
-                        viewer.setValue(pyodide.runPython("python_to_jona(src)"));
-                        monaco.editor.setModelLanguage(viewer.getModel(), 'jona');
-                    }
-                } catch(e) { /* ignore parse errors while typing */ }
-            }, 300);
-        }
+  const openApp = (appId, props = {}) => {
+    const config = APPS_CONFIG[appId];
+    if (!config) return;
+    
+    // Check if single-instance app is already open
+    const existing = windows.find(w => w.appId === appId && !props.filePath);
+    if (existing && !props.filePath) {
+      focusWindow(existing.id);
+      return;
+    }
 
-        document.getElementById('btn-split').onclick = () => {
-            const pane = document.getElementById('split-pane');
-            pane.classList.toggle('hidden');
-            if(!pane.classList.contains('hidden')) updateLiveTranslation();
-        };
+    const newId = `${appId}_${Date.now()}`;
+    setWindows([...windows, {
+      id: newId,
+      appId,
+      title: props.filePath ? `${config.title} - ${props.filePath.split('/').pop()}` : config.title,
+      x: 100 + (windows.length * 30),
+      y: 100 + (windows.length * 30),
+      w: config.width,
+      h: config.height,
+      zIndex: topZ + 1,
+      props
+    }]);
+    setTopZ(z => z + 1);
+  };
 
-        // Execution Logic
-        document.getElementById('btn-run').onclick = async () => {
-            if(!pyodide) return;
-            terminal.writeln(`\x1b[1;34m> Führe ${activeFile} aus...\x1b[0m`);
-            
-            // 1. Compile all .jona files and mount them into Pyodide FS so imports work!
-            for(let filename in files) {
-                let pyCode = files[filename];
-                if(filename.endsWith('.jona')) {
-                    pyodide.globals.set("src", files[filename]);
-                    try {
-                        pyCode = pyodide.runPython("jona_to_python(src)");
-                    } catch(e) {
-                        terminal.writeln(`\x1b[31mKompilierungsfehler in ${filename}\x1b[0m`);
-                        continue;
-                    }
-                }
-                const pyFilename = filename.replace(/\.jona$/, '.py');
-                pyodide.FS.writeFile(pyFilename, pyCode);
-            }
+  const closeWindow = (id) => setWindows(ws => ws.filter(w => w.id !== id));
+  
+  const focusWindow = (id) => {
+    setWindows(ws => ws.map(w => w.id === id ? { ...w, zIndex: topZ + 1 } : w));
+    setTopZ(z => z + 1);
+  };
 
-            // 2. Execute active file
-            let codeToRun = files[activeFile];
-            if(activeFile.endsWith('.jona')) {
-                pyodide.globals.set("src", codeToRun);
-                codeToRun = pyodide.runPython("jona_to_python(src)");
-            }
-            
-            try {
-                await pyodide.runPythonAsync(codeToRun);
-            } catch(e) {
-                // Handled by stderr redirect
-            }
-            promptTerm();
-        };
+  const activeApp = windows.length > 0 ? windows.reduce((prev, current) => (prev.zIndex > current.zIndex) ? prev : current) : null;
 
-        // File Convert Buttons
-        document.getElementById('btn-jona-to-py').onclick = () => {
-            if(!pyodide) return;
-            pyodide.globals.set("src", editor.getValue());
-            editor.setValue(pyodide.runPython("jona_to_python(src)"));
-            if(activeFile.endsWith('.jona')) {
-                const newName = activeFile.replace('.jona', '.py');
-                files[newName] = files[activeFile];
-                delete files[activeFile];
-                switchFile(newName);
-            }
-        };
+  // --- RENDERING VIEWS ---
 
-        document.getElementById('btn-py-to-jona').onclick = () => {
-            if(!pyodide) return;
-            pyodide.globals.set("src", editor.getValue());
-            editor.setValue(pyodide.runPython("python_to_jona(src)"));
-            if(activeFile.endsWith('.py')) {
-                const newName = activeFile.replace('.py', '.jona');
-                files[newName] = files[activeFile];
-                delete files[activeFile];
-                switchFile(newName);
-            }
-        };
+  if (bootState === 1) return (
+    <div className="w-full h-screen bg-black flex flex-col items-center justify-center text-white">
+      <Apple size={80} className="mb-8" />
+      <div className="w-48 h-1 bg-gray-800 rounded overflow-hidden">
+        <div className="h-full bg-white animate-pulse" style={{ width: '60%', transition: 'width 2s' }}></div>
+      </div>
+    </div>
+  );
 
-        document.getElementById('btn-download').onclick = () => {
-            const blob = new Blob([editor.getValue()], { type: "text/plain;charset=utf-8" });
-            const a = document.createElement("a");
-            a.href = URL.createObjectURL(blob);
-            a.download = activeFile;
-            a.click();
-        };
+  if (bootState === 2) return (
+    <div className="w-full h-screen bg-cover bg-center flex flex-col items-center justify-center relative" 
+         style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&q=80&w=2000")' }}>
+      <div className="absolute inset-0 bg-black/20 backdrop-blur-sm" />
+      <div className="relative z-10 flex flex-col items-center">
+        <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mb-4 shadow-xl">
+          <span className="text-4xl text-gray-500">👤</span>
+        </div>
+        <h1 className="text-white text-2xl font-medium mb-6 drop-shadow-md">Gastnutzer</h1>
+        <form onSubmit={(e) => { e.preventDefault(); setBootState(3); }} className="relative">
+          <input 
+            type="password" 
+            placeholder="Passwort (leer lassen)" 
+            className="px-4 py-2 rounded-full bg-white/20 border border-white/40 text-white placeholder-white/70 outline-none backdrop-blur-md text-center w-64"
+            autoFocus
+          />
+          <button type="submit" className="absolute right-3 top-1/2 -translate-y-1/2 text-white/70 hover:text-white">
+            <ChevronRight size={20} />
+          </button>
+        </form>
+      </div>
+    </div>
+  );
 
-        document.getElementById('btn-share').onclick = () => {
-            const base64 = btoa(JSON.stringify(files));
-            window.history.replaceState(null, null, '#' + base64);
-            navigator.clipboard.writeText(window.location.href).then(() => {
-                alert("URL in die Zwischenablage kopiert! Schicke sie deinen Freunden.");
-            });
-        };
+  return (
+    <div className={`w-full h-screen overflow-hidden ${theme === 'dark' ? 'dark' : ''}`}>
+      <div className="w-full h-full bg-cover bg-center flex flex-col relative transition-colors duration-500"
+           style={{ 
+             backgroundImage: theme === 'dark' 
+               ? 'url("https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=2000")' // Dark mode BG
+               : 'url("https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&q=80&w=2000")'  // Light mode BG
+           }}>
+        
+        {/* MENU BAR */}
+        <div className="h-7 w-full bg-white/70 dark:bg-black/70 backdrop-blur-md flex items-center justify-between px-4 text-sm font-medium z-50 text-gray-800 dark:text-gray-200 select-none">
+          <div className="flex items-center space-x-4">
+            <Apple size={16} className="cursor-pointer hover:text-black dark:hover:text-white" />
+            <span className="font-bold">{activeApp ? activeApp.title : 'MacWeb'}</span>
+            <span className="cursor-pointer hover:opacity-70">Ablage</span>
+            <span className="cursor-pointer hover:opacity-70">Bearbeiten</span>
+            <span className="cursor-pointer hover:opacity-70">Hilfe</span>
+          </div>
+          <div className="flex items-center space-x-4">
+            <Wifi size={14} />
+            <Battery size={16} />
+            <Search size={14} />
+            <span>{time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+          </div>
+        </div>
 
-        document.getElementById('btn-clear-term').onclick = () => {
-            terminal.clear();
-        };
+        {/* DESKTOP AREA (Window Manager) */}
+        <div className="flex-1 relative overflow-hidden" onClick={() => setTopZ(topZ)}>
+          {windows.map(win => (
+            <Window 
+              key={win.id}
+              {...win}
+              initialX={win.x}
+              initialY={win.y}
+              initialW={win.w}
+              initialH={win.h}
+              isFocused={activeApp?.id === win.id}
+              close={closeWindow}
+              focus={focusWindow}
+              component={APPS_CONFIG[win.appId].component}
+              vfs={vfs}
+              openApp={openApp}
+              theme={theme}
+              setTheme={setTheme}
+              {...win.props}
+            />
+          ))}
+        </div>
 
-        window.addEventListener('resize', () => {
-            if(termFitAddon) termFitAddon.fit();
-        });
-
-        // Init
-        initTerminal();
-        initPyodide();
-    </script>
-</body>
-</html>
+        {/* DOCK */}
+        <div className="pb-2 w-full flex justify-center z-50 select-none absolute bottom-0">
+          <div className="flex items-end px-3 py-2 space-x-2 bg-white/40 dark:bg-black/40 backdrop-blur-xl rounded-2xl border border-white/20 shadow-2xl">
+            {Object.entries(APPS_CONFIG).map(([id, app]) => {
+              const isOpen = windows.some(w => w.appId === id);
+              const Icon = app.icon;
+              return (
+                <div key={id} className="relative group flex flex-col items-center">
+                  <div 
+                    className="absolute -top-10 bg-black/80 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none"
+                  >
+                    {app.title}
+                  </div>
+                  <button 
+                    onClick={() => openApp(id)}
+                    className="w-12 h-12 bg-white dark:bg-gray-800 rounded-xl shadow-lg flex items-center justify-center transform transition-all duration-200 hover:-translate-y-2 hover:scale-110 focus:outline-none"
+                  >
+                    <Icon size={28} className={app.color} />
+                  </button>
+                  {isOpen && <div className="absolute -bottom-1 w-1 h-1 bg-black dark:bg-white rounded-full mt-1" />}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 ```
