@@ -2,184 +2,181 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Geschichts-Coach: Moderne & Diktaturen</title>
+    <title>Elite-Check: Geschichte Kursstufe</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333; line-height: 1.6; padding: 20px; }
-        .container { max-width: 800px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h1 { color: #2c3e50; text-align: center; border-bottom: 2px solid #f1c40f; padding-bottom: 10px; }
-        .stats { display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; color: #7f8c8d; }
-        .question { font-size: 1.2rem; margin-bottom: 20px; color: #2c3e50; }
-        .options { display: grid; gap: 10px; }
-        button { padding: 12px; border: 2px solid #3498db; background: white; border-radius: 8px; cursor: pointer; transition: 0.3s; font-size: 1rem; text-align: left; }
-        button:hover { background: #3498db; color: white; }
-        .result-screen { text-align: center; display: none; }
-        .score-display { font-size: 3rem; font-weight: bold; color: #27ae60; margin: 20px 0; }
-        .np-display { font-size: 1.5rem; color: #e67e22; margin-bottom: 20px; }
-        .feedback { font-style: italic; margin-bottom: 30px; }
-        .restart-btn { background: #f1c40f; color: #2c3e50; border: none; padding: 15px 30px; font-weight: bold; text-align: center; display: inline-block; cursor: pointer; border-radius: 8px; }
-        .restart-btn:hover { background: #d4ac0d; }
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #eceff1; padding: 20px; color: #263238; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        h1 { border-left: 8px solid #f1c40f; padding-left: 15px; color: #37474f; }
+        .question-box { margin-bottom: 30px; padding: 20px; border: 1px solid #cfd8dc; border-radius: 8px; }
+        .type-label { font-size: 0.8rem; text-transform: uppercase; color: #78909c; font-weight: bold; display: block; margin-bottom: 10px; }
+        .question-text { font-size: 1.25rem; font-weight: 600; margin-bottom: 20px; }
+        .options { display: flex; flex-direction: column; gap: 12px; }
+        label { padding: 12px; border: 1px solid #cfd8dc; border-radius: 6px; cursor: pointer; transition: 0.2s; }
+        label:hover { background: #f5f5f5; }
+        input[type="text"] { width: 100%; padding: 12px; font-size: 1rem; border: 2px solid #3498db; border-radius: 6px; }
+        .btn-next { background: #2c3e50; color: white; border: none; padding: 15px 30px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 20px; float: right; }
+        .btn-next:hover { background: #1a252f; }
+        
+        /* Result Table */
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; border: 1px solid #cfd8dc; text-align: left; }
+        th { background: #f8f9fa; }
+        .wrong { color: #c0392b; font-weight: bold; }
+        .correct { color: #27ae60; font-weight: bold; }
+        .score-big { font-size: 4rem; color: #2c3e50; text-align: center; margin: 10px 0; }
+        .np-big { font-size: 2rem; text-align: center; color: #e67e22; margin-bottom: 30px; }
+        .hidden { display: none; }
+        .clearfix::after { content: ""; clear: both; display: table; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div id="quiz-ui">
-        <h1>Prüfungs-Check: 19./20. Jahrhundert</h1>
-        <div class="stats">
-            <span>Frage: <span id="current-q">1</span>/10</span>
-            <span>Runde: <span id="round-count">1</span></span>
+    <div id="quiz-section">
+        <div id="progress">Frage 1 von 10</div>
+        <h1>Kursstufen-Prüfung</h1>
+        <div class="question-box">
+            <span id="type-indicator" class="type-label">Typ</span>
+            <div id="q-text" class="question-text">Frage wird geladen...</div>
+            <div id="input-area" class="options"></div>
         </div>
-        <div id="question-text" class="question">Lade Frage...</div>
-        <div id="options-container" class="options"></div>
+        <div class="clearfix">
+            <button class="btn-next" onclick="nextQuestion()">Nächste Frage →</button>
+        </div>
     </div>
 
-    <div id="result-ui" class="result-screen">
-        <h1>Dein Ergebnis</h1>
-        <div class="score-display" id="final-score">0/10</div>
-        <div class="np-display" id="final-np">0 Notenpunkte</div>
-        <div id="final-feedback" class="feedback"></div>
-        <button class="restart-btn" onclick="startNewRound()">Nächste Übungsrunde (10 neue Fragen)</button>
+    <div id="result-section" class="hidden">
+        <h1>Prüfungsbericht</h1>
+        <div class="score-big" id="final-raw">0/10</div>
+        <div class="np-big" id="final-np">0 Notenpunkte</div>
+        <div id="feedback-text" style="text-align: center; margin-bottom: 20px;"></div>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Frage</th>
+                    <th>Deine Antwort</th>
+                    <th>Richtig wäre</th>
+                </tr>
+            </thead>
+            <tbody id="review-table"></tbody>
+        </table>
+        <br>
+        <button class="btn-next" onclick="location.reload()" style="float: none; display: block; margin: auto;">Neustart</button>
     </div>
 </div>
 
 <script>
-    const questionPool = [
-        // WEGE IN DIE MODERNE
-        { q: "Was bedeutet 'Revolution von oben' (1871)?", a: ["Einigung durch Fürsten/Militär (Bismarck)", "Aufstand der Arbeiter", "Friedliche Wahl", "Demokratisierung Preußens"], c: 0 },
-        { q: "Was war ein Merkmal der 'Jacksonian Democracy'?", a: ["Stimmrecht für alle weißen Männer", "Abschaffung der Sklaverei", "Königreich USA", "Nur reiche Eliten wählen"], c: 0 },
-        { q: "Was beschreibt das 'Gilded Age'?", a: ["Wirtschaftsboom mit versteckten sozialen Mängeln", "Eine Ära des reinen Goldes", "Rückkehr zur Landwirtschaft", "Ende des Kapitalismus"], c: 0 },
-        { q: "Was ist ein 'Modernisierungsverlierer' um 1900?", a: ["Handwerker, die gegen Industrie verloren", "Internet-Nutzer", "Reiche Konzernerben", "Politiker der Mitte"], c: 0 },
-        { q: "Was bedeutet 'Urbanisierung'?", a: ["Massives Städtewachstum", "Flucht aufs Dorf", "Bau von Schlössern", "Abriss von Fabriken"], c: 0 },
-        { q: "Was war die 'Nationalversammlung' (1848)?", a: ["Erstes gewähltes dt. Parlament", "Hitlers Regierung", "Stammtisch der Fürsten", "Bismarcks Kabinett"], c: 0 },
-        { q: "Wer prägte 'Eisen und Blut'?", a: ["Otto von Bismarck", "Karl Marx", "Andrew Jackson", "Adolf Hitler"], c: 0 },
-        { q: "Was ist 'Laissez-faire'?", a: ["Staat greift nicht in Wirtschaft ein", "Starke staatliche Kontrolle", "Verbot von Handel", "Schutz von Arbeiterrechten"], c: 0 },
-        { q: "Was förderte den 'Massenkonsum'?", a: ["Günstige Preise durch Fließbandarbeit", "Exklusivität für den Adel", "Tauschhandel", "Verbot von Werbung"], c: 0 },
-        { q: "Welche Ideologie entstand als 'Krisenreaktion' auf die Moderne?", a: ["Radikalnationalismus", "Liberalismus", "Globalismus", "Pazifismus"], c: 0 },
+const pool = [
+    { t: "text", q: "Wie heißt der Fachbegriff für die Einteilung der NS-Gesellschaft in 'wertvolle' und 'minderwertige' Menschen?", a: "Volksgemeinschaft" },
+    { t: "text", q: "Welcher Artikel der Weimarer Verfassung regelte die Notverordnungen des Reichspräsidenten? (Nur Zahl)", a: "48" },
+    { t: "text", q: "Wie nennt man die gewaltsame Anpassung aller Organisationen an die NS-Ideologie 1933?", a: "Gleichschaltung" },
+    { t: "text", q: "Welcher Kanzler leitete 1930 das erste Präsidialkabinett?", a: "Brüning" },
+    { t: "multi", q: "Welche Merkmale kennzeichnen die liberale Demokratie?", o: ["Pluralismus", "Gewaltenteilung", "Einparteiensystem", "Menschenrechte"], c: [0,1,3] },
+    { t: "multi", q: "Was sind Merkmale des 'Gilded Age' in den USA?", o: ["Big Business", "Wirtschaftsboom", "Staatliche Planwirtschaft", "Korruption"], c: [0,1,3] },
+    { t: "multi", q: "Was waren Ursachen für das Scheitern von Weimar?", o: ["Weltwirtschaftskrise", "Stabilität der Mitte", "Antidemokratisches Denken", "Schwäche des Reichspräsidenten"], c: [0,2] },
+    { t: "multi", q: "Welche Aspekte gehören zur NS-Ideologie?", o: ["Antisemitismus", "Pazifismus", "Lebensraum im Osten", "Sozialdarwinismus"], c: [0,2,3] },
+    { t: "single", q: "Was bedeutet 'Modernisierung von oben' im Kaiserreich?", o: ["Einigung durch Bismarck und Militär", "Revolution der Arbeiter", "Wahl durch das Volk"], c: 0 },
+    { t: "single", q: "Welche Funktion hatte die 'Kaderpartei' im Sowjetkommunismus?", o: ["Elite als Vorhut der Revolution", "Zusammentreffen aller Meinungen", "Reine Sportorganisation"], c: 0 },
+    { t: "text", q: "Wie heißt die Ideologie, die das 'Recht des Stärkeren' auf Menschenrassen überträgt?", a: "Sozialdarwinismus" },
+    { t: "text", q: "In welchem Jahr begann die Weltwirtschaftskrise?", a: "1929" },
+    { t: "single", q: "Wer ernannte Hitler zum Reichskanzler?", o: ["Hindenburg", "Ludendorff", "Ebert", "Das Volk"], c: 0 },
+    { t: "multi", q: "Was sind Begleiterscheinungen der Hochmoderne um 1900?", o: ["Urbanisierung", "Beschleunigung", "Entstehung von Massenmedien", "Agrarisierung"], c: [0,1,2] },
+    { t: "text", q: "Was war der zentrale Kampfbegriff der NS-Außenpolitik bezüglich Territorien?", a: "Lebensraum" }
+];
 
-        // LIBERALISMUS / KOMMUNISMUS
-        { q: "Was ist ein Kernmerkmal des Liberalismus?", a: ["Gewaltenteilung & Grundrechte", "Diktatur einer Partei", "Planwirtschaft", "Gleichschaltung"], c: 0 },
-        { q: "Was lehnt der 'Antipluralismus' ab?", a: ["Meinungsvielfalt", "Einheitsmeinung", "Die Regierung", "Eugenik"], c: 0 },
-        { q: "Was bedeutet 'Diktatur des Proletariats'?", a: ["Herrschaft der Arbeiterklasse", "Herrschaft des Kaisers", "Herrschaft des Marktes", "Anarchie"], c: 0 },
-        { q: "Was ist eine 'Kaderpartei'?", a: ["Elitepartei der Revolutionäre", "Volkspartei für alle", "Religiöser Orden", "Verbotene Partei"], c: 0 },
-        { q: "Was fordert die 'Partizipation'?", a: ["Teilhabe der Bürger an Macht", "Ausschluss der Armen", "Abschaffung von Wahlen", "Gehorsam"], c: 0 },
-        { q: "Was ist 'Pluralismus'?", a: ["Existenz vieler Interessen & Gruppen", "Eine einzige Wahrheit", "Herrschaft weniger Reicher", "Chaos"], c: 0 },
+let questions = [];
+let currentIdx = 0;
+let userAnswers = [];
+let score = 0;
 
-        // WEIMARER REPUBLIK
-        { q: "Wann war die 'Novemberrevolution'?", a: ["1918", "1933", "1848", "1945"], c: 0 },
-        { q: "Was ermöglichte 'Präsidialkabinette'?", a: ["Art. 48 (Notverordnungen)", "Art. 1 (Menschenwürde)", "Ermächtigungsgesetz", "Grundgesetz"], c: 0 },
-        { q: "Welches Ereignis startete 1929?", a: ["Weltwirtschaftskrise", "Machtergreifung", "Börsenboom", "Friedensschluss"], c: 0 },
-        { q: "Was bedeutet 'Revision' nach 1918?", a: ["Widerstand gegen Versailler Vertrag", "Akzeptanz der Niederlage", "Demokratisierung", "Neuordnung der Wirtschaft"], c: 0 },
-        { q: "Wer war 'Ersatzkaiser' in Weimar?", a: ["Der Reichspräsident", "Der Reichskanzler", "Der Papst", "Hitler"], c: 0 },
-        { q: "Warum scheiterte Weimar parlamentarisch?", a: ["Handlungsunfähigkeit durch Radikalisierung", "Zu viele neue Gesetze", "Zu wenig Parteien", "Kaiser kam zurück"], c: 0 },
+function init() {
+    questions = pool.sort(() => 0.5 - Math.random()).slice(0, 10);
+    renderQuestion();
+}
 
-        // NATIONALSOZIALISMUS
-        { q: "Was bedeutet 'Volksgemeinschaft'?", a: ["Ausgrenzung von 'Nicht-Ariern'", "Soziale Hilfe für alle", "Demokratischer Verbund", "Religiöse Gemeinschaft"], c: 0 },
-        { q: "Was war das Ziel von 'Lebensraum im Osten'?", a: ["Vernichtungskrieg & Expansion", "Urlaub am Meer", "Handelsbeziehungen", "Friedliche Besiedlung"], c: 0 },
-        { q: "Wann war die 'Machtergreifung'?", a: ["30.01.1933", "09.11.1918", "01.09.1939", "20.07.1944"], c: 0 },
-        { q: "Was bedeutet 'Gleichschaltung'?", a: ["Anpassung aller Vereine an NS-Linie", "Bau von Stromleitungen", "Gleiche Löhne für alle", "Wahlfreiheit"], c: 0 },
-        { q: "Wer war Kern der NS-Rassenideologie?", a: ["Antisemitismus", "Liberalismus", "Katholizismus", "Pazifismus"], c: 0 },
-        { q: "Was war die 'Pseudolegalität'?", a: ["NS-Machtübernahme mit legalem Schein", "Illegaler Putsch", "Demokratische Wahl", "Kaiserliche Ernennung"], c: 0 },
-        { q: "Was ist das 'Führerprinzip'?", a: ["Autorität von oben nach unten", "Wahl des Chefs durch Arbeiter", "Gewaltenteilung", "Basisdemokratie"], c: 0 },
-        { q: "Welche Rolle spielten Konzentrationslager?", a: ["Terror & Ausschaltung von Gegnern", "Arbeitsbeschaffungsmaßnahme", "Internate für Eliten", "Flüchtlingsheime"], c: 0 },
-        { q: "Was war 'Euthanasie' im NS?", a: ["Systematischer Mord an Kranken", "Schmerzlinderung", "Tierversuche", "Krankenhausreform"], c: 0 },
-        { q: "Was bedeutet 'Sozialdarwinismus'?", a: ["Übertragung von Biologie auf Völker", "Gleichheit aller Menschen", "Schutz der Schwachen", "Wirtschaftshilfe"], c: 0 },
-        { q: "Wer wurde durch die 'Nürnberger Gesetze' rechtlos?", a: ["Juden", "Adelige", "NSDAP-Mitglieder", "Soldaten"], c: 0 },
-        { q: "Was geschah im 'Ghetto'?", a: ["Zwangsabsonderung jüdischer Bürger", "Künstlerviertel", "Modernes Wohnprojekt", "Regierungsviertel"], c: 0 },
-        { q: "Was war die 'NSDAP'?", a: ["Nationalsozialistische Arbeiterpartei", "Kommunistische Partei", "Liberale Zentrumspartei", "Verein für Sport"], c: 0 },
-        { q: "Was kennzeichnet 'Massenloyalität'?", a: ["Unterstützung des Regimes durch Propaganda", "Widerstand des Volkes", "Gleichgültigkeit", "Geheimer Hass"], c: 0 },
-        { q: "Was ist 'Widerstand' im NS?", a: ["Aktiver Kampf gegen das Regime", "Zustimmung zu Gesetzen", "Ausreise", "Schweigen"], c: 0 },
-        { q: "Was passierte am 9. November 1938?", a: ["Reichspogromnacht", "Ende des Weltkriegs", "Hitlers Geburtstag", "Olympische Spiele"], c: 0 },
-        { q: "Was war die 'HJ' (Hitlerjugend)?", a: ["NS-Organisation zur Erziehung der Jugend", "Pfadfinderbund", "Schule für Technik", "Sportverein"], c: 0 },
-        { q: "Was bedeutet 'Deportation'?", a: ["Zwangstransport in Vernichtungslager", "Freiwillige Auswanderung", "Einreiseerlaubnis", "Urlaub"], c: 0 },
-        { q: "Was ist 'Antiliberalismus'?", a: ["Ablehnung von Freiheit & Demokratie", "Liebe zum Parlament", "Freihandel", "Toleranz"], c: 0 },
-        { q: "Wer ernannte Hitler zum Kanzler?", a: ["Hindenburg", "Bismarck", "Ebert", "Das Volk per Direktwahl"], c: 0 },
-        { q: "Was war das 'Ermächtigungsgesetz'?", a: ["Selbstentmachtung des Parlaments", "Einführung der Grundrechte", "Kriegserklärung", "Frauenwahlrecht"], c: 0 },
-        { q: "Wofür stand die Propaganda unter Goebbels?", a: ["Manipulation der öffentlichen Meinung", "Wahrheitsgetreue Berichterstattung", "Wissenschaftliche Forschung", "Unterhaltung ohne Politik"], c: 0 },
-        { q: "Was beschreibt der 'Totalitarismus'?", a: ["Kontrolle über alle Lebensbereiche", "Begrenzte Macht des Staates", "Freiheit des Einzelnen", "Direkte Demokratie"], c: 0 },
-        { q: "Was ist die 'SD'?", a: ["Sicherheitsdienst der SS", "Soziale Dienste", "Schülerdelegation", "Staatliche Druckerei"], c: 0 },
-        { q: "Was war die 'SA'?", a: ["Paramilitärische Kampforganisation", "Soziale Abteilung", "Sängerakademie", "Schutzarmee"], c: 0 },
-        { q: "Welcher Begriff steht für die Vernichtung der Juden?", a: ["Shoah / Holocaust", "Reformation", "Industrialisierung", "Völkerwanderung"], c: 0 },
-        { q: "Was war 'Big Business' in den USA?", a: ["Aufstieg mächtiger Monopole", "Kleine Familienbetriebe", "Verbot von Handel", "Staatliche Firmen"], c: 0 },
-        { q: "Was bedeutet 'Modernisierungsbeschleunigung'?", a: ["Schneller Wandel durch Technik", "Verlangsamung der Arbeit", "Rückkehr zum Mittelalter", "Bauernreform"], c: 0 }
-    ];
+function renderQuestion() {
+    const q = questions[currentIdx];
+    document.getElementById('progress').innerText = `Frage ${currentIdx + 1} von 10`;
+    document.getElementById('q-text').innerText = q.q;
+    const area = document.getElementById('input-area');
+    area.innerHTML = "";
 
-    let currentQuestions = [];
-    let score = 0;
-    let questionIndex = 0;
-    let round = 1;
-
-    function shuffle(array) {
-        return array.sort(() => Math.random() - 0.5);
-    }
-
-    function startNewRound() {
-        currentQuestions = shuffle([...questionPool]).slice(0, 10);
-        score = 0;
-        questionIndex = 0;
-        document.getElementById('quiz-ui').style.display = 'block';
-        document.getElementById('result-ui').style.display = 'none';
-        document.getElementById('round-count').innerText = round;
-        showQuestion();
-    }
-
-    function showQuestion() {
-        const q = currentQuestions[questionIndex];
-        document.getElementById('current-q').innerText = questionIndex + 1;
-        document.getElementById('question-text').innerText = q.q;
-        const optionsDiv = document.getElementById('options-container');
-        optionsDiv.innerHTML = '';
-        
-        q.a.forEach((opt, i) => {
-            const btn = document.createElement('button');
-            btn.innerText = opt;
-            btn.onclick = () => handleAnswer(i);
-            optionsDiv.appendChild(btn);
+    if(q.t === "text") {
+        document.getElementById('type-indicator').innerText = "Transfer: Fachbegriff eingeben";
+        area.innerHTML = `<input type="text" id="text-ans" placeholder="Antwort hier tippen..." autocomplete="off">`;
+    } else if(q.t === "single") {
+        document.getElementById('type-indicator').innerText = "Wahl: Nur eine Antwort richtig";
+        q.o.forEach((opt, i) => {
+            area.innerHTML += `<label><input type="radio" name="ans" value="${i}"> ${opt}</label>`;
+        });
+    } else {
+        document.getElementById('type-indicator').innerText = "Analyse: Mehrere Antworten können richtig sein";
+        q.o.forEach((opt, i) => {
+            area.innerHTML += `<label><input type="checkbox" name="ans" value="${i}"> ${opt}</label>`;
         });
     }
+}
 
-    function handleAnswer(i) {
-        if (i === currentQuestions[questionIndex].c) score++;
-        questionIndex++;
-        if (questionIndex < 10) {
-            showQuestion();
-        } else {
-            showResult();
-        }
+function nextQuestion() {
+    const q = questions[currentIdx];
+    let userVal;
+
+    if(q.t === "text") {
+        userVal = document.getElementById('text-ans').value.trim();
+    } else if(q.t === "single") {
+        const selected = document.querySelector('input[name="ans"]:checked');
+        userVal = selected ? parseInt(selected.value) : null;
+    } else {
+        const selected = Array.from(document.querySelectorAll('input[name="ans"]:checked')).map(el => parseInt(el.value));
+        userVal = selected;
     }
 
-    function calculateNP(s) {
-        // Skala für 10 Fragen
-        if (s === 10) return 15;
-        if (s === 9) return 13;
-        if (s === 8) return 11;
-        if (s === 7) return 09;
-        if (s === 6) return 07;
-        if (s === 5) return 05;
-        if (s === 4) return 03;
-        return 0;
-    }
+    userAnswers.push(userVal);
+    checkScore(q, userVal);
 
-    function getFeedback(np) {
-        if (np >= 13) return "Exzellent! Du bist perfekt vorbereitet. Du beherrschst die Begriffe und Zusammenhänge.";
-        if (np >= 10) return "Sehr gut! Du hast eine stabile Basis. Schau dir die Begriffe zu Weimar/NS nochmal kurz an.";
-        if (np >= 7) return "Befriedigend. Du weißt viel, aber bei den Details (z.B. Präsidialkabinette) hapert es noch.";
-        if (np >= 5) return "Ausreichend. Du solltest die Zusammenfassungen oben nochmal intensiv lesen.";
-        return "Gefahr! Du musst dich heute Abend nochmal richtig dransetzen. Lerne die Begriffsliste!";
-    }
+    currentIdx++;
+    if(currentIdx < 10) renderQuestion(); else showResults();
+}
 
-    function showResult() {
-        document.getElementById('quiz-ui').style.display = 'none';
-        document.getElementById('result-ui').style.display = 'block';
-        const np = calculateNP(score);
-        document.getElementById('final-score').innerText = score + "/10";
-        document.getElementById('final-np').innerText = np + " Notenpunkte (NP)";
-        document.getElementById('final-feedback').innerText = getFeedback(np);
-        round++;
+function checkScore(q, val) {
+    if(q.t === "text") {
+        if(val.toLowerCase() === q.a.toLowerCase()) score++;
+    } else if(q.t === "single") {
+        if(val === q.c) score++;
+    } else {
+        if(JSON.stringify(val.sort()) === JSON.stringify(q.c.sort())) score++;
     }
+}
 
-    startNewRound();
+function showResults() {
+    document.getElementById('quiz-section').classList.add('hidden');
+    document.getElementById('result-section').classList.remove('hidden');
+    
+    const np = [0,0,0,1,3,5,7,9,11,13,15][score];
+    document.getElementById('final-raw').innerText = score + "/10";
+    document.getElementById('final-np').innerText = np + " Notenpunkte";
+    
+    const table = document.getElementById('review-table');
+    questions.forEach((q, i) => {
+        let u = userAnswers[i];
+        let correctStr = q.t === "text" ? q.a : (q.t === "single" ? q.o[q.c] : q.c.map(idx => q.o[idx]).join(", "));
+        let userStr = q.t === "text" ? (u || "Keine") : (q.t === "single" ? (u !== null ? q.o[u] : "Keine") : u.map(idx => q.o[idx]).join(", "));
+        
+        let isCorrect = false;
+        if(q.t === "text") isCorrect = u.toLowerCase() === q.a.toLowerCase();
+        else if(q.t === "single") isCorrect = u === q.c;
+        else isCorrect = JSON.stringify(u.sort()) === JSON.stringify(q.c.sort());
+
+        table.innerHTML += `<tr>
+            <td>${q.q}</td>
+            <td class="${isCorrect ? 'correct' : 'wrong'}">${userStr}</td>
+            <td>${correctStr}</td>
+        </tr>`;
+    });
+}
+
+init();
 </script>
-
 </body>
 </html>
