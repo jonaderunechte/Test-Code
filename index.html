@@ -3,463 +3,183 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MacWeb OS</title>
-    <!-- Tailwind CSS for styling -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-    <!-- React & ReactDOM -->
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <!-- Babel for JSX -->
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <title>Geschichts-Coach: Moderne & Diktaturen</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
-        
-        body {
-            font-family: 'Inter', sans-serif;
-            margin: 0;
-            overflow: hidden;
-            background: #000;
-        }
-
-        /* Glassmorphism utility */
-        .glass {
-            background: rgba(255, 255, 255, 0.7);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-        }
-
-        .dark .glass {
-            background: rgba(30, 30, 30, 0.7);
-        }
-
-        /* Standard scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: rgba(0,0,0,0.2);
-            border-radius: 10px;
-        }
-        .dark ::-webkit-scrollbar-thumb {
-            background: rgba(255,255,255,0.2);
-        }
-
-        /* Animations */
-        @keyframes bootFade {
-            0% { opacity: 0; transform: scale(0.9); }
-            100% { opacity: 1; transform: scale(1); }
-        }
-        .animate-boot { animation: bootFade 1.5s ease-out forwards; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; color: #333; line-height: 1.6; padding: 20px; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h1 { color: #2c3e50; text-align: center; border-bottom: 2px solid #f1c40f; padding-bottom: 10px; }
+        .stats { display: flex; justify-content: space-between; margin-bottom: 20px; font-weight: bold; color: #7f8c8d; }
+        .question { font-size: 1.2rem; margin-bottom: 20px; color: #2c3e50; }
+        .options { display: grid; gap: 10px; }
+        button { padding: 12px; border: 2px solid #3498db; background: white; border-radius: 8px; cursor: pointer; transition: 0.3s; font-size: 1rem; text-align: left; }
+        button:hover { background: #3498db; color: white; }
+        .result-screen { text-align: center; display: none; }
+        .score-display { font-size: 3rem; font-weight: bold; color: #27ae60; margin: 20px 0; }
+        .np-display { font-size: 1.5rem; color: #e67e22; margin-bottom: 20px; }
+        .feedback { font-style: italic; margin-bottom: 30px; }
+        .restart-btn { background: #f1c40f; color: #2c3e50; border: none; padding: 15px 30px; font-weight: bold; text-align: center; display: inline-block; cursor: pointer; border-radius: 8px; }
+        .restart-btn:hover { background: #d4ac0d; }
     </style>
 </head>
 <body>
-    <div id="root"></div>
 
-    <script type="text/babel">
-        const { useState, useEffect, useRef, useCallback, useMemo } = React;
+<div class="container">
+    <div id="quiz-ui">
+        <h1>Prüfungs-Check: 19./20. Jahrhundert</h1>
+        <div class="stats">
+            <span>Frage: <span id="current-q">1</span>/10</span>
+            <span>Runde: <span id="round-count">1</span></span>
+        </div>
+        <div id="question-text" class="question">Lade Frage...</div>
+        <div id="options-container" class="options"></div>
+    </div>
 
-        // --- ICONS WRAPPER ---
-        const Icon = ({ name, size = 20, className = "" }) => {
-            const LucideIcon = lucide.icons[name];
-            if (!LucideIcon) return null;
-            return <i data-lucide={name.toLowerCase()} style={{ width: size, height: size }} className={className}></i>;
-        };
+    <div id="result-ui" class="result-screen">
+        <h1>Dein Ergebnis</h1>
+        <div class="score-display" id="final-score">0/10</div>
+        <div class="np-display" id="final-np">0 Notenpunkte</div>
+        <div id="final-feedback" class="feedback"></div>
+        <button class="restart-btn" onclick="startNewRound()">Nächste Übungsrunde (10 neue Fragen)</button>
+    </div>
+</div>
 
-        useEffect(() => {
-            lucide.createIcons();
+<script>
+    const questionPool = [
+        // WEGE IN DIE MODERNE
+        { q: "Was bedeutet 'Revolution von oben' (1871)?", a: ["Einigung durch Fürsten/Militär (Bismarck)", "Aufstand der Arbeiter", "Friedliche Wahl", "Demokratisierung Preußens"], c: 0 },
+        { q: "Was war ein Merkmal der 'Jacksonian Democracy'?", a: ["Stimmrecht für alle weißen Männer", "Abschaffung der Sklaverei", "Königreich USA", "Nur reiche Eliten wählen"], c: 0 },
+        { q: "Was beschreibt das 'Gilded Age'?", a: ["Wirtschaftsboom mit versteckten sozialen Mängeln", "Eine Ära des reinen Goldes", "Rückkehr zur Landwirtschaft", "Ende des Kapitalismus"], c: 0 },
+        { q: "Was ist ein 'Modernisierungsverlierer' um 1900?", a: ["Handwerker, die gegen Industrie verloren", "Internet-Nutzer", "Reiche Konzernerben", "Politiker der Mitte"], c: 0 },
+        { q: "Was bedeutet 'Urbanisierung'?", a: ["Massives Städtewachstum", "Flucht aufs Dorf", "Bau von Schlössern", "Abriss von Fabriken"], c: 0 },
+        { q: "Was war die 'Nationalversammlung' (1848)?", a: ["Erstes gewähltes dt. Parlament", "Hitlers Regierung", "Stammtisch der Fürsten", "Bismarcks Kabinett"], c: 0 },
+        { q: "Wer prägte 'Eisen und Blut'?", a: ["Otto von Bismarck", "Karl Marx", "Andrew Jackson", "Adolf Hitler"], c: 0 },
+        { q: "Was ist 'Laissez-faire'?", a: ["Staat greift nicht in Wirtschaft ein", "Starke staatliche Kontrolle", "Verbot von Handel", "Schutz von Arbeiterrechten"], c: 0 },
+        { q: "Was förderte den 'Massenkonsum'?", a: ["Günstige Preise durch Fließbandarbeit", "Exklusivität für den Adel", "Tauschhandel", "Verbot von Werbung"], c: 0 },
+        { q: "Welche Ideologie entstand als 'Krisenreaktion' auf die Moderne?", a: ["Radikalnationalismus", "Liberalismus", "Globalismus", "Pazifismus"], c: 0 },
+
+        // LIBERALISMUS / KOMMUNISMUS
+        { q: "Was ist ein Kernmerkmal des Liberalismus?", a: ["Gewaltenteilung & Grundrechte", "Diktatur einer Partei", "Planwirtschaft", "Gleichschaltung"], c: 0 },
+        { q: "Was lehnt der 'Antipluralismus' ab?", a: ["Meinungsvielfalt", "Einheitsmeinung", "Die Regierung", "Eugenik"], c: 0 },
+        { q: "Was bedeutet 'Diktatur des Proletariats'?", a: ["Herrschaft der Arbeiterklasse", "Herrschaft des Kaisers", "Herrschaft des Marktes", "Anarchie"], c: 0 },
+        { q: "Was ist eine 'Kaderpartei'?", a: ["Elitepartei der Revolutionäre", "Volkspartei für alle", "Religiöser Orden", "Verbotene Partei"], c: 0 },
+        { q: "Was fordert die 'Partizipation'?", a: ["Teilhabe der Bürger an Macht", "Ausschluss der Armen", "Abschaffung von Wahlen", "Gehorsam"], c: 0 },
+        { q: "Was ist 'Pluralismus'?", a: ["Existenz vieler Interessen & Gruppen", "Eine einzige Wahrheit", "Herrschaft weniger Reicher", "Chaos"], c: 0 },
+
+        // WEIMARER REPUBLIK
+        { q: "Wann war die 'Novemberrevolution'?", a: ["1918", "1933", "1848", "1945"], c: 0 },
+        { q: "Was ermöglichte 'Präsidialkabinette'?", a: ["Art. 48 (Notverordnungen)", "Art. 1 (Menschenwürde)", "Ermächtigungsgesetz", "Grundgesetz"], c: 0 },
+        { q: "Welches Ereignis startete 1929?", a: ["Weltwirtschaftskrise", "Machtergreifung", "Börsenboom", "Friedensschluss"], c: 0 },
+        { q: "Was bedeutet 'Revision' nach 1918?", a: ["Widerstand gegen Versailler Vertrag", "Akzeptanz der Niederlage", "Demokratisierung", "Neuordnung der Wirtschaft"], c: 0 },
+        { q: "Wer war 'Ersatzkaiser' in Weimar?", a: ["Der Reichspräsident", "Der Reichskanzler", "Der Papst", "Hitler"], c: 0 },
+        { q: "Warum scheiterte Weimar parlamentarisch?", a: ["Handlungsunfähigkeit durch Radikalisierung", "Zu viele neue Gesetze", "Zu wenig Parteien", "Kaiser kam zurück"], c: 0 },
+
+        // NATIONALSOZIALISMUS
+        { q: "Was bedeutet 'Volksgemeinschaft'?", a: ["Ausgrenzung von 'Nicht-Ariern'", "Soziale Hilfe für alle", "Demokratischer Verbund", "Religiöse Gemeinschaft"], c: 0 },
+        { q: "Was war das Ziel von 'Lebensraum im Osten'?", a: ["Vernichtungskrieg & Expansion", "Urlaub am Meer", "Handelsbeziehungen", "Friedliche Besiedlung"], c: 0 },
+        { q: "Wann war die 'Machtergreifung'?", a: ["30.01.1933", "09.11.1918", "01.09.1939", "20.07.1944"], c: 0 },
+        { q: "Was bedeutet 'Gleichschaltung'?", a: ["Anpassung aller Vereine an NS-Linie", "Bau von Stromleitungen", "Gleiche Löhne für alle", "Wahlfreiheit"], c: 0 },
+        { q: "Wer war Kern der NS-Rassenideologie?", a: ["Antisemitismus", "Liberalismus", "Katholizismus", "Pazifismus"], c: 0 },
+        { q: "Was war die 'Pseudolegalität'?", a: ["NS-Machtübernahme mit legalem Schein", "Illegaler Putsch", "Demokratische Wahl", "Kaiserliche Ernennung"], c: 0 },
+        { q: "Was ist das 'Führerprinzip'?", a: ["Autorität von oben nach unten", "Wahl des Chefs durch Arbeiter", "Gewaltenteilung", "Basisdemokratie"], c: 0 },
+        { q: "Welche Rolle spielten Konzentrationslager?", a: ["Terror & Ausschaltung von Gegnern", "Arbeitsbeschaffungsmaßnahme", "Internate für Eliten", "Flüchtlingsheime"], c: 0 },
+        { q: "Was war 'Euthanasie' im NS?", a: ["Systematischer Mord an Kranken", "Schmerzlinderung", "Tierversuche", "Krankenhausreform"], c: 0 },
+        { q: "Was bedeutet 'Sozialdarwinismus'?", a: ["Übertragung von Biologie auf Völker", "Gleichheit aller Menschen", "Schutz der Schwachen", "Wirtschaftshilfe"], c: 0 },
+        { q: "Wer wurde durch die 'Nürnberger Gesetze' rechtlos?", a: ["Juden", "Adelige", "NSDAP-Mitglieder", "Soldaten"], c: 0 },
+        { q: "Was geschah im 'Ghetto'?", a: ["Zwangsabsonderung jüdischer Bürger", "Künstlerviertel", "Modernes Wohnprojekt", "Regierungsviertel"], c: 0 },
+        { q: "Was war die 'NSDAP'?", a: ["Nationalsozialistische Arbeiterpartei", "Kommunistische Partei", "Liberale Zentrumspartei", "Verein für Sport"], c: 0 },
+        { q: "Was kennzeichnet 'Massenloyalität'?", a: ["Unterstützung des Regimes durch Propaganda", "Widerstand des Volkes", "Gleichgültigkeit", "Geheimer Hass"], c: 0 },
+        { q: "Was ist 'Widerstand' im NS?", a: ["Aktiver Kampf gegen das Regime", "Zustimmung zu Gesetzen", "Ausreise", "Schweigen"], c: 0 },
+        { q: "Was passierte am 9. November 1938?", a: ["Reichspogromnacht", "Ende des Weltkriegs", "Hitlers Geburtstag", "Olympische Spiele"], c: 0 },
+        { q: "Was war die 'HJ' (Hitlerjugend)?", a: ["NS-Organisation zur Erziehung der Jugend", "Pfadfinderbund", "Schule für Technik", "Sportverein"], c: 0 },
+        { q: "Was bedeutet 'Deportation'?", a: ["Zwangstransport in Vernichtungslager", "Freiwillige Auswanderung", "Einreiseerlaubnis", "Urlaub"], c: 0 },
+        { q: "Was ist 'Antiliberalismus'?", a: ["Ablehnung von Freiheit & Demokratie", "Liebe zum Parlament", "Freihandel", "Toleranz"], c: 0 },
+        { q: "Wer ernannte Hitler zum Kanzler?", a: ["Hindenburg", "Bismarck", "Ebert", "Das Volk per Direktwahl"], c: 0 },
+        { q: "Was war das 'Ermächtigungsgesetz'?", a: ["Selbstentmachtung des Parlaments", "Einführung der Grundrechte", "Kriegserklärung", "Frauenwahlrecht"], c: 0 },
+        { q: "Wofür stand die Propaganda unter Goebbels?", a: ["Manipulation der öffentlichen Meinung", "Wahrheitsgetreue Berichterstattung", "Wissenschaftliche Forschung", "Unterhaltung ohne Politik"], c: 0 },
+        { q: "Was beschreibt der 'Totalitarismus'?", a: ["Kontrolle über alle Lebensbereiche", "Begrenzte Macht des Staates", "Freiheit des Einzelnen", "Direkte Demokratie"], c: 0 },
+        { q: "Was ist die 'SD'?", a: ["Sicherheitsdienst der SS", "Soziale Dienste", "Schülerdelegation", "Staatliche Druckerei"], c: 0 },
+        { q: "Was war die 'SA'?", a: ["Paramilitärische Kampforganisation", "Soziale Abteilung", "Sängerakademie", "Schutzarmee"], c: 0 },
+        { q: "Welcher Begriff steht für die Vernichtung der Juden?", a: ["Shoah / Holocaust", "Reformation", "Industrialisierung", "Völkerwanderung"], c: 0 },
+        { q: "Was war 'Big Business' in den USA?", a: ["Aufstieg mächtiger Monopole", "Kleine Familienbetriebe", "Verbot von Handel", "Staatliche Firmen"], c: 0 },
+        { q: "Was bedeutet 'Modernisierungsbeschleunigung'?", a: ["Schneller Wandel durch Technik", "Verlangsamung der Arbeit", "Rückkehr zum Mittelalter", "Bauernreform"], c: 0 }
+    ];
+
+    let currentQuestions = [];
+    let score = 0;
+    let questionIndex = 0;
+    let round = 1;
+
+    function shuffle(array) {
+        return array.sort(() => Math.random() - 0.5);
+    }
+
+    function startNewRound() {
+        currentQuestions = shuffle([...questionPool]).slice(0, 10);
+        score = 0;
+        questionIndex = 0;
+        document.getElementById('quiz-ui').style.display = 'block';
+        document.getElementById('result-ui').style.display = 'none';
+        document.getElementById('round-count').innerText = round;
+        showQuestion();
+    }
+
+    function showQuestion() {
+        const q = currentQuestions[questionIndex];
+        document.getElementById('current-q').innerText = questionIndex + 1;
+        document.getElementById('question-text').innerText = q.q;
+        const optionsDiv = document.getElementById('options-container');
+        optionsDiv.innerHTML = '';
+        
+        q.a.forEach((opt, i) => {
+            const btn = document.createElement('button');
+            btn.innerText = opt;
+            btn.onclick = () => handleAnswer(i);
+            optionsDiv.appendChild(btn);
         });
+    }
 
-        // ==========================================
-        // 1. FILE SYSTEM LOGIC
-        // ==========================================
-        const INITIAL_FS = {
-            type: 'dir',
-            name: 'root',
-            children: {
-                'Home': {
-                    type: 'dir',
-                    children: {
-                        'Dokumente': { type: 'dir', children: {} },
-                        'Notizen': { type: 'dir', children: {} },
-                        'readme.txt': { type: 'file', content: 'Willkommen bei MacWeb OS!\nNutze das Terminal oder den Finder.' }
-                    }
-                }
-            }
-        };
-
-        const useVFS = () => {
-            const [fs, setFs] = useState(() => {
-                const saved = localStorage.getItem('mac_web_fs');
-                return saved ? JSON.parse(saved) : INITIAL_FS;
-            });
-
-            useEffect(() => {
-                localStorage.setItem('mac_web_fs', JSON.stringify(fs));
-            }, [fs]);
-
-            const getNode = (path, currentFs = fs) => {
-                const parts = path.split('/').filter(Boolean);
-                let current = currentFs;
-                for (const part of parts) {
-                    if (!current.children || !current.children[part]) return null;
-                    current = current.children[part];
-                }
-                return current;
-            };
-
-            const createNode = (path, nodeData) => {
-                const newFs = { ...fs };
-                const parts = path.split('/').filter(Boolean);
-                const name = parts.pop();
-                let current = newFs;
-                for (const part of parts) {
-                    current.children[part] = { ...current.children[part] };
-                    current = current.children[part];
-                }
-                current.children[name] = nodeData;
-                setFs(newFs);
-            };
-
-            const deleteNode = (path) => {
-                const newFs = { ...fs };
-                const parts = path.split('/').filter(Boolean);
-                const name = parts.pop();
-                let current = newFs;
-                for (const part of parts) {
-                    current.children[part] = { ...current.children[part] };
-                    current = current.children[part];
-                }
-                delete current.children[name];
-                setFs(newFs);
-            };
-
-            return { fs, getNode, createNode, deleteNode };
-        };
-
-        // ==========================================
-        // 2. APPS
-        // ==========================================
-
-        const TerminalApp = ({ vfs }) => {
-            const [history, setHistory] = useState([{ type: 'out', text: 'MacWeb OS Shell v1.0.0' }]);
-            const [input, setInput] = useState('');
-            const [cwd, setCwd] = useState('/Home');
-            const endRef = useRef(null);
-
-            useEffect(() => endRef.current?.scrollIntoView(), [history]);
-
-            const exec = (e) => {
-                if (e.key !== 'Enter') return;
-                const fullCmd = input.trim();
-                setHistory(h => [...h, { type: 'in', text: `${cwd} $ ${fullCmd}` }]);
-                setInput('');
-                
-                const [cmd, ...args] = fullCmd.split(' ');
-                
-                switch(cmd.toLowerCase()) {
-                    case 'help': 
-                        setHistory(h => [...h, { type: 'out', text: 'Befehle: ls, cd, pwd, mkdir, touch, rm, cat, clear, date, help' }]);
-                        break;
-                    case 'ls':
-                        const node = vfs.getNode(cwd);
-                        setHistory(h => [...h, { type: 'out', text: Object.keys(node.children).join('  ') }]);
-                        break;
-                    case 'pwd':
-                        setHistory(h => [...h, { type: 'out', text: cwd }]);
-                        break;
-                    case 'clear': setHistory([]); break;
-                    case 'date': setHistory(h => [...h, { type: 'out', text: new Date().toString() }]); break;
-                    case 'mkdir':
-                        vfs.createNode(`${cwd}/${args[0]}`, { type: 'dir', children: {} });
-                        break;
-                    case 'touch':
-                        vfs.createNode(`${cwd}/${args[0]}`, { type: 'file', content: '' });
-                        break;
-                    case 'cat':
-                        const file = vfs.getNode(`${cwd}/${args[0]}`);
-                        setHistory(h => [...h, { type: 'out', text: file?.content || 'Datei nicht gefunden' }]);
-                        break;
-                    case 'cd':
-                        if (args[0] === '..') setCwd('/Home');
-                        else if (vfs.getNode(`${cwd}/${args[0]}`)) setCwd(`${cwd}/${args[0]}`);
-                        break;
-                    default: 
-                        if(cmd) setHistory(h => [...h, { type: 'out', text: `Command not found: ${cmd}` }]);
-                }
-            };
-
-            return (
-                <div className="h-full bg-[#1e1e1e] text-[#f0f0f0] font-mono p-3 overflow-y-auto text-sm">
-                    {history.map((l, i) => <div key={i} className={l.type === 'in' ? 'text-blue-400' : ''}>{l.text}</div>)}
-                    <div className="flex">
-                        <span className="text-green-400 mr-2">{cwd} $</span>
-                        <input autoFocus className="bg-transparent outline-none flex-1" value={input} onChange={e => setInput(e.target.value)} onKeyDown={exec} />
-                    </div>
-                    <div ref={endRef} />
-                </div>
-            );
-        };
-
-        const CalculatorApp = () => {
-            const [val, setVal] = useState('0');
-            const ops = ['/', '*', '-', '+', '='];
-            const handle = (btn) => {
-                if (btn === '=') setVal(String(eval(val)));
-                else if (btn === 'C') setVal('0');
-                else setVal(val === '0' ? btn : val + btn);
-            };
-            return (
-                <div className="h-full bg-black text-white p-4 flex flex-col">
-                    <div className="text-4xl text-right mb-4 mt-auto overflow-hidden">{val}</div>
-                    <div className="grid grid-cols-4 gap-2">
-                        {['7','8','9','/','4','5','6','*','1','2','3','-','C','0','=','+'].map(b => (
-                            <button key={b} onClick={() => handle(b)} className={`h-12 rounded-full text-xl ${ops.includes(b) ? 'bg-orange-500' : 'bg-gray-700'}`}>{b}</button>
-                        ))}
-                    </div>
-                </div>
-            );
-        };
-
-        const SnakeApp = () => {
-            const [snake, setSnake] = useState([[10, 10]]);
-            const [food, setFood] = useState([5, 5]);
-            const [dir, setDir] = useState([1, 0]);
-            const [over, setOver] = useState(false);
-
-            useEffect(() => {
-                const interval = setInterval(() => {
-                    if(over) return;
-                    setSnake(s => {
-                        const head = [s[0][0] + dir[0], s[0][1] + dir[1]];
-                        if(head[0] < 0 || head[0] > 19 || head[1] < 0 || head[1] > 19) { setOver(true); return s; }
-                        const newS = [head, ...s];
-                        if(head[0] === food[0] && head[1] === food[1]) {
-                            setFood([Math.floor(Math.random()*20), Math.floor(Math.random()*20)]);
-                        } else newS.pop();
-                        return newS;
-                    });
-                }, 150);
-                return () => clearInterval(interval);
-            }, [dir, food, over]);
-
-            useEffect(() => {
-                const move = (e) => {
-                    if(e.key === 'ArrowUp') setDir([0, -1]);
-                    if(e.key === 'ArrowDown') setDir([0, 1]);
-                    if(e.key === 'ArrowLeft') setDir([-1, 0]);
-                    if(e.key === 'ArrowRight') setDir([1, 0]);
-                };
-                window.addEventListener('keydown', move);
-                return () => window.removeEventListener('keydown', move);
-            }, []);
-
-            return (
-                <div className="h-full bg-black flex flex-col items-center justify-center">
-                    <div className="relative w-64 h-64 border border-gray-600">
-                        {snake.map((p, i) => <div key={i} className="absolute bg-green-500 w-3 h-3" style={{left: p[0]*12.8, top: p[1]*12.8}} />)}
-                        <div className="absolute bg-red-500 w-3 h-3" style={{left: food[0]*12.8, top: food[1]*12.8}} />
-                    </div>
-                    {over && <button onClick={() => {setSnake([[10,10]]); setOver(false)}} className="mt-2 text-white bg-blue-600 px-4 py-1 rounded">Reset</button>}
-                </div>
-            );
-        };
-
-        const MinesweeperApp = () => {
-            const [grid, setGrid] = useState(Array(100).fill(0).map(() => ({ mine: Math.random() < 0.15, rev: false })));
-            const reveal = (i) => {
-                const newG = [...grid];
-                newG[i].rev = true;
-                setGrid(newG);
-            };
-            return (
-                <div className="h-full bg-gray-200 p-4 flex flex-wrap content-start">
-                    {grid.map((c, i) => (
-                        <div key={i} onClick={() => reveal(i)} className={`w-[10%] h-[10%] border border-gray-400 flex items-center justify-center cursor-pointer ${c.rev ? 'bg-white' : 'bg-gray-400'}`}>
-                            {c.rev && (c.mine ? '💣' : '•')}
-                        </div>
-                    ))}
-                </div>
-            );
-        };
-
-        const FinderApp = ({ vfs }) => {
-            const [path, setPath] = useState('/Home');
-            const node = vfs.getNode(path);
-            return (
-                <div className="h-full bg-white flex flex-col">
-                    <div className="p-2 border-b flex gap-2 text-xs bg-gray-100">
-                        <button onClick={() => setPath('/Home')}>Home</button>
-                        <span className="text-gray-400">/</span>
-                        <span>{path}</span>
-                    </div>
-                    <div className="flex-1 p-4 flex flex-wrap gap-6 overflow-y-auto">
-                        {Object.keys(node.children).map(name => (
-                            <div key={name} onDoubleClick={() => node.children[name].type === 'dir' && setPath(`${path}/${name}`)} className="flex flex-col items-center w-16 gap-1 group cursor-pointer">
-                                <div className={`p-2 rounded group-hover:bg-blue-100 ${node.children[name].type === 'dir' ? 'text-blue-500' : 'text-gray-500'}`}>
-                                    <Icon name={node.children[name].type === 'dir' ? 'Folder' : 'FileText'} size={32} />
-                                </div>
-                                <span className="text-[10px] text-center truncate w-full">{name}</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            );
-        };
-
-        const NotepadApp = ({ vfs }) => {
-            const [text, setText] = useState('Hallo Welt...');
-            return <textarea className="w-full h-full p-4 outline-none resize-none" value={text} onChange={e => setText(e.target.value)} placeholder="Schreib etwas..." />;
-        };
-
-        const BrowserApp = () => {
-            const [url, setUrl] = useState('https://de.wikipedia.org');
-            const [src, setSrc] = useState(url);
-            return (
-                <div className="h-full flex flex-col">
-                    <div className="p-2 bg-gray-200 flex gap-2">
-                        <input className="flex-1 px-2 py-1 rounded border text-sm" value={url} onChange={e => setUrl(e.target.value)} onKeyDown={e => e.key === 'Enter' && setSrc(url)} />
-                    </div>
-                    <iframe className="flex-1 bg-white" src={src} />
-                </div>
-            );
-        };
-
-        const SettingsApp = ({ theme, setTheme }) => (
-            <div className="h-full p-6 bg-white dark:bg-gray-900 dark:text-white">
-                <h2 className="text-xl font-bold mb-4">Einstellungen</h2>
-                <div className="flex items-center justify-between p-3 bg-gray-100 dark:bg-gray-800 rounded">
-                    <span>Dunkler Modus</span>
-                    <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className={`w-12 h-6 rounded-full relative transition-colors ${theme === 'dark' ? 'bg-blue-500' : 'bg-gray-400'}`}>
-                        <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${theme === 'dark' ? 'left-7' : 'left-1'}`} />
-                    </button>
-                </div>
-            </div>
-        );
-
-        // ==========================================
-        // 3. CORE SYSTEM
-        // ==========================================
-
-        const APP_CONFIG = {
-            finder: { title: 'Finder', icon: 'Folder', color: 'text-blue-500', comp: FinderApp },
-            terminal: { title: 'Terminal', icon: 'Terminal', color: 'text-gray-700', comp: TerminalApp },
-            notes: { title: 'Notizen', icon: 'FileText', color: 'text-yellow-500', comp: NotepadApp },
-            calc: { title: 'Rechner', icon: 'Calculator', color: 'text-orange-500', comp: CalculatorApp },
-            browser: { title: 'Browser', icon: 'Globe', color: 'text-blue-400', comp: BrowserApp },
-            snake: { title: 'Snake', icon: 'Gamepad2', color: 'text-green-500', comp: SnakeApp },
-            mines: { title: 'Minesweeper', icon: 'Grid', color: 'text-red-500', comp: MinesweeperApp },
-            settings: { title: 'Einstellungen', icon: 'Settings', color: 'text-gray-400', comp: SettingsApp }
-        };
-
-        function App() {
-            const [booting, setBooting] = useState(true);
-            const [loggedIn, setLoggedIn] = useState(false);
-            const [theme, setTheme] = useState('light');
-            const [windows, setWindows] = useState([]);
-            const [focused, setFocused] = useState(null);
-            const [time, setTime] = useState(new Date());
-            const vfs = useVFS();
-
-            useEffect(() => {
-                setTimeout(() => setBooting(false), 2500);
-                const t = setInterval(() => setTime(new Date()), 1000);
-                return () => clearInterval(t);
-            }, []);
-
-            const open = (id) => {
-                if (windows.find(w => w.appId === id)) {
-                    setFocused(id);
-                    return;
-                }
-                const conf = APP_CONFIG[id];
-                setWindows([...windows, { appId: id, ...conf, x: 100 + windows.length*20, y: 80 + windows.length*20 }]);
-                setFocused(id);
-            };
-
-            const close = (id) => setWindows(windows.filter(w => w.appId !== id));
-
-            if (booting) return (
-                <div className="h-screen w-full bg-black flex flex-col items-center justify-center text-white">
-                    <Icon name="Apple" size={80} className="mb-8" />
-                    <div className="w-48 h-1 bg-gray-800 rounded overflow-hidden">
-                        <div className="h-full bg-white transition-all duration-[2s] w-full"></div>
-                    </div>
-                </div>
-            );
-
-            if (!loggedIn) return (
-                <div className="h-screen w-full bg-cover bg-center flex flex-col items-center justify-center" style={{backgroundImage: 'url(https://images.unsplash.com/photo-1519750783826-e2420f4d687f?q=80&w=2000)'}}>
-                    <div className="absolute inset-0 bg-black/30 backdrop-blur-md" />
-                    <div className="relative z-10 flex flex-col items-center animate-boot">
-                        <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center text-4xl mb-4 shadow-xl">👤</div>
-                        <h2 className="text-white text-xl font-medium mb-4">Gast</h2>
-                        <button onClick={() => setLoggedIn(true)} className="px-6 py-2 bg-white/20 hover:bg-white/30 text-white border border-white/40 rounded-full backdrop-blur-md">Anmelden</button>
-                    </div>
-                </div>
-            );
-
-            return (
-                <div className={`h-screen w-full relative overflow-hidden flex flex-col transition-all ${theme === 'dark' ? 'dark' : ''}`}>
-                    {/* Desktop BG */}
-                    <div className="absolute inset-0 bg-cover bg-center" style={{backgroundImage: theme === 'dark' ? 'url(https://images.unsplash.com/photo-1614850523296-d8c1af93d400?q=80&w=2000)' : 'url(https://images.unsplash.com/photo-1519750783826-e2420f4d687f?q=80&w=2000)'}} />
-                    
-                    {/* Menu Bar */}
-                    <div className="h-7 w-full glass z-[100] flex items-center justify-between px-4 text-xs font-semibold select-none dark:text-white">
-                        <div className="flex items-center gap-4">
-                            <Icon name="Apple" size={14} />
-                            <span>{focused ? APP_CONFIG[focused].title : 'Finder'}</span>
-                            <span className="font-normal opacity-70">Ablage</span>
-                            <span className="font-normal opacity-70">Bearbeiten</span>
-                        </div>
-                        <div className="flex items-center gap-4">
-                            <Icon name="Wifi" size={14} />
-                            <Icon name="Battery" size={14} />
-                            <span>{time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                        </div>
-                    </div>
-
-                    {/* Window Area */}
-                    <div className="flex-1 relative">
-                        {windows.map(win => (
-                            <div key={win.appId} 
-                                 onClick={() => setFocused(win.appId)}
-                                 style={{ left: win.x, top: win.y, zIndex: focused === win.appId ? 50 : 10 }}
-                                 className="absolute w-[600px] h-[400px] bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col border dark:border-gray-700">
-                                <div className="h-8 bg-gray-100 dark:bg-gray-800 flex items-center px-3 gap-2 select-none group">
-                                    <div onClick={(e) => { e.stopPropagation(); close(win.appId); }} className="w-3 h-3 bg-red-500 rounded-full cursor-pointer" />
-                                    <div className="w-3 h-3 bg-yellow-500 rounded-full" />
-                                    <div className="w-3 h-3 bg-green-500 rounded-full" />
-                                    <span className="flex-1 text-center text-xs font-bold opacity-50">{win.title}</span>
-                                </div>
-                                <div className="flex-1 overflow-hidden">
-                                    <win.comp vfs={vfs} theme={theme} setTheme={setTheme} />
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Dock */}
-                    <div className="h-16 flex justify-center pb-2 z-[100]">
-                        <div className="glass px-2 py-2 flex gap-3 rounded-2xl border border-white/20 shadow-xl items-end">
-                            {Object.entries(APP_CONFIG).map(([id, conf]) => (
-                                <div key={id} onClick={() => open(id)} className="w-12 h-12 bg-white/80 dark:bg-gray-800 rounded-xl flex items-center justify-center shadow-lg transform hover:scale-125 transition-all cursor-pointer group">
-                                    <Icon name={conf.icon} size={28} className={conf.color} />
-                                    <div className="absolute -top-10 bg-black/80 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none">{conf.title}</div>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </div>
-            );
+    function handleAnswer(i) {
+        if (i === currentQuestions[questionIndex].c) score++;
+        questionIndex++;
+        if (questionIndex < 10) {
+            showQuestion();
+        } else {
+            showResult();
         }
+    }
 
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
+    function calculateNP(s) {
+        // Skala für 10 Fragen
+        if (s === 10) return 15;
+        if (s === 9) return 13;
+        if (s === 8) return 11;
+        if (s === 7) return 09;
+        if (s === 6) return 07;
+        if (s === 5) return 05;
+        if (s === 4) return 03;
+        return 0;
+    }
+
+    function getFeedback(np) {
+        if (np >= 13) return "Exzellent! Du bist perfekt vorbereitet. Du beherrschst die Begriffe und Zusammenhänge.";
+        if (np >= 10) return "Sehr gut! Du hast eine stabile Basis. Schau dir die Begriffe zu Weimar/NS nochmal kurz an.";
+        if (np >= 7) return "Befriedigend. Du weißt viel, aber bei den Details (z.B. Präsidialkabinette) hapert es noch.";
+        if (np >= 5) return "Ausreichend. Du solltest die Zusammenfassungen oben nochmal intensiv lesen.";
+        return "Gefahr! Du musst dich heute Abend nochmal richtig dransetzen. Lerne die Begriffsliste!";
+    }
+
+    function showResult() {
+        document.getElementById('quiz-ui').style.display = 'none';
+        document.getElementById('result-ui').style.display = 'block';
+        const np = calculateNP(score);
+        document.getElementById('final-score').innerText = score + "/10";
+        document.getElementById('final-np').innerText = np + " Notenpunkte (NP)";
+        document.getElementById('final-feedback').innerText = getFeedback(np);
+        round++;
+    }
+
+    startNewRound();
+</script>
+
 </body>
 </html>
