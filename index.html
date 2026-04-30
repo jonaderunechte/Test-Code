@@ -3,205 +3,244 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ScribbleCode Generator</title>
+    <title>ScribbleCode V2 - Mit Image-Scanner</title>
     <style>
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #1e1e24;
-            color: #ffffff;
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #1a1a1d;
+            color: #efefef;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 40px;
+            padding: 20px;
         }
         .container {
-            background: #2b2b36;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+            background: #25252b;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
             text-align: center;
-            max-width: 500px;
+            max-width: 600px;
         }
-        input {
-            width: 80%;
-            padding: 10px;
-            margin-bottom: 20px;
+        .controls { margin-bottom: 20px; }
+        input[type="text"] {
+            width: 70%;
+            padding: 12px;
+            border-radius: 8px;
             border: none;
-            border-radius: 6px;
             font-size: 16px;
+            margin-bottom: 10px;
         }
-        button {
+        .btn-group { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+        button, label {
             background-color: #3a7794;
             color: white;
             border: none;
-            padding: 10px 20px;
-            font-size: 16px;
+            padding: 10px 18px;
+            font-size: 14px;
             border-radius: 6px;
             cursor: pointer;
-            margin: 5px;
-            transition: background 0.2s;
+            transition: 0.3s;
         }
-        button:hover {
-            background-color: #2a5a72;
-        }
+        button:hover, label:hover { background-color: #4a87a4; }
+        .btn-download { background-color: #2e7d32; }
+        .btn-download:hover { background-color: #388e3c; }
+        
         canvas {
             margin-top: 20px;
+            max-width: 100%;
             border-radius: 8px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
-            background-color: #fdfaf0; /* Hintergrundfarbe aus deinem Bild */
+            background-color: #fdfaf0;
+            display: block;
         }
+        #fileInput { display: none; }
         .output {
             margin-top: 20px;
             padding: 15px;
-            background: #1e1e24;
-            border-radius: 6px;
-            min-height: 24px;
+            background: #111;
+            border-left: 4px solid #3a7794;
             font-family: monospace;
-            color: #4CAF50;
             word-wrap: break-word;
+            text-align: left;
         }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h2>ScribbleCode System</h2>
-        <p>Gib einen Text ein (ideal: 5-30 Zeichen), um ihn in eine Vektor-Linie zu übersetzen.</p>
+        <h2>ScribbleCode V2</h2>
+        <p>Generiere Codes oder lade ein Bild hoch zum Scannen.</p>
         
-        <input type="text" id="inputText" placeholder="Geheime Nachricht hier..." value="Hello World">
-        <br>
-        <button onclick="generateCode()">Generieren</button>
-        <button onclick="decodeCode()">Auslesen</button>
+        <div class="controls">
+            <input type="text" id="inputText" placeholder="Text eingeben..." value="GEHEIM123">
+            <div class="btn-group">
+                <button onclick="generateCode()">Generieren</button>
+                <button class="btn-download" onclick="downloadImage()">Bild speichern (.png)</button>
+                <label for="fileInput">Bild hochladen & auslesen</label>
+                <input type="file" id="fileInput" accept="image/*" onchange="handleUpload(event)">
+            </div>
+        </div>
 
-        <canvas id="codeCanvas" width="400" height="400"></canvas>
+        <canvas id="codeCanvas" width="500" height="500"></canvas>
 
-        <div id="outputText" class="output">Ausgelesener Text erscheint hier...</div>
+        <div id="status" style="margin-top:10px; font-weight:bold;"></div>
+        <div id="outputText" class="output">Ergebnis-Daten...</div>
     </div>
 
     <script>
-        let encodedDataPoints = []; // Speichert die Vektoren fürs Auslesen
+        const canvas = document.getElementById('codeCanvas');
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+        const BLUE_COLOR = { r: 58, g: 119, b: 148 }; // Unser #3a7794
 
-        function drawBackgroundAndMarkers(ctx, w, h) {
-            // Hintergrund
+        function drawBackground(ctx, w, h) {
             ctx.fillStyle = "#fdfaf0";
             ctx.fillRect(0, 0, w, h);
-
-            // Rasterlinien (Gitter)
+            // Gitter zeichnen
             ctx.strokeStyle = "#d6d8dd";
-            ctx.lineWidth = 4;
-            ctx.beginPath();
-            ctx.moveTo(w * 0.2, 0); ctx.lineTo(w * 0.2, h);
-            ctx.moveTo(w * 0.8, 0); ctx.lineTo(w * 0.8, h);
-            ctx.moveTo(0, h * 0.2); ctx.lineTo(w, h * 0.2);
-            ctx.moveTo(0, h * 0.8); ctx.lineTo(w, h * 0.8);
-            ctx.stroke();
-
-            // Eck-Markierungen (Wie im Bild)
-            ctx.strokeStyle = "#3a7794";
-            ctx.lineWidth = 8;
-            ctx.lineCap = "round";
-            ctx.lineJoin = "round";
-            
-            // Oben Rechts
-            ctx.beginPath(); ctx.moveTo(w * 0.9, h * 0.2); ctx.lineTo(w * 0.9, h * 0.1); ctx.lineTo(w * 0.8, h * 0.1); ctx.stroke();
-            // Unten Links
-            ctx.beginPath(); ctx.moveTo(w * 0.2, h * 0.9); ctx.lineTo(w * 0.1, h * 0.9); ctx.lineTo(w * 0.1, h * 0.8); ctx.stroke();
-            // Unten Rechts
-            ctx.beginPath(); ctx.moveTo(w * 0.8, h * 0.9); ctx.lineTo(w * 0.9, h * 0.9); ctx.lineTo(w * 0.9, h * 0.8); ctx.stroke();
+            ctx.lineWidth = 2;
+            for(let i=1; i<5; i++) {
+                ctx.beginPath(); ctx.moveTo(w*i/5, 0); ctx.lineTo(w*i/5, h); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(0, h*i/5); ctx.lineTo(w, h*i/5); ctx.stroke();
+            }
         }
 
         function generateCode() {
             const text = document.getElementById('inputText').value;
             if (!text) return;
-
-            const canvas = document.getElementById('codeCanvas');
-            const ctx = canvas.getContext('2d');
             const w = canvas.width;
             const h = canvas.height;
+            drawBackground(ctx, w, h);
 
-            drawBackgroundAndMarkers(ctx, w, h);
-
-            // Text in Bytes umwandeln
-            const encoder = new TextEncoder();
-            const bytes = encoder.encode(text);
-            
-            // Wir zerlegen jedes Byte (8 Bit) in zwei 4-Bit Blöcke (0-15)
-            // Das gibt uns die Variablen für Winkel und Länge!
+            const bytes = new TextEncoder().encode(text);
             let nibbles = [];
-            for (let byte of bytes) {
-                nibbles.push(byte >> 4);     // Obere 4 Bits
-                nibbles.push(byte & 0x0F);   // Untere 4 Bits
-            }
+            for (let b of bytes) { nibbles.push(b >> 4); nibbles.push(b & 0x0F); }
 
-            const paddingX = w * 0.15;
-            const paddingY = h * 0.15;
-            const drawW = w - (paddingX * 2);
-            const drawH = h - (paddingY * 2);
-
-            // X-Schritte berechnen
-            const stepX = drawW / (nibbles.length > 1 ? nibbles.length - 1 : 1);
+            const pad = w * 0.15;
+            const stepX = (w - 2 * pad) / (nibbles.length - 1);
 
             ctx.beginPath();
-            ctx.strokeStyle = "#3a7794";
-            ctx.lineWidth = 6;
-
-            encodedDataPoints = []; // Zurücksetzen für den Decoder
+            ctx.strokeStyle = `rgb(${BLUE_COLOR.r},${BLUE_COLOR.g},${BLUE_COLOR.b})`;
+            ctx.lineWidth = 8;
+            ctx.lineJoin = "round";
+            ctx.lineCap = "round";
 
             for (let i = 0; i < nibbles.length; i++) {
-                const val = nibbles[i]; // Wert zwischen 0 und 15
+                const x = pad + i * stepX;
+                const valNorm = nibbles[i] / 15;
+                const y = (i % 2 === 0) 
+                    ? pad + valNorm * (h * 0.3) 
+                    : h - pad - valNorm * (h * 0.3);
                 
-                const x = paddingX + (i * stepX);
-                let y;
-
-                // Damit es "zickzack" aussieht, zwingen wir jeden geraden Punkt
-                // in die obere Hälfte und jeden ungeraden in die untere Hälfte.
-                // Der genaue Y-Wert innerhalb der Hälfte bestimmt den WINKEL und die LÄNGE.
-                if (i % 2 === 0) {
-                    y = paddingY + (val / 15) * (drawH * 0.4); 
-                } else {
-                    y = paddingY + drawH - (val / 15) * (drawH * 0.4);
-                }
-
-                // Speichere die mathematischen Daten für den Ausleser
-                encodedDataPoints.push({ x, y, val });
-
-                if (i === 0) ctx.moveTo(x, y);
-                else ctx.lineTo(x, y);
+                if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
             }
-            
-            // Linie zeichnen
             ctx.stroke();
-            document.getElementById('outputText').innerText = "Code generiert!";
-            document.getElementById('outputText').style.color = "#4CAF50";
+            document.getElementById('status').innerText = "Code generiert.";
         }
 
-        function decodeCode() {
-            if (encodedDataPoints.length === 0) {
-                document.getElementById('outputText').innerText = "Kein Code zum Auslesen gefunden!";
-                document.getElementById('outputText').style.color = "#ff5252";
+        function downloadImage() {
+            const link = document.createElement('a');
+            link.download = 'scribble-code.png';
+            link.href = canvas.toDataURL();
+            link.click();
+        }
+
+        function handleUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    scanImage();
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function scanImage() {
+            document.getElementById('status').innerText = "Scanne Pixel...";
+            const w = canvas.width;
+            const h = canvas.height;
+            const imgData = ctx.getImageData(0, 0, w, h).data;
+            
+            // 1. Finde alle blauen Pixel und ihre X/Y Koordinaten
+            let points = [];
+            for (let x = 0; x < w; x++) {
+                let columnBlueY = [];
+                for (let y = 0; y < h; y++) {
+                    const idx = (y * w + x) * 4;
+                    const r = imgData[idx], g = imgData[idx+1], b = imgData[idx+2];
+                    
+                    // Farberkennung mit Toleranz
+                    if (Math.abs(r-BLUE_COLOR.r) < 40 && Math.abs(g-BLUE_COLOR.r) < 40 && b > 100) {
+                        columnBlueY.push(y);
+                    }
+                }
+                if (columnBlueY.length > 0) {
+                    // Durchschnittliches Y in dieser Spalte (Mitte der Linie)
+                    const avgY = columnBlueY.reduce((a,b) => a+b) / columnBlueY.length;
+                    points.push({x, y: avgY});
+                }
+            }
+
+            if (points.length < 10) {
+                document.getElementById('outputText').innerText = "Fehler: Kein Scribble-Code erkannt.";
                 return;
             }
 
-            // Aus den Vektordaten die 4-Bit-Blöcke rekonstruieren
-            let bytes = [];
-            for (let i = 0; i < encodedDataPoints.length; i += 2) {
-                const upperNibble = encodedDataPoints[i].val;
-                // Falls es eine ungerade Anzahl gibt (sollte nicht passieren), fange Fehler ab
-                const lowerNibble = encodedDataPoints[i+1] ? encodedDataPoints[i+1].val : 0; 
+            // 2. Spitzen finden (Lokale Minima und Maxima)
+            let peaks = [];
+            for (let i = 1; i < points.length - 1; i++) {
+                const prev = points[i-1].y;
+                const curr = points[i].y;
+                const next = points[i+1].y;
                 
-                const byte = (upperNibble << 4) | lowerNibble;
-                bytes.push(byte);
+                // Wenn die Steigung die Richtung ändert, haben wir eine Spitze
+                if ((curr < prev && curr < next) || (curr > prev && curr > next)) {
+                    // Verhindere zu viele eng beieinander liegende Punkte
+                    if (peaks.length === 0 || Math.abs(points[i].x - peaks[peaks.length-1].x) > 5) {
+                        peaks.push(points[i]);
+                    }
+                }
+            }
+            // Ersten und letzten Punkt hinzufügen
+            peaks.unshift(points[0]);
+            peaks.push(points[points.length-1]);
+
+            // 3. Werte rekonstruieren
+            const pad = h * 0.15;
+            const maxRange = h * 0.3;
+            let nibbles = [];
+
+            peaks.forEach((p, index) => {
+                let val;
+                if (index % 2 === 0) { // Oben
+                    val = (p.y - pad) / maxRange * 15;
+                } else { // Unten
+                    val = (h - pad - p.y) / maxRange * 15;
+                }
+                nibbles.push(Math.max(0, Math.min(15, Math.round(val))));
+            });
+
+            // Nibbles zu Bytes
+            let bytes = [];
+            for (let i = 0; i < nibbles.length; i += 2) {
+                if (nibbles[i+1] !== undefined) {
+                    bytes.push((nibbles[i] << 4) | nibbles[i+1]);
+                }
             }
 
-            // Bytes zurück in Text übersetzen
-            const decoder = new TextDecoder();
-            const decodedText = decoder.decode(new Uint8Array(bytes));
-
-            document.getElementById('outputText').innerText = "Entschlüsselt: " + decodedText;
-            document.getElementById('outputText').style.color = "#ffffff";
+            try {
+                const decodedText = new TextDecoder().decode(new Uint8Array(bytes));
+                document.getElementById('outputText').innerText = "DECODER ERGEBNIS: " + decodedText;
+                document.getElementById('status').innerText = "Erfolgreich ausgelesen!";
+            } catch(e) {
+                document.getElementById('outputText').innerText = "Fehler beim Dekodieren der Daten.";
+            }
         }
-
-        // Beim Start einmal ausführen
+        
         window.onload = generateCode;
     </script>
 </body>
