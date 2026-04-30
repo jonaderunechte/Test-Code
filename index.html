@@ -2,181 +2,207 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <title>Elite-Check: Geschichte Kursstufe</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ScribbleCode Generator</title>
     <style>
-        body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #eceff1; padding: 20px; color: #263238; }
-        .container { max-width: 900px; margin: auto; background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        h1 { border-left: 8px solid #f1c40f; padding-left: 15px; color: #37474f; }
-        .question-box { margin-bottom: 30px; padding: 20px; border: 1px solid #cfd8dc; border-radius: 8px; }
-        .type-label { font-size: 0.8rem; text-transform: uppercase; color: #78909c; font-weight: bold; display: block; margin-bottom: 10px; }
-        .question-text { font-size: 1.25rem; font-weight: 600; margin-bottom: 20px; }
-        .options { display: flex; flex-direction: column; gap: 12px; }
-        label { padding: 12px; border: 1px solid #cfd8dc; border-radius: 6px; cursor: pointer; transition: 0.2s; }
-        label:hover { background: #f5f5f5; }
-        input[type="text"] { width: 100%; padding: 12px; font-size: 1rem; border: 2px solid #3498db; border-radius: 6px; }
-        .btn-next { background: #2c3e50; color: white; border: none; padding: 15px 30px; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 20px; float: right; }
-        .btn-next:hover { background: #1a252f; }
-        
-        /* Result Table */
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; border: 1px solid #cfd8dc; text-align: left; }
-        th { background: #f8f9fa; }
-        .wrong { color: #c0392b; font-weight: bold; }
-        .correct { color: #27ae60; font-weight: bold; }
-        .score-big { font-size: 4rem; color: #2c3e50; text-align: center; margin: 10px 0; }
-        .np-big { font-size: 2rem; text-align: center; color: #e67e22; margin-bottom: 30px; }
-        .hidden { display: none; }
-        .clearfix::after { content: ""; clear: both; display: table; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1e1e24;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px;
+        }
+        .container {
+            background: #2b2b36;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+            text-align: center;
+            max-width: 500px;
+        }
+        input {
+            width: 80%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+        }
+        button {
+            background-color: #3a7794;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            margin: 5px;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background-color: #2a5a72;
+        }
+        canvas {
+            margin-top: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.5);
+            background-color: #fdfaf0; /* Hintergrundfarbe aus deinem Bild */
+        }
+        .output {
+            margin-top: 20px;
+            padding: 15px;
+            background: #1e1e24;
+            border-radius: 6px;
+            min-height: 24px;
+            font-family: monospace;
+            color: #4CAF50;
+            word-wrap: break-word;
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div id="quiz-section">
-        <div id="progress">Frage 1 von 10</div>
-        <h1>Kursstufen-Prüfung</h1>
-        <div class="question-box">
-            <span id="type-indicator" class="type-label">Typ</span>
-            <div id="q-text" class="question-text">Frage wird geladen...</div>
-            <div id="input-area" class="options"></div>
-        </div>
-        <div class="clearfix">
-            <button class="btn-next" onclick="nextQuestion()">Nächste Frage →</button>
-        </div>
-    </div>
-
-    <div id="result-section" class="hidden">
-        <h1>Prüfungsbericht</h1>
-        <div class="score-big" id="final-raw">0/10</div>
-        <div class="np-big" id="final-np">0 Notenpunkte</div>
-        <div id="feedback-text" style="text-align: center; margin-bottom: 20px;"></div>
+    <div class="container">
+        <h2>ScribbleCode System</h2>
+        <p>Gib einen Text ein (ideal: 5-30 Zeichen), um ihn in eine Vektor-Linie zu übersetzen.</p>
         
-        <table>
-            <thead>
-                <tr>
-                    <th>Frage</th>
-                    <th>Deine Antwort</th>
-                    <th>Richtig wäre</th>
-                </tr>
-            </thead>
-            <tbody id="review-table"></tbody>
-        </table>
+        <input type="text" id="inputText" placeholder="Geheime Nachricht hier..." value="Hello World">
         <br>
-        <button class="btn-next" onclick="location.reload()" style="float: none; display: block; margin: auto;">Neustart</button>
+        <button onclick="generateCode()">Generieren</button>
+        <button onclick="decodeCode()">Auslesen</button>
+
+        <canvas id="codeCanvas" width="400" height="400"></canvas>
+
+        <div id="outputText" class="output">Ausgelesener Text erscheint hier...</div>
     </div>
-</div>
 
-<script>
-const pool = [
-    { t: "text", q: "Wie heißt der Fachbegriff für die Einteilung der NS-Gesellschaft in 'wertvolle' und 'minderwertige' Menschen?", a: "Volksgemeinschaft" },
-    { t: "text", q: "Welcher Artikel der Weimarer Verfassung regelte die Notverordnungen des Reichspräsidenten? (Nur Zahl)", a: "48" },
-    { t: "text", q: "Wie nennt man die gewaltsame Anpassung aller Organisationen an die NS-Ideologie 1933?", a: "Gleichschaltung" },
-    { t: "text", q: "Welcher Kanzler leitete 1930 das erste Präsidialkabinett?", a: "Brüning" },
-    { t: "multi", q: "Welche Merkmale kennzeichnen die liberale Demokratie?", o: ["Pluralismus", "Gewaltenteilung", "Einparteiensystem", "Menschenrechte"], c: [0,1,3] },
-    { t: "multi", q: "Was sind Merkmale des 'Gilded Age' in den USA?", o: ["Big Business", "Wirtschaftsboom", "Staatliche Planwirtschaft", "Korruption"], c: [0,1,3] },
-    { t: "multi", q: "Was waren Ursachen für das Scheitern von Weimar?", o: ["Weltwirtschaftskrise", "Stabilität der Mitte", "Antidemokratisches Denken", "Schwäche des Reichspräsidenten"], c: [0,2] },
-    { t: "multi", q: "Welche Aspekte gehören zur NS-Ideologie?", o: ["Antisemitismus", "Pazifismus", "Lebensraum im Osten", "Sozialdarwinismus"], c: [0,2,3] },
-    { t: "single", q: "Was bedeutet 'Modernisierung von oben' im Kaiserreich?", o: ["Einigung durch Bismarck und Militär", "Revolution der Arbeiter", "Wahl durch das Volk"], c: 0 },
-    { t: "single", q: "Welche Funktion hatte die 'Kaderpartei' im Sowjetkommunismus?", o: ["Elite als Vorhut der Revolution", "Zusammentreffen aller Meinungen", "Reine Sportorganisation"], c: 0 },
-    { t: "text", q: "Wie heißt die Ideologie, die das 'Recht des Stärkeren' auf Menschenrassen überträgt?", a: "Sozialdarwinismus" },
-    { t: "text", q: "In welchem Jahr begann die Weltwirtschaftskrise?", a: "1929" },
-    { t: "single", q: "Wer ernannte Hitler zum Reichskanzler?", o: ["Hindenburg", "Ludendorff", "Ebert", "Das Volk"], c: 0 },
-    { t: "multi", q: "Was sind Begleiterscheinungen der Hochmoderne um 1900?", o: ["Urbanisierung", "Beschleunigung", "Entstehung von Massenmedien", "Agrarisierung"], c: [0,1,2] },
-    { t: "text", q: "Was war der zentrale Kampfbegriff der NS-Außenpolitik bezüglich Territorien?", a: "Lebensraum" }
-];
+    <script>
+        let encodedDataPoints = []; // Speichert die Vektoren fürs Auslesen
 
-let questions = [];
-let currentIdx = 0;
-let userAnswers = [];
-let score = 0;
+        function drawBackgroundAndMarkers(ctx, w, h) {
+            // Hintergrund
+            ctx.fillStyle = "#fdfaf0";
+            ctx.fillRect(0, 0, w, h);
 
-function init() {
-    questions = pool.sort(() => 0.5 - Math.random()).slice(0, 10);
-    renderQuestion();
-}
+            // Rasterlinien (Gitter)
+            ctx.strokeStyle = "#d6d8dd";
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(w * 0.2, 0); ctx.lineTo(w * 0.2, h);
+            ctx.moveTo(w * 0.8, 0); ctx.lineTo(w * 0.8, h);
+            ctx.moveTo(0, h * 0.2); ctx.lineTo(w, h * 0.2);
+            ctx.moveTo(0, h * 0.8); ctx.lineTo(w, h * 0.8);
+            ctx.stroke();
 
-function renderQuestion() {
-    const q = questions[currentIdx];
-    document.getElementById('progress').innerText = `Frage ${currentIdx + 1} von 10`;
-    document.getElementById('q-text').innerText = q.q;
-    const area = document.getElementById('input-area');
-    area.innerHTML = "";
+            // Eck-Markierungen (Wie im Bild)
+            ctx.strokeStyle = "#3a7794";
+            ctx.lineWidth = 8;
+            ctx.lineCap = "round";
+            ctx.lineJoin = "round";
+            
+            // Oben Rechts
+            ctx.beginPath(); ctx.moveTo(w * 0.9, h * 0.2); ctx.lineTo(w * 0.9, h * 0.1); ctx.lineTo(w * 0.8, h * 0.1); ctx.stroke();
+            // Unten Links
+            ctx.beginPath(); ctx.moveTo(w * 0.2, h * 0.9); ctx.lineTo(w * 0.1, h * 0.9); ctx.lineTo(w * 0.1, h * 0.8); ctx.stroke();
+            // Unten Rechts
+            ctx.beginPath(); ctx.moveTo(w * 0.8, h * 0.9); ctx.lineTo(w * 0.9, h * 0.9); ctx.lineTo(w * 0.9, h * 0.8); ctx.stroke();
+        }
 
-    if(q.t === "text") {
-        document.getElementById('type-indicator').innerText = "Transfer: Fachbegriff eingeben";
-        area.innerHTML = `<input type="text" id="text-ans" placeholder="Antwort hier tippen..." autocomplete="off">`;
-    } else if(q.t === "single") {
-        document.getElementById('type-indicator').innerText = "Wahl: Nur eine Antwort richtig";
-        q.o.forEach((opt, i) => {
-            area.innerHTML += `<label><input type="radio" name="ans" value="${i}"> ${opt}</label>`;
-        });
-    } else {
-        document.getElementById('type-indicator').innerText = "Analyse: Mehrere Antworten können richtig sein";
-        q.o.forEach((opt, i) => {
-            area.innerHTML += `<label><input type="checkbox" name="ans" value="${i}"> ${opt}</label>`;
-        });
-    }
-}
+        function generateCode() {
+            const text = document.getElementById('inputText').value;
+            if (!text) return;
 
-function nextQuestion() {
-    const q = questions[currentIdx];
-    let userVal;
+            const canvas = document.getElementById('codeCanvas');
+            const ctx = canvas.getContext('2d');
+            const w = canvas.width;
+            const h = canvas.height;
 
-    if(q.t === "text") {
-        userVal = document.getElementById('text-ans').value.trim();
-    } else if(q.t === "single") {
-        const selected = document.querySelector('input[name="ans"]:checked');
-        userVal = selected ? parseInt(selected.value) : null;
-    } else {
-        const selected = Array.from(document.querySelectorAll('input[name="ans"]:checked')).map(el => parseInt(el.value));
-        userVal = selected;
-    }
+            drawBackgroundAndMarkers(ctx, w, h);
 
-    userAnswers.push(userVal);
-    checkScore(q, userVal);
+            // Text in Bytes umwandeln
+            const encoder = new TextEncoder();
+            const bytes = encoder.encode(text);
+            
+            // Wir zerlegen jedes Byte (8 Bit) in zwei 4-Bit Blöcke (0-15)
+            // Das gibt uns die Variablen für Winkel und Länge!
+            let nibbles = [];
+            for (let byte of bytes) {
+                nibbles.push(byte >> 4);     // Obere 4 Bits
+                nibbles.push(byte & 0x0F);   // Untere 4 Bits
+            }
 
-    currentIdx++;
-    if(currentIdx < 10) renderQuestion(); else showResults();
-}
+            const paddingX = w * 0.15;
+            const paddingY = h * 0.15;
+            const drawW = w - (paddingX * 2);
+            const drawH = h - (paddingY * 2);
 
-function checkScore(q, val) {
-    if(q.t === "text") {
-        if(val.toLowerCase() === q.a.toLowerCase()) score++;
-    } else if(q.t === "single") {
-        if(val === q.c) score++;
-    } else {
-        if(JSON.stringify(val.sort()) === JSON.stringify(q.c.sort())) score++;
-    }
-}
+            // X-Schritte berechnen
+            const stepX = drawW / (nibbles.length > 1 ? nibbles.length - 1 : 1);
 
-function showResults() {
-    document.getElementById('quiz-section').classList.add('hidden');
-    document.getElementById('result-section').classList.remove('hidden');
-    
-    const np = [0,0,0,1,3,5,7,9,11,13,15][score];
-    document.getElementById('final-raw').innerText = score + "/10";
-    document.getElementById('final-np').innerText = np + " Notenpunkte";
-    
-    const table = document.getElementById('review-table');
-    questions.forEach((q, i) => {
-        let u = userAnswers[i];
-        let correctStr = q.t === "text" ? q.a : (q.t === "single" ? q.o[q.c] : q.c.map(idx => q.o[idx]).join(", "));
-        let userStr = q.t === "text" ? (u || "Keine") : (q.t === "single" ? (u !== null ? q.o[u] : "Keine") : u.map(idx => q.o[idx]).join(", "));
-        
-        let isCorrect = false;
-        if(q.t === "text") isCorrect = u.toLowerCase() === q.a.toLowerCase();
-        else if(q.t === "single") isCorrect = u === q.c;
-        else isCorrect = JSON.stringify(u.sort()) === JSON.stringify(q.c.sort());
+            ctx.beginPath();
+            ctx.strokeStyle = "#3a7794";
+            ctx.lineWidth = 6;
 
-        table.innerHTML += `<tr>
-            <td>${q.q}</td>
-            <td class="${isCorrect ? 'correct' : 'wrong'}">${userStr}</td>
-            <td>${correctStr}</td>
-        </tr>`;
-    });
-}
+            encodedDataPoints = []; // Zurücksetzen für den Decoder
 
-init();
-</script>
+            for (let i = 0; i < nibbles.length; i++) {
+                const val = nibbles[i]; // Wert zwischen 0 und 15
+                
+                const x = paddingX + (i * stepX);
+                let y;
+
+                // Damit es "zickzack" aussieht, zwingen wir jeden geraden Punkt
+                // in die obere Hälfte und jeden ungeraden in die untere Hälfte.
+                // Der genaue Y-Wert innerhalb der Hälfte bestimmt den WINKEL und die LÄNGE.
+                if (i % 2 === 0) {
+                    y = paddingY + (val / 15) * (drawH * 0.4); 
+                } else {
+                    y = paddingY + drawH - (val / 15) * (drawH * 0.4);
+                }
+
+                // Speichere die mathematischen Daten für den Ausleser
+                encodedDataPoints.push({ x, y, val });
+
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            
+            // Linie zeichnen
+            ctx.stroke();
+            document.getElementById('outputText').innerText = "Code generiert!";
+            document.getElementById('outputText').style.color = "#4CAF50";
+        }
+
+        function decodeCode() {
+            if (encodedDataPoints.length === 0) {
+                document.getElementById('outputText').innerText = "Kein Code zum Auslesen gefunden!";
+                document.getElementById('outputText').style.color = "#ff5252";
+                return;
+            }
+
+            // Aus den Vektordaten die 4-Bit-Blöcke rekonstruieren
+            let bytes = [];
+            for (let i = 0; i < encodedDataPoints.length; i += 2) {
+                const upperNibble = encodedDataPoints[i].val;
+                // Falls es eine ungerade Anzahl gibt (sollte nicht passieren), fange Fehler ab
+                const lowerNibble = encodedDataPoints[i+1] ? encodedDataPoints[i+1].val : 0; 
+                
+                const byte = (upperNibble << 4) | lowerNibble;
+                bytes.push(byte);
+            }
+
+            // Bytes zurück in Text übersetzen
+            const decoder = new TextDecoder();
+            const decodedText = decoder.decode(new Uint8Array(bytes));
+
+            document.getElementById('outputText').innerText = "Entschlüsselt: " + decodedText;
+            document.getElementById('outputText').style.color = "#ffffff";
+        }
+
+        // Beim Start einmal ausführen
+        window.onload = generateCode;
+    </script>
 </body>
 </html>
