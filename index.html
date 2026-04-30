@@ -1,160 +1,182 @@
+```html
 <!DOCTYPE html>
 <html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ScribbleCode V3 - High Precision</title>
+    <title>ScribbleCode V5 - Smart Scan</title>
     <style>
-        body { font-family: sans-serif; background: #1a1a1d; color: white; display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .container { background: #25252b; padding: 20px; border-radius: 15px; text-align: center; max-width: 90vw; }
-        input { width: 80%; padding: 10px; margin-bottom: 10px; border-radius: 5px; border: none; }
-        button, label { background: #3a7794; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; margin: 5px; display: inline-block; }
-        canvas { margin-top: 15px; background: #fdfaf0; border-radius: 10px; max-width: 100%; height: auto; cursor: crosshair; }
-        .output { margin-top: 15px; padding: 10px; background: #000; color: #0f0; font-family: monospace; border-radius: 5px; min-height: 40px; text-align: left; }
+        :root { --primary: #3a7794; --bg: #1a1a1d; --card: #25252b; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; display: flex; flex-direction: column; align-items: center; padding: 20px; margin: 0; }
+        .container { background: var(--card); padding: 20px; border-radius: 20px; text-align: center; max-width: 500px; width: 95%; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        input { width: calc(100% - 24px); padding: 12px; margin-bottom: 15px; border-radius: 8px; border: none; background: #111; color: white; font-size: 16px; }
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 15px; }
+        button, .file-label { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; text-decoration: none; }
+        .btn-download { background: #2e7d32; }
+        canvas { background: #fdfaf0; border-radius: 10px; width: 100%; height: auto; image-rendering: pixelated; }
+        .output-box { margin-top: 15px; padding: 15px; background: #000; color: #40ff40; font-family: monospace; border-radius: 8px; text-align: left; min-height: 20px; border-left: 4px solid var(--primary); }
         #fileInput { display: none; }
+        .info { font-size: 11px; color: #888; margin-top: 5px; }
     </style>
 </head>
 <body>
 
     <div class="container">
-        <h2>ScribbleCode V3</h2>
-        <input type="text" id="inputText" value="GEHEIM123">
-        <div class="btn-group">
-            <button onclick="generateCode()">Generieren</button>
-            <button style="background:#2e7d32" onclick="downloadImage()">Speichern</button>
-            <label for="fileInput">Hochladen</label>
-            <input type="file" id="fileInput" accept="image/*" onchange="handleUpload(event)">
+        <h2>ScribbleCode V5</h2>
+        <input type="text" id="inputText" value="Jona" placeholder="Text...">
+        
+        <div class="btn-grid">
+            <button onclick="generate()">Generieren</button>
+            <button class="btn-download" onclick="download()">Speichern</button>
+            <label class="file-label" for="fileInput">Hochladen</label>
+            <button onclick="scan()">Scan starten</button>
         </div>
+        <input type="file" id="fileInput" accept="image/*" onchange="handleUpload(event)">
 
-        <canvas id="codeCanvas" width="600" height="600"></canvas>
-        <div id="status">Bereit.</div>
-        <div id="outputText" class="output">Ergebnis...</div>
+        <canvas id="mainCanvas" width="600" height="600"></canvas>
+        <div id="status" class="info">Bereit.</div>
+        <div id="result" class="output-box">Ergebnis erscheint hier...</div>
     </div>
 
     <script>
-        const canvas = document.getElementById('codeCanvas');
+        const canvas = document.getElementById('mainCanvas');
         const ctx = canvas.getContext('2d', { willReadFrequently: true });
-        
-        // Die Ziel-Farbe aus deinem Bild
-        const TARGET_COLOR = { r: 58, g: 119, b: 148 }; 
+        const BLUE = [58, 119, 148];
 
-        function generateCode() {
+        function generate() {
             const text = document.getElementById('inputText').value;
             const w = canvas.width, h = canvas.height;
             
-            // Hintergrund & Gitter
+            // Background
             ctx.fillStyle = "#fdfaf0";
             ctx.fillRect(0, 0, w, h);
-            ctx.strokeStyle = "#e0e2e5";
+            
+            // Grid
+            ctx.strokeStyle = "#e8eae0";
             ctx.lineWidth = 2;
             for(let i=1; i<6; i++) {
                 ctx.beginPath(); ctx.moveTo(w*i/6, 0); ctx.lineTo(w*i/6, h); ctx.stroke();
                 ctx.beginPath(); ctx.moveTo(0, h*i/6); ctx.lineTo(w, h*i/6); ctx.stroke();
             }
 
-            const bytes = new TextEncoder().encode(text);
-            let nibbles = [];
-            for (let b of bytes) { nibbles.push(b >> 4); nibbles.push(b & 0x0F); }
+            // Data Assembly: Sync-Header (0, 15) + Data + Sync-Footer (15, 0)
+            const encoder = new TextEncoder();
+            const bytes = encoder.encode(text);
+            let nibbles = [0, 15]; // Start Marker
+            bytes.forEach(b => { nibbles.push(b >> 4); nibbles.push(b & 0x0F); });
+            nibbles.push(15, 0); // End Marker
 
-            const pad = w * 0.15;
-            const stepX = (w - 2 * pad) / (nibbles.length - 1);
+            const px = w * 0.15, py = h * 0.2, ry = h * 0.3;
+            const sx = (w - 2 * px) / (nibbles.length - 1);
 
             ctx.beginPath();
-            ctx.strokeStyle = `rgb(${TARGET_COLOR.r},${TARGET_COLOR.g},${TARGET_COLOR.b})`;
-            ctx.lineWidth = 10;
+            ctx.strokeStyle = `rgb(${BLUE[0]},${BLUE[1]},${BLUE[2]})`;
+            ctx.lineWidth = 14;
             ctx.lineJoin = "round";
             ctx.lineCap = "round";
 
             for (let i = 0; i < nibbles.length; i++) {
-                const x = pad + i * stepX;
-                const valNorm = nibbles[i] / 15;
-                const y = (i % 2 === 0) ? pad + valNorm * (h * 0.35) : h - pad - valNorm * (h * 0.35);
+                const x = px + i * sx;
+                const v = nibbles[i] / 15;
+                const y = (i % 2 === 0) ? py + v * ry : h - py - v * ry;
                 if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
             }
             ctx.stroke();
-            document.getElementById('status').innerText = "Code generiert.";
+            document.getElementById('status').innerText = `Code mit ${nibbles.length} Ankerpunkten erstellt.`;
         }
 
-        function handleUpload(event) {
-            const file = event.target.files[0];
+        function handleUpload(e) {
+            const file = e.target.files[0];
             const reader = new FileReader();
-            reader.onload = (e) => {
+            reader.onload = (event) => {
                 const img = new Image();
                 img.onload = () => {
                     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                    scanImage();
+                    scan();
                 };
-                img.src = e.target.result;
+                img.src = event.target.result;
             };
             reader.readAsDataURL(file);
         }
 
-        function scanImage() {
+        function scan() {
             const w = canvas.width, h = canvas.height;
-            const imgData = ctx.getImageData(0, 0, w, h).data;
+            const data = ctx.getImageData(0, 0, w, h).data;
             let points = [];
 
-            // Pixel-Analyse
+            // 1. Color extraction
             for (let x = 0; x < w; x++) {
-                let foundY = [];
+                let sy = 0, c = 0;
                 for (let y = 0; y < h; y++) {
                     const i = (y * w + x) * 4;
-                    // Großzügigere Farberkennung (Toleranz 60 statt 40)
-                    const dr = Math.abs(imgData[i] - TARGET_COLOR.r);
-                    const dg = Math.abs(imgData[i+1] - TARGET_COLOR.g);
-                    const db = Math.abs(imgData[i+2] - TARGET_COLOR.b);
-                    
-                    if (dr < 60 && dg < 60 && db < 60) {
-                        foundY.push(y);
+                    if (data[i+2] > data[i] + 30 && data[i+2] > data[i+1] + 30) { // Blue dominant
+                        sy += y; c++;
                     }
                 }
-                if (foundY.length > 0) {
-                    points.push({x, y: foundY.reduce((a,b)=>a+b)/foundY.length});
-                }
+                if (c > 3) points.push({x, y: sy / c});
             }
 
-            // Spitzen finden
+            if (points.length < 10) return;
+
+            // 2. Peak Detection with plateau prevention
             let peaks = [];
-            for (let i = 2; i < points.length - 2; i++) {
-                const curr = points[i].y;
-                const isMin = curr < points[i-1].y && curr < points[i-2].y && curr < points[i+1].y && curr < points[i+2].y;
-                const isMax = curr > points[i-1].y && curr > points[i-2].y && curr > points[i+1].y && curr > points[i+2].y;
-                
-                if (isMin || isMax) {
-                    if (peaks.length === 0 || Math.abs(points[i].x - peaks[peaks.length-1].x) > 10) {
+            const lookaround = 10;
+            for (let i = lookaround; i < points.length - lookaround; i++) {
+                let isMax = true, isMin = true;
+                for (let j = -lookaround; j <= lookaround; j++) {
+                    if (points[i+j].y < points[i].y) isMax = false;
+                    if (points[i+j].y > points[i].y) isMin = false;
+                }
+                if (isMax || isMin) {
+                    // Plateau check: only add if far enough from last peak
+                    if (peaks.length === 0 || points[i].x - peaks[peaks.length-1].x > 15) {
                         peaks.push(points[i]);
-                        // Zeichne Scan-Punkt zur Kontrolle
                         ctx.fillStyle = "red";
-                        ctx.fillRect(points[i].x-2, points[i].y-2, 4, 4);
+                        ctx.beginPath(); ctx.arc(points[i].x, points[i].y, 5, 0, 7); ctx.fill();
                     }
                 }
             }
 
-            // Dekodieren
-            const pad = h * 0.15;
-            const range = h * 0.35;
+            // 3. Decoding
+            const py = h * 0.2, ry = h * 0.3;
+            // Filter start/stop marker: we ignore the first 2 and last 2 peaks
+            let dataPeaks = peaks.slice(2, -2);
             let nibbles = [];
-            peaks.forEach((p, i) => {
-                let v = (i % 2 === 0) ? (p.y - pad) / range : (h - pad - p.y) / range;
-                nibbles.push(Math.max(0, Math.min(15, Math.round(v * 15))));
+
+            dataPeaks.forEach((p, i) => {
+                // i+2 because we sliced the first 2
+                let val;
+                if ((i+2) % 2 === 0) val = (p.y - py) / ry;
+                else val = (h - py - p.y) / ry;
+                nibbles.push(Math.max(0, Math.min(15, Math.round(val * 15))));
             });
 
-            let bytes = [];
-            for(let i=0; i<nibbles.length; i+=2) if(nibbles[i+1]!==undefined) bytes.push((nibbles[i]<<4)|nibbles[i+1]);
+            let finalBytes = [];
+            for(let i=0; i < nibbles.length; i+=2) {
+                if(nibbles[i+1] !== undefined) {
+                    finalBytes.push((nibbles[i] << 4) | nibbles[i+1]);
+                }
+            }
 
-            const result = new TextDecoder().decode(new Uint8Array(bytes));
-            document.getElementById('outputText').innerText = result || "Fehler beim Lesen";
-            document.getElementById('status').innerText = "Scan abgeschlossen.";
+            try {
+                const text = new TextDecoder().decode(new Uint8Array(finalBytes));
+                document.getElementById('result').innerText = text || "Kein Text erkannt";
+                document.getElementById('status').innerText = `Erfolg! ${peaks.length} Spitzen analysiert.`;
+            } catch(e) {
+                document.getElementById('result').innerText = "Dekodierungsfehler.";
+            }
         }
 
-        function downloadImage() {
-            const link = document.createElement('a');
-            link.download = 'scribble.png';
-            link.href = canvas.toDataURL();
-            link.click();
+        function download() {
+            const a = document.createElement('a');
+            a.download = 'scribble.png';
+            a.href = canvas.toDataURL();
+            a.click();
         }
 
-        window.onload = generateCode;
+        window.onload = generate;
     </script>
 </body>
 </html>
+
+```
