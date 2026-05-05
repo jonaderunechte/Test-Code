@@ -28,7 +28,6 @@
 
         .dirt-field {
             background-color: #6d4c41;
-            /* Cartoon Ploughed Field Texture */
             background-image: repeating-linear-gradient( 0deg, #6d4c41, #6d4c41 15px, #5d4037 15px, #5d4037 30px );
             border: 6px solid #4e342e;
             border-radius: 12px;
@@ -45,7 +44,6 @@
             filter: drop-shadow(2px 4px 4px rgba(0,0,0,0.3));
         }
 
-        /* Hover Tooltip */
         .animal-tooltip {
             visibility: hidden;
             opacity: 0;
@@ -60,7 +58,6 @@
             opacity: 1;
         }
 
-        /* Scrollbar */
         ::-webkit-scrollbar { width: 10px; }
         ::-webkit-scrollbar-track { background: #e0e0e0; border-radius: 8px; }
         ::-webkit-scrollbar-thumb { background: #8B5A2B; border-radius: 8px; }
@@ -88,7 +85,6 @@
         <div class="flex space-x-4 items-center flex-wrap">
             <div class="flex items-center gap-2 bg-white px-3 py-1 rounded-lg border-2 border-gray-300 shadow-sm cursor-pointer hover:bg-gray-50" onclick="renameFarm()">
                 <h1 id="ui-farmname" class="text-2xl font-black text-[#557A46]">JT Farm</h1>
-                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
             </div>
             
             <div class="text-xl font-bold bg-yellow-100 text-yellow-800 px-4 py-2 rounded-xl border-4 border-yellow-400 shadow-sm flex items-center gap-2">
@@ -100,6 +96,9 @@
             <div class="text-lg font-bold bg-orange-100 text-orange-800 px-4 py-2 rounded-xl border-4 border-orange-400 shadow-sm" title="Freie Arbeiter / Gesamte Arbeiter">
                 Arbeiter: <span id="ui-workers">0/0</span>
             </div>
+            <div id="ui-power-warning" class="hidden text-lg font-bold bg-red-100 text-red-800 px-4 py-2 rounded-xl border-4 border-red-500 shadow-sm animate-pulse">
+                ⚡ STROMAUSFALL
+            </div>
         </div>
         <div class="flex items-center gap-2">
             <button id="btn-speed" class="hidden bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-xl border-b-4 border-red-700 shadow font-black transition active:translate-y-1 active:border-b-0">Admin Zeitraffer</button>
@@ -110,7 +109,7 @@
     <div class="pt-24 pb-6 px-4 max-w-7xl mx-auto flex gap-6 h-screen">
         
         <!-- Sidebar Navigation -->
-        <div class="w-64 wood-panel flex flex-col overflow-hidden h-[calc(100vh-7rem)] bg-[#FAEDCD]">
+        <div class="w-64 wood-panel flex flex-col overflow-hidden h-[calc(100vh-7rem)] bg-[#FAEDCD] flex-shrink-0">
             <div class="bg-[#8B5A2B] text-white text-center py-4 font-black text-2xl uppercase tracking-widest border-b-4 border-[#5d4037]">Menü</div>
             <button class="nav-btn tab-active p-4 text-left font-bold text-lg border-b-2 border-[#D4A373] transition flex items-center" data-tab="farm">
                 <svg class="w-6 h-6 mr-3 text-gray-700" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3L4 9v12h16V9l-8-6zm6 16h-3v-6H9v6H6v-9l6-4.5 6 4.5v9z"/></svg> Meine Farm
@@ -126,27 +125,24 @@
             </button>
             
             <div class="mt-auto p-4 bg-[#e9edc9] border-t-4 border-[#D4A373] text-sm text-[#4b5563] font-bold">
-                <p>Info: 1 Tag = 10 Min. Spielzeit.</p>
-                <p>Speichert automatisch.</p>
-                <p class="mt-2 text-red-600 font-black animate-pulse" id="worker-warning" style="display:none;">Achtung! Arbeiter streiken! Kein Geld!</p>
+                <p id="passive-income-display" class="text-green-700 font-black mb-1 hidden"></p>
+                <p>Info: 1 Tag = 10 Min.</p>
+                <p class="mt-2 text-red-600 font-black animate-pulse" id="worker-warning" style="display:none;">Streik! Kein Geld!</p>
             </div>
         </div>
 
         <!-- Content Area -->
-        <div class="flex-1 wood-panel bg-[#fefae0] p-6 overflow-y-auto h-[calc(100vh-7rem)] relative" id="content-area">
-            <!-- Dynamic Content -->
-        </div>
-
+        <div class="flex-1 wood-panel bg-[#fefae0] p-6 overflow-y-auto h-[calc(100vh-7rem)] relative" id="content-area"></div>
     </div>
 
     <!-- Modal Overlay -->
-    <div id="modal" class="fixed inset-0 bg-black bg-opacity-60 z-[100] hidden flex justify-center items-center backdrop-blur-sm">
-        <div class="bg-[#fefae0] border-4 border-[#8B5A2B] p-6 rounded-3xl shadow-2xl max-w-lg w-full transform transition-all">
-            <div class="flex justify-between items-center mb-4 border-b-2 border-[#D4A373] pb-2">
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-60 z-[100] hidden flex justify-center items-center backdrop-blur-sm p-4">
+        <div class="bg-[#fefae0] border-4 border-[#8B5A2B] p-6 rounded-3xl shadow-2xl max-w-2xl w-full transform transition-all flex flex-col max-h-[90vh]">
+            <div class="flex justify-between items-center mb-4 border-b-2 border-[#D4A373] pb-2 shrink-0">
                 <h2 id="modal-title" class="text-2xl font-black text-[#5d4037]">Titel</h2>
                 <button id="modal-close" class="text-gray-500 hover:text-red-500 text-3xl font-black">&times;</button>
             </div>
-            <div id="modal-content" class="max-h-[60vh] overflow-y-auto pr-2"></div>
+            <div id="modal-content" class="overflow-y-auto pr-2 flex-1"></div>
         </div>
     </div>
 
@@ -155,136 +151,195 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebas
 import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-/** --- CARTOON SVG ASSETS --- */
+/** --- NATIVE SVG ASSETS (Cartoon Design) --- */
 const SVG = {
-    weizen: `<svg viewBox="0 0 100 100"><rect x="45" y="20" width="10" height="70" fill="#d4af37" rx="5"/><ellipse cx="35" cy="40" rx="8" ry="15" fill="#f3e5ab" transform="rotate(-30 35 40)"/><ellipse cx="65" cy="40" rx="8" ry="15" fill="#f3e5ab" transform="rotate(30 65 40)"/><ellipse cx="35" cy="60" rx="8" ry="15" fill="#f3e5ab" transform="rotate(-30 35 60)"/><ellipse cx="65" cy="60" rx="8" ry="15" fill="#f3e5ab" transform="rotate(30 65 60)"/><ellipse cx="50" cy="20" rx="8" ry="20" fill="#f3e5ab"/></svg>`,
-    mais: `<svg viewBox="0 0 100 100"><rect x="40" y="20" width="20" height="70" fill="#4CAF50" rx="10"/><ellipse cx="50" cy="40" rx="15" ry="30" fill="#FFC107"/><path d="M 35 40 Q 50 20 65 40" fill="none" stroke="#FF9800" stroke-width="4"/><path d="M 35 50 Q 50 30 65 50" fill="none" stroke="#FF9800" stroke-width="4"/><path d="M 35 60 Q 50 40 65 60" fill="none" stroke="#FF9800" stroke-width="4"/></svg>`,
-    tomaten: `<svg viewBox="0 0 100 100"><rect x="47" y="10" width="6" height="80" fill="#388E3C"/><circle cx="30" cy="40" r="18" fill="#F44336"/><circle cx="70" cy="50" r="20" fill="#F44336"/><circle cx="50" cy="70" r="16" fill="#F44336"/><path d="M 30 22 Q 35 15 47 25 M 70 30 Q 60 20 50 30" stroke="#4CAF50" stroke-width="4" fill="none"/></svg>`,
-    sonnenblumen: `<svg viewBox="0 0 100 100"><rect x="46" y="40" width="8" height="60" fill="#4CAF50"/><circle cx="50" cy="30" r="25" fill="#FFEB3B"/><circle cx="50" cy="30" r="15" fill="#5D4037"/><path d="M 50 5 L 55 15 L 45 15 Z M 75 30 L 65 25 L 65 35 Z M 25 30 L 35 25 L 35 35 Z M 50 55 L 55 45 L 45 45 Z" fill="#FFC107"/></svg>`,
-    erdbeeren: `<svg viewBox="0 0 100 100"><path d="M 20 40 Q 50 100 80 40 Q 80 10 50 10 Q 20 10 20 40 Z" fill="#E53935"/><path d="M 30 15 Q 50 5 70 15 L 50 25 Z" fill="#4CAF50"/><circle cx="40" cy="40" r="2" fill="#FFCDD2"/><circle cx="60" cy="50" r="2" fill="#FFCDD2"/><circle cx="50" cy="65" r="2" fill="#FFCDD2"/></svg>`,
+    weizen: `<svg viewBox="0 0 100 100"><rect x="45" y="20" width="10" height="70" fill="#d4af37" rx="5"/><ellipse cx="35" cy="40" rx="8" ry="15" fill="#f3e5ab" transform="rotate(-30 35 40)"/><ellipse cx="65" cy="40" rx="8" ry="15" fill="#f3e5ab" transform="rotate(30 65 40)"/></svg>`,
+    mais: `<svg viewBox="0 0 100 100"><rect x="40" y="20" width="20" height="70" fill="#4CAF50" rx="10"/><ellipse cx="50" cy="40" rx="15" ry="30" fill="#FFC107"/><path d="M 35 40 Q 50 20 65 40" fill="none" stroke="#FF9800" stroke-width="4"/></svg>`,
+    tomaten: `<svg viewBox="0 0 100 100"><rect x="47" y="10" width="6" height="80" fill="#388E3C"/><circle cx="30" cy="40" r="18" fill="#F44336"/><circle cx="70" cy="50" r="20" fill="#F44336"/></svg>`,
+    sonnenblumen: `<svg viewBox="0 0 100 100"><rect x="46" y="40" width="8" height="60" fill="#4CAF50"/><circle cx="50" cy="30" r="25" fill="#FFEB3B"/><circle cx="50" cy="30" r="15" fill="#5D4037"/></svg>`,
+    erdbeeren: `<svg viewBox="0 0 100 100"><path d="M 20 40 Q 50 100 80 40 Q 80 10 50 10 Q 20 10 20 40 Z" fill="#E53935"/><path d="M 30 15 Q 50 5 70 15 L 50 25 Z" fill="#4CAF50"/></svg>`,
     apfel: `<svg viewBox="0 0 100 100"><circle cx="50" cy="55" r="35" fill="#D32F2F"/><path d="M 50 20 Q 60 0 70 10" stroke="#795548" stroke-width="4" fill="none"/><path d="M 50 20 Q 70 10 80 30 Q 60 40 50 20" fill="#4CAF50"/></svg>`,
-    zuckerrohr: `<svg viewBox="0 0 100 100"><rect x="30" y="10" width="12" height="80" fill="#8BC34A" rx="4"/><line x1="30" y1="30" x2="42" y2="30" stroke="#33691E" stroke-width="3"/><line x1="30" y1="50" x2="42" y2="50" stroke="#33691E" stroke-width="3"/><rect x="60" y="20" width="12" height="70" fill="#8BC34A" rx="4"/><line x1="60" y1="40" x2="72" y2="40" stroke="#33691E" stroke-width="3"/><line x1="60" y1="60" x2="72" y2="60" stroke="#33691E" stroke-width="3"/></svg>`,
-    karotten: `<svg viewBox="0 0 100 100"><path d="M 20 30 Q 50 100 80 30 Z" fill="#FF9800"/><path d="M 20 30 Q 50 10 80 30 Z" fill="#F57C00"/><path d="M 35 15 Q 40 0 50 5 Q 60 0 65 15 Z" fill="#4CAF50"/></svg>`,
-    kartoffeln: `<svg viewBox="0 0 100 100"><ellipse cx="50" cy="50" rx="35" ry="25" fill="#A1887F"/><circle cx="35" cy="45" r="3" fill="#5D4037"/><circle cx="60" cy="55" r="4" fill="#5D4037"/><circle cx="50" cy="35" r="2" fill="#5D4037"/></svg>`,
-    kuerbis: `<svg viewBox="0 0 100 100"><ellipse cx="50" cy="60" rx="40" ry="30" fill="#FF9800"/><ellipse cx="35" cy="60" rx="20" ry="28" fill="#F57C00"/><ellipse cx="65" cy="60" rx="20" ry="28" fill="#F57C00"/><ellipse cx="50" cy="60" rx="15" ry="30" fill="#FFB74D"/><path d="M 45 30 Q 50 10 65 20" stroke="#4CAF50" stroke-width="6" fill="none"/></svg>`,
-    saatgut: `<svg viewBox="0 0 100 100"><path d="M 20 80 L 80 80 L 70 30 L 30 30 Z" fill="#8D6E63"/><path d="M 30 30 Q 50 10 70 30 Z" fill="#A1887F"/><circle cx="40" cy="50" r="3" fill="#3E2723"/><circle cx="60" cy="60" r="3" fill="#3E2723"/><circle cx="50" cy="70" r="3" fill="#3E2723"/></svg>`,
-    
-    huhn: `<svg viewBox="0 0 100 100"><ellipse cx="50" cy="60" rx="30" ry="25" fill="#FFFFFF"/><circle cx="70" cy="40" r="15" fill="#FFFFFF"/><path d="M 80 35 L 95 40 L 80 45 Z" fill="#FFC107"/><path d="M 60 25 Q 70 10 80 25 Z" fill="#F44336"/><path d="M 70 50 Q 75 60 70 65 Z" fill="#F44336"/><circle cx="75" cy="38" r="2" fill="#000"/><path d="M 20 60 Q 10 40 30 50 Z" fill="#EEEEEE"/><line x1="40" y1="85" x2="40" y2="95" stroke="#FF9800" stroke-width="4"/><line x1="60" y1="85" x2="60" y2="95" stroke="#FF9800" stroke-width="4"/></svg>`,
-    schaf: `<svg viewBox="0 0 100 100"><rect x="25" y="60" width="8" height="30" fill="#212121" rx="4"/><rect x="65" y="60" width="8" height="30" fill="#212121" rx="4"/><circle cx="50" cy="50" r="35" fill="#F5F5F5"/><circle cx="30" cy="40" r="20" fill="#F5F5F5"/><circle cx="70" cy="40" r="20" fill="#F5F5F5"/><circle cx="50" cy="70" r="15" fill="#F5F5F5"/><ellipse cx="80" cy="45" rx="15" ry="10" fill="#212121"/><circle cx="75" cy="42" r="2" fill="#FFF"/></svg>`,
-    schwein: `<svg viewBox="0 0 100 100"><rect x="30" y="60" width="10" height="25" fill="#F48FB1" rx="5"/><rect x="60" y="60" width="10" height="25" fill="#F48FB1" rx="5"/><ellipse cx="50" cy="55" rx="35" ry="25" fill="#F8BBD0"/><circle cx="75" cy="45" r="18" fill="#F8BBD0"/><ellipse cx="85" cy="45" rx="6" ry="8" fill="#F06292"/><circle cx="70" cy="40" r="2" fill="#000"/><path d="M 65 25 Q 75 15 80 30 Z" fill="#F48FB1"/><path d="M 15 50 Q 5 40 10 30" stroke="#F48FB1" stroke-width="4" fill="none"/></svg>`,
-    kuh: `<svg viewBox="0 0 100 100"><rect x="25" y="60" width="10" height="30" fill="#424242" rx="2"/><rect x="65" y="60" width="10" height="30" fill="#424242" rx="2"/><ellipse cx="50" cy="50" rx="35" ry="25" fill="#FFFFFF"/><path d="M 25 45 Q 35 30 50 45 Q 40 60 25 45 Z" fill="#212121"/><path d="M 60 60 Q 75 50 70 70 Z" fill="#212121"/><rect x="40" y="70" width="20" height="10" fill="#F48FB1" rx="5"/><circle cx="80" cy="35" r="16" fill="#FFFFFF"/><path d="M 70 20 Q 75 10 80 20 Z" fill="#212121"/><path d="M 85 20 Q 90 10 95 20 Z" fill="#212121"/><circle cx="75" cy="32" r="2" fill="#000"/><ellipse cx="90" cy="40" rx="8" ry="12" fill="#F8BBD0"/></svg>`,
-    doenertier: `<svg viewBox="0 0 100 100"><rect x="30" y="10" width="40" height="80" fill="#8D6E63" rx="10"/><line x1="50" y1="5" x2="50" y2="95" stroke="#5D4037" stroke-width="6"/><path d="M 30 30 Q 50 40 70 30 M 30 50 Q 50 60 70 50 M 30 70 Q 50 80 70 70" stroke="#5D4037" stroke-width="3" fill="none"/><circle cx="50" cy="50" r="10" fill="#FFB74D"/><circle cx="45" cy="48" r="2" fill="#000"/><circle cx="55" cy="48" r="2" fill="#000"/><path d="M 45 55 Q 50 60 55 55" stroke="#000" stroke-width="2" fill="none"/><path d="M 20 50 L 30 40 L 30 60 Z M 80 50 L 70 40 L 70 60 Z" fill="#F44336"/></svg>`,
-    
+    zuckerrohr: `<svg viewBox="0 0 100 100"><rect x="30" y="10" width="12" height="80" fill="#8BC34A" rx="4"/><line x1="30" y1="30" x2="42" y2="30" stroke="#33691E" stroke-width="3"/><rect x="60" y="20" width="12" height="70" fill="#8BC34A" rx="4"/></svg>`,
+    karotten: `<svg viewBox="0 0 100 100"><path d="M 20 30 Q 50 100 80 30 Z" fill="#FF9800"/><path d="M 35 15 Q 40 0 50 5 Q 60 0 65 15 Z" fill="#4CAF50"/></svg>`,
+    kartoffeln: `<svg viewBox="0 0 100 100"><ellipse cx="50" cy="50" rx="35" ry="25" fill="#A1887F"/><circle cx="35" cy="45" r="3" fill="#5D4037"/></svg>`,
+    kuerbis: `<svg viewBox="0 0 100 100"><ellipse cx="50" cy="60" rx="40" ry="30" fill="#FF9800"/><ellipse cx="35" cy="60" rx="20" ry="28" fill="#F57C00"/><ellipse cx="65" cy="60" rx="20" ry="28" fill="#F57C00"/></svg>`,
+    saatgut: `<svg viewBox="0 0 100 100"><path d="M 20 80 L 80 80 L 70 30 L 30 30 Z" fill="#8D6E63"/><path d="M 30 30 Q 50 10 70 30 Z" fill="#A1887F"/></svg>`,
     sprout: `<svg viewBox="0 0 100 100"><path d="M 50 90 L 50 50" stroke="#4CAF50" stroke-width="6" stroke-linecap="round"/><path d="M 50 70 Q 30 70 30 40 Q 50 50 50 70 Z" fill="#8BC34A"/><path d="M 50 60 Q 70 60 70 30 Q 50 40 50 60 Z" fill="#4CAF50"/></svg>`,
-    
+
+    rosmarin: `<svg viewBox="0 0 100 100"><path d="M 50 90 L 50 20 M 50 70 L 30 50 M 50 50 L 70 30" stroke="#388E3C" stroke-width="8" stroke-linecap="round" fill="none"/></svg>`,
+    wilde_kraeuter: `<svg viewBox="0 0 100 100"><path d="M 50 90 Q 30 50 20 20 M 50 90 Q 70 50 80 20 M 50 90 L 50 10" stroke="#4CAF50" stroke-width="6" fill="none"/><circle cx="20" cy="20" r="10" fill="#8BC34A"/><circle cx="80" cy="20" r="10" fill="#8BC34A"/><circle cx="50" cy="10" r="10" fill="#8BC34A"/></svg>`,
+    trauben: `<svg viewBox="0 0 100 100"><path d="M 50 10 L 50 30 M 50 20 Q 70 10 80 30" stroke="#4CAF50" stroke-width="4" fill="none"/><circle cx="40" cy="35" r="12" fill="#9C27B0"/><circle cx="60" cy="35" r="12" fill="#9C27B0"/><circle cx="30" cy="55" r="12" fill="#9C27B0"/><circle cx="70" cy="55" r="12" fill="#9C27B0"/><circle cx="50" cy="50" r="12" fill="#8E24AA"/><circle cx="40" cy="70" r="12" fill="#8E24AA"/><circle cx="60" cy="70" r="12" fill="#8E24AA"/><circle cx="50" cy="85" r="12" fill="#7B1FA2"/></svg>`,
+    kaffee: `<svg viewBox="0 0 100 100"><ellipse cx="40" cy="50" rx="20" ry="30" fill="#4E342E" transform="rotate(-20 40 50)"/><ellipse cx="60" cy="60" rx="20" ry="30" fill="#5D4037" transform="rotate(20 60 60)"/><path d="M 30 30 Q 40 50 30 70" stroke="#3E2723" stroke-width="4" fill="none" transform="rotate(-20 40 50)"/><path d="M 50 40 Q 60 60 50 80" stroke="#3E2723" stroke-width="4" fill="none" transform="rotate(20 60 60)"/></svg>`,
+    goldbeeren: `<svg viewBox="0 0 100 100"><path d="M 50 90 L 50 30 M 50 60 L 30 40 M 50 70 L 70 50" stroke="#388E3C" stroke-width="4" fill="none"/><circle cx="30" cy="40" r="12" fill="#FFD700"/><circle cx="70" cy="50" r="12" fill="#FFD700"/><circle cx="50" cy="30" r="15" fill="#FFC107"/><path d="M 45 25 L 50 15 L 55 25 L 65 30 L 55 35 L 50 45 L 45 35 L 35 30 Z" fill="#FFF8E1"/></svg>`,
+
+    huhn: `<svg viewBox="0 0 100 100"><ellipse cx="50" cy="60" rx="30" ry="25" fill="#FFFFFF"/><circle cx="70" cy="40" r="15" fill="#FFFFFF"/><path d="M 80 35 L 95 40 L 80 45 Z" fill="#FFC107"/><path d="M 60 25 Q 70 10 80 25 Z" fill="#F44336"/><circle cx="75" cy="38" r="2" fill="#000"/><line x1="40" y1="85" x2="40" y2="95" stroke="#FF9800" stroke-width="4"/><line x1="60" y1="85" x2="60" y2="95" stroke="#FF9800" stroke-width="4"/></svg>`,
+    schaf: `<svg viewBox="0 0 100 100"><rect x="25" y="60" width="8" height="30" fill="#212121" rx="4"/><rect x="65" y="60" width="8" height="30" fill="#212121" rx="4"/><circle cx="50" cy="50" r="35" fill="#F5F5F5"/><circle cx="30" cy="40" r="20" fill="#F5F5F5"/><circle cx="70" cy="40" r="20" fill="#F5F5F5"/><circle cx="50" cy="70" r="15" fill="#F5F5F5"/><ellipse cx="80" cy="45" rx="15" ry="10" fill="#212121"/><circle cx="75" cy="42" r="2" fill="#FFF"/></svg>`,
+    schwein: `<svg viewBox="0 0 100 100"><rect x="30" y="60" width="10" height="25" fill="#F48FB1" rx="5"/><rect x="60" y="60" width="10" height="25" fill="#F48FB1" rx="5"/><ellipse cx="50" cy="55" rx="35" ry="25" fill="#F8BBD0"/><circle cx="75" cy="45" r="18" fill="#F8BBD0"/><ellipse cx="85" cy="45" rx="6" ry="8" fill="#F06292"/><circle cx="70" cy="40" r="2" fill="#000"/></svg>`,
+    kuh: `<svg viewBox="0 0 100 100"><rect x="25" y="60" width="10" height="30" fill="#424242" rx="2"/><rect x="65" y="60" width="10" height="30" fill="#424242" rx="2"/><ellipse cx="50" cy="50" rx="35" ry="25" fill="#FFFFFF"/><path d="M 25 45 Q 35 30 50 45 Q 40 60 25 45 Z" fill="#212121"/><rect x="40" y="70" width="20" height="10" fill="#F48FB1" rx="5"/><circle cx="80" cy="35" r="16" fill="#FFFFFF"/><path d="M 70 20 Q 75 10 80 20 Z" fill="#212121"/><path d="M 85 20 Q 90 10 95 20 Z" fill="#212121"/><circle cx="75" cy="32" r="2" fill="#000"/></svg>`,
+    doenertier: `<svg viewBox="0 0 100 100"><rect x="30" y="10" width="40" height="80" fill="#8D6E63" rx="10"/><line x1="50" y1="5" x2="50" y2="95" stroke="#5D4037" stroke-width="6"/><path d="M 30 30 Q 50 40 70 30 M 30 50 Q 50 60 70 50" stroke="#5D4037" stroke-width="3" fill="none"/><circle cx="50" cy="50" r="10" fill="#FFB74D"/><circle cx="45" cy="48" r="2" fill="#000"/><circle cx="55" cy="48" r="2" fill="#000"/><path d="M 45 55 Q 50 60 55 55" stroke="#000" stroke-width="2" fill="none"/></svg>`,
+    bienen: `<svg viewBox="0 0 100 100"><path d="M 20 80 L 80 80 L 70 40 Q 50 20 30 40 Z" fill="#FFB300"/><line x1="25" y1="50" x2="75" y2="50" stroke="#FF8F00" stroke-width="4"/><line x1="22" y1="65" x2="78" y2="65" stroke="#FF8F00" stroke-width="4"/><ellipse cx="50" cy="70" rx="8" ry="12" fill="#3E2723"/><path d="M 75 30 Q 85 20 95 30 Q 85 40 75 30" fill="#B3E5FC" opacity="0.8"/><circle cx="80" cy="30" r="8" fill="#FFEB3B"/><line x1="78" y1="26" x2="78" y2="34" stroke="#000" stroke-width="2"/><line x1="82" y1="26" x2="82" y2="34" stroke="#000" stroke-width="2"/></svg>`,
+    enten: `<svg viewBox="0 0 100 100"><ellipse cx="50" cy="65" rx="30" ry="20" fill="#00897B"/><circle cx="70" cy="40" r="16" fill="#00897B"/><path d="M 85 38 L 100 42 L 85 46 Z" fill="#FF9800"/><circle cx="75" cy="35" r="2" fill="#FFF"/><circle cx="75" cy="35" r="1" fill="#000"/><path d="M 20 65 Q 10 50 30 55 Z" fill="#00695C"/><line x1="40" y1="85" x2="35" y2="95" stroke="#FF9800" stroke-width="4"/><line x1="60" y1="85" x2="65" y2="95" stroke="#FF9800" stroke-width="4"/></svg>`,
+
     ei: `<svg viewBox="0 0 100 100"><ellipse cx="50" cy="55" rx="25" ry="35" fill="#FFF9C4" stroke="#FFE082" stroke-width="4"/></svg>`,
     federn: `<svg viewBox="0 0 100 100"><path d="M 20 80 Q 50 50 80 20 Q 90 40 50 90 Q 30 90 20 80 Z" fill="#EEEEEE" stroke="#E0E0E0" stroke-width="2"/><line x1="20" y1="80" x2="80" y2="20" stroke="#BDBDBD" stroke-width="4"/></svg>`,
     wolle: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="35" fill="#FAFAFA" stroke="#E0E0E0" stroke-width="4"/><path d="M 30 30 Q 50 50 70 30 M 30 50 Q 50 70 70 50 M 30 70 Q 50 90 70 70" stroke="#EEEEEE" stroke-width="4" fill="none"/></svg>`,
-    schafsmilch: `<svg viewBox="0 0 100 100"><rect x="35" y="30" width="30" height="60" fill="#E3F2FD" rx="5"/><rect x="30" y="20" width="40" height="10" fill="#B3E5FC" rx="2"/><path d="M 35 50 Q 50 60 65 50" stroke="#BBDEFB" stroke-width="3" fill="none"/></svg>`,
-    schweinefleisch: `<svg viewBox="0 0 100 100"><path d="M 20 40 Q 50 20 80 40 L 70 80 Q 50 90 30 80 Z" fill="#EF9A9A" stroke="#E57373" stroke-width="4"/><ellipse cx="50" cy="55" rx="10" ry="15" fill="#FFEbee"/></svg>`,
+    schafsmilch: `<svg viewBox="0 0 100 100"><rect x="35" y="30" width="30" height="60" fill="#E3F2FD" rx="5"/><rect x="30" y="20" width="40" height="10" fill="#B3E5FC" rx="2"/></svg>`,
+    schweinefleisch: `<svg viewBox="0 0 100 100"><path d="M 20 40 Q 50 20 80 40 L 70 80 Q 50 90 30 80 Z" fill="#EF9A9A" stroke="#E57373" stroke-width="4"/></svg>`,
     trueffel: `<svg viewBox="0 0 100 100"><ellipse cx="50" cy="60" rx="30" ry="20" fill="#5D4037"/><ellipse cx="40" cy="50" rx="25" ry="15" fill="#4E342E"/><circle cx="60" cy="65" r="5" fill="#3E2723"/><circle cx="35" cy="55" r="4" fill="#3E2723"/></svg>`,
     milch: `<svg viewBox="0 0 100 100"><rect x="30" y="30" width="40" height="60" fill="#FAFAFA" rx="4"/><polygon points="30,30 50,10 70,30" fill="#ECEFF1"/><rect x="45" y="50" width="10" height="30" fill="#2196F3"/></svg>`,
-    rindfleisch: `<svg viewBox="0 0 100 100"><path d="M 10 50 Q 50 10 90 50 Q 80 90 50 90 Q 20 90 10 50 Z" fill="#D32F2F" stroke="#B71C1C" stroke-width="4"/><path d="M 30 50 Q 50 40 70 60" stroke="#FFEBEE" stroke-width="4" fill="none"/><path d="M 40 30 Q 60 30 80 40" stroke="#FFEBEE" stroke-width="4" fill="none"/></svg>`,
-    doenerfleisch: `<svg viewBox="0 0 100 100"><rect x="25" y="40" width="50" height="40" fill="#A1887F" rx="5"/><path d="M 20 45 Q 50 80 80 45 Z" fill="#FFCC80"/><path d="M 30 40 L 40 30 L 60 30 L 70 40 Z" fill="#8D6E63"/></svg>`,
-    magische_sosse: `<svg viewBox="0 0 100 100"><path d="M 40 10 L 60 10 L 55 30 L 75 90 L 25 90 L 45 30 Z" fill="#B2EBF2" stroke="#80DEEA" stroke-width="4"/><path d="M 35 60 Q 50 70 65 60 L 70 85 L 30 85 Z" fill="#E040FB"/><rect x="45" y="5" width="10" height="5" fill="#757575"/></svg>`,
-    
-    kaese: `<svg viewBox="0 0 100 100"><path d="M 20 70 L 50 20 L 80 70 Z" fill="#FFCA28"/><path d="M 20 70 L 50 90 L 80 70 Z" fill="#FFB300"/><circle cx="45" cy="55" r="6" fill="#FFA000"/><circle cx="55" cy="75" r="4" fill="#FFA000"/><circle cx="65" cy="50" r="5" fill="#FFA000"/></svg>`,
-    stoff: `<svg viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="60" fill="#00BCD4" rx="5"/><line x1="20" y1="40" x2="80" y2="40" stroke="#B2EBF2" stroke-width="4"/><line x1="20" y1="60" x2="80" y2="60" stroke="#B2EBF2" stroke-width="4"/><line x1="40" y1="20" x2="40" y2="80" stroke="#B2EBF2" stroke-width="4"/><line x1="60" y1="20" x2="60" y2="80" stroke="#B2EBF2" stroke-width="4"/></svg>`,
-    ketchup: `<svg viewBox="0 0 100 100"><rect x="35" y="40" width="30" height="50" fill="#E53935" rx="10"/><path d="M 40 40 L 45 15 L 55 15 L 60 40 Z" fill="#D32F2F"/><rect x="43" y="5" width="14" height="10" fill="#78909C" rx="2"/><rect x="40" y="55" width="20" height="20" fill="#FFCDD2"/></svg>`,
+    rindfleisch: `<svg viewBox="0 0 100 100"><path d="M 10 50 Q 50 10 90 50 Q 80 90 50 90 Q 20 90 10 50 Z" fill="#D32F2F" stroke="#B71C1C" stroke-width="4"/></svg>`,
+    doenerfleisch: `<svg viewBox="0 0 100 100"><rect x="25" y="40" width="50" height="40" fill="#A1887F" rx="5"/><path d="M 20 45 Q 50 80 80 45 Z" fill="#FFCC80"/></svg>`,
+    magische_sosse: `<svg viewBox="0 0 100 100"><path d="M 40 10 L 60 10 L 55 30 L 75 90 L 25 90 L 45 30 Z" fill="#B2EBF2" stroke="#80DEEA" stroke-width="4"/><path d="M 35 60 Q 50 70 65 60 L 70 85 L 30 85 Z" fill="#E040FB"/></svg>`,
+    honig: `<svg viewBox="0 0 100 100"><path d="M 30 40 L 70 40 L 65 80 L 35 80 Z" fill="#FFC107"/><rect x="25" y="30" width="50" height="10" fill="#795548"/><path d="M 40 40 L 45 60 Q 50 65 55 60 L 60 40 Z" fill="#FFA000"/></svg>`,
+    kaese: `<svg viewBox="0 0 100 100"><path d="M 20 70 L 50 20 L 80 70 Z" fill="#FFCA28"/><path d="M 20 70 L 50 90 L 80 70 Z" fill="#FFB300"/><circle cx="45" cy="55" r="6" fill="#FFA000"/></svg>`,
+    schafskaese: `<svg viewBox="0 0 100 100"><path d="M 20 70 L 50 30 L 80 70 Z" fill="#F5F5F5"/><circle cx="45" cy="55" r="5" fill="#E0E0E0"/><circle cx="60" cy="65" r="4" fill="#E0E0E0"/></svg>`,
+    stoff: `<svg viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="60" fill="#00BCD4" rx="5"/><line x1="20" y1="40" x2="80" y2="40" stroke="#B2EBF2" stroke-width="4"/><line x1="40" y1="20" x2="40" y2="80" stroke="#B2EBF2" stroke-width="4"/></svg>`,
+    ketchup: `<svg viewBox="0 0 100 100"><rect x="35" y="40" width="30" height="50" fill="#E53935" rx="10"/><path d="M 40 40 L 45 15 L 55 15 L 60 40 Z" fill="#D32F2F"/><rect x="43" y="5" width="14" height="10" fill="#78909C" rx="2"/></svg>`,
     energie: `<svg viewBox="0 0 100 100"><path d="M 55 10 L 25 50 L 50 50 L 45 90 L 80 40 L 55 40 Z" fill="#FFC107" stroke="#FFA000" stroke-width="4"/></svg>`,
     mehl: `<svg viewBox="0 0 100 100"><path d="M 25 30 L 75 30 L 85 90 L 15 90 Z" fill="#FAFAFA" stroke="#E0E0E0" stroke-width="4"/><path d="M 35 30 L 45 15 L 55 15 L 65 30 Z" fill="#EEEEEE"/><text x="50" y="65" font-size="20" text-anchor="middle" fill="#9E9E9E" font-family="sans-serif">MEHL</text></svg>`,
-    brot: `<svg viewBox="0 0 100 100"><rect x="20" y="40" width="60" height="40" fill="#FFB74D" rx="10"/><path d="M 20 45 Q 50 15 80 45 Z" fill="#F57C00"/><line x1="35" y1="35" x2="45" y2="25" stroke="#E65100" stroke-width="3" stroke-linecap="round"/><line x1="55" y1="35" x2="65" y2="25" stroke="#E65100" stroke-width="3" stroke-linecap="round"/></svg>`,
-    wurst: `<svg viewBox="0 0 100 100"><path d="M 20 50 Q 50 10 80 50 Q 80 70 60 70 L 40 70 Q 20 70 20 50 Z" fill="#E53935"/><ellipse cx="20" cy="50" rx="5" ry="10" fill="#FFCDD2"/><ellipse cx="80" cy="50" rx="5" ry="10" fill="#D32F2F"/></svg>`,
-    zucker: `<svg viewBox="0 0 100 100"><rect x="30" y="30" width="40" height="40" fill="#FFFFFF" stroke="#E0E0E0" stroke-width="4" rx="4"/><line x1="30" y1="40" x2="70" y2="40" stroke="#E0E0E0" stroke-width="2"/><line x1="40" y1="30" x2="40" y2="70" stroke="#E0E0E0" stroke-width="2"/></svg>`,
-    apfelsaft: `<svg viewBox="0 0 100 100"><rect x="30" y="30" width="40" height="60" fill="#FFF9C4" rx="5" stroke="#FFF176" stroke-width="4"/><polygon points="30,30 45,10 55,10 70,30" fill="#FFECB3"/><path d="M 30 50 Q 50 60 70 50 L 70 85 L 30 85 Z" fill="#FFC107"/><rect x="42" y="40" width="16" height="20" fill="#FFCA28"/></svg>`,
-    mayonnaise: `<svg viewBox="0 0 100 100"><ellipse cx="50" cy="80" rx="30" ry="15" fill="#FFF59D"/><path d="M 20 80 L 25 40 L 75 40 L 80 80 Z" fill="#FFF9C4"/><ellipse cx="50" cy="40" rx="25" ry="10" fill="#FFF176"/><path d="M 35 40 L 40 20 L 60 20 L 65 40 Z" fill="#B0BEC5"/><rect x="30" y="55" width="40" height="15" fill="#2196F3"/></svg>`,
+    brot: `<svg viewBox="0 0 100 100"><rect x="20" y="40" width="60" height="40" fill="#FFB74D" rx="10"/><path d="M 20 45 Q 50 15 80 45 Z" fill="#F57C00"/></svg>`,
+    wurst: `<svg viewBox="0 0 100 100"><path d="M 20 50 Q 50 10 80 50 Q 80 70 60 70 L 40 70 Q 20 70 20 50 Z" fill="#E53935"/><ellipse cx="20" cy="50" rx="5" ry="10" fill="#FFCDD2"/></svg>`,
+    zucker: `<svg viewBox="0 0 100 100"><rect x="30" y="30" width="40" height="40" fill="#FFFFFF" stroke="#E0E0E0" stroke-width="4" rx="4"/><line x1="30" y1="40" x2="70" y2="40" stroke="#E0E0E0" stroke-width="2"/></svg>`,
+    apfelsaft: `<svg viewBox="0 0 100 100"><rect x="30" y="30" width="40" height="60" fill="#FFF9C4" rx="5" stroke="#FFF176" stroke-width="4"/><polygon points="30,30 45,10 55,10 70,30" fill="#FFECB3"/><path d="M 30 50 Q 50 60 70 50 L 70 85 L 30 85 Z" fill="#FFC107"/></svg>`,
+    mayonnaise: `<svg viewBox="0 0 100 100"><ellipse cx="50" cy="80" rx="30" ry="15" fill="#FFF59D"/><path d="M 20 80 L 25 40 L 75 40 L 80 80 Z" fill="#FFF9C4"/><ellipse cx="50" cy="40" rx="25" ry="10" fill="#FFF176"/></svg>`,
+    sandwich: `<svg viewBox="0 0 100 100"><rect x="15" y="60" width="70" height="15" fill="#FFCC80" rx="5"/><rect x="20" y="50" width="60" height="10" fill="#8BC34A" rx="2"/><rect x="20" y="40" width="60" height="10" fill="#E53935" rx="2"/><rect x="20" y="30" width="60" height="10" fill="#FFCA28" rx="2"/><rect x="15" y="15" width="70" height="15" fill="#FFCC80" rx="5"/></svg>`,
+    gewuerze: `<svg viewBox="0 0 100 100"><rect x="35" y="40" width="30" height="50" fill="#E0E0E0" rx="5"/><path d="M 35 40 Q 50 20 65 40 Z" fill="#9E9E9E"/><circle cx="45" cy="30" r="2" fill="#424242"/><circle cx="55" cy="30" r="2" fill="#424242"/><circle cx="50" cy="25" r="2" fill="#424242"/><rect x="35" y="60" width="30" height="10" fill="#4CAF50"/></svg>`,
+    eisen: `<svg viewBox="0 0 100 100"><rect x="20" y="40" width="60" height="25" fill="#9E9E9E" rx="3"/><polygon points="20,40 30,30 90,30 80,40" fill="#BDBDBD"/><polygon points="80,40 90,30 90,55 80,65" fill="#757575"/></svg>`,
+    kupfer: `<svg viewBox="0 0 100 100"><rect x="20" y="40" width="60" height="25" fill="#D84315" rx="3"/><polygon points="20,40 30,30 90,30 80,40" fill="#FF7043"/><polygon points="80,40 90,30 90,55 80,65" fill="#BF360C"/></svg>`,
+    gold: `<svg viewBox="0 0 100 100"><rect x="20" y="40" width="60" height="25" fill="#FFC107" rx="3"/><polygon points="20,40 30,30 90,30 80,40" fill="#FFD54F"/><polygon points="80,40 90,30 90,55 80,65" fill="#FF8F00"/></svg>`,
+    stein: `<svg viewBox="0 0 100 100"><path d="M 30 80 L 15 50 L 40 20 L 75 30 L 85 60 L 60 85 Z" fill="#757575"/><path d="M 40 20 L 50 50 L 30 80" stroke="#616161" stroke-width="2" fill="none"/><path d="M 50 50 L 85 60" stroke="#616161" stroke-width="2" fill="none"/></svg>`,
+    plastik: `<svg viewBox="0 0 100 100"><path d="M 50 15 L 80 75 L 20 75 Z" fill="none" stroke="#29B6F6" stroke-width="8" stroke-linejoin="round"/><path d="M 50 30 L 65 65 L 35 65 Z" fill="#81D4FA"/><path d="M 45 10 L 55 10 L 50 20 Z" fill="#0288D1"/></svg>`,
+    computerchips: `<svg viewBox="0 0 100 100"><rect x="25" y="25" width="50" height="50" fill="#388E3C" rx="5"/><rect x="35" y="35" width="30" height="30" fill="#212121" rx="2"/><line x1="20" y1="35" x2="25" y2="35" stroke="#FFC107" stroke-width="4"/><line x1="20" y1="50" x2="25" y2="50" stroke="#FFC107" stroke-width="4"/><line x1="20" y1="65" x2="25" y2="65" stroke="#FFC107" stroke-width="4"/><line x1="75" y1="35" x2="80" y2="35" stroke="#FFC107" stroke-width="4"/><line x1="75" y1="50" x2="80" y2="50" stroke="#FFC107" stroke-width="4"/><line x1="75" y1="65" x2="80" y2="65" stroke="#FFC107" stroke-width="4"/><line x1="35" y1="20" x2="35" y2="25" stroke="#FFC107" stroke-width="4"/><line x1="50" y1="20" x2="50" y2="25" stroke="#FFC107" stroke-width="4"/><line x1="65" y1="20" x2="65" y2="25" stroke="#FFC107" stroke-width="4"/><line x1="35" y1="75" x2="35" y2="80" stroke="#FFC107" stroke-width="4"/><line x1="50" y1="75" x2="50" y2="80" stroke="#FFC107" stroke-width="4"/><line x1="65" y1="75" x2="65" y2="80" stroke="#FFC107" stroke-width="4"/></svg>`,
+    strandspielzeug: `<svg viewBox="0 0 100 100"><path d="M 25 30 L 75 30 L 65 80 L 35 80 Z" fill="#E53935"/><path d="M 25 30 Q 50 10 75 30" stroke="#FFC107" stroke-width="6" fill="none"/><rect x="20" y="30" width="60" height="5" fill="#D32F2F"/></svg>`,
+    verpackungsmaterial: `<svg viewBox="0 0 100 100"><polygon points="50,25 85,40 50,55 15,40" fill="#D7CCC8"/><polygon points="15,40 50,55 50,85 15,70" fill="#A1887F"/><polygon points="50,55 85,40 85,70 50,85" fill="#8D6E63"/><line x1="50" y1="55" x2="50" y2="85" stroke="#5D4037" stroke-width="2"/><line x1="15" y1="40" x2="50" y2="55" stroke="#5D4037" stroke-width="2"/><line x1="85" y1="40" x2="50" y2="55" stroke="#5D4037" stroke-width="2"/></svg>`,
+    tupperware: `<svg viewBox="0 0 100 100"><rect x="20" y="40" width="60" height="40" fill="#B3E5FC" rx="5"/><rect x="15" y="30" width="70" height="15" fill="#0288D1" rx="5"/><path d="M 30 40 L 30 80 M 50 40 L 50 80 M 70 40 L 70 80" stroke="#81D4FA" stroke-width="2" fill="none"/></svg>`,
+    computer: `<svg viewBox="0 0 100 100"><rect x="15" y="25" width="70" height="50" fill="#424242" rx="4"/><rect x="20" y="30" width="60" height="40" fill="#81D4FA"/><rect x="40" y="75" width="20" height="10" fill="#616161"/><rect x="30" y="85" width="40" height="5" fill="#616161" rx="2"/></svg>`,
+    handy: `<svg viewBox="0 0 100 100"><rect x="30" y="10" width="40" height="80" fill="#212121" rx="5"/><rect x="35" y="20" width="30" height="60" fill="#81D4FA"/><circle cx="50" cy="85" r="3" fill="#424242"/></svg>`,
+    server: `<svg viewBox="0 0 100 100"><rect x="30" y="10" width="40" height="80" fill="#424242" rx="2"/><rect x="35" y="20" width="30" height="15" fill="#616161"/><rect x="35" y="40" width="30" height="15" fill="#616161"/><rect x="35" y="60" width="30" height="15" fill="#616161"/><circle cx="40" cy="27" r="3" fill="#4CAF50"/><circle cx="40" cy="47" r="3" fill="#4CAF50"/><circle cx="40" cy="67" r="3" fill="#F44336"/><circle cx="50" cy="27" r="3" fill="#FFEB3B"/><circle cx="50" cy="47" r="3" fill="#FFEB3B"/><circle cx="50" cy="67" r="3" fill="#FFEB3B"/></svg>`,
+    rechencenter: `<svg viewBox="0 0 100 100"><rect x="10" y="30" width="80" height="60" fill="#CFD8DC"/><rect x="20" y="40" width="15" height="50" fill="#90A4AE"/><rect x="45" y="40" width="15" height="50" fill="#90A4AE"/><rect x="70" y="40" width="15" height="50" fill="#90A4AE"/><path d="M 10 30 L 30 15 L 90 15 L 90 30 Z" fill="#B0BEC5"/><rect x="25" y="50" width="5" height="5" fill="#4CAF50"/><rect x="50" y="60" width="5" height="5" fill="#FFEB3B"/><rect x="75" y="50" width="5" height="5" fill="#F44336"/></svg>`,
+    kissen: `<svg viewBox="0 0 100 100"><rect x="20" y="25" width="60" height="50" fill="#E1F5FE" rx="15"/><path d="M 30 35 Q 50 50 70 35 M 30 65 Q 50 50 70 65" stroke="#B3E5FC" stroke-width="4" fill="none"/></svg>`,
+    kuchen: `<svg viewBox="0 0 100 100"><path d="M 20 70 L 50 30 L 80 70 Z" fill="#FFCC80"/><path d="M 20 70 Q 50 80 80 70 L 80 80 Q 50 90 20 80 Z" fill="#FFA726"/><circle cx="45" cy="50" r="4" fill="#D32F2F"/><circle cx="55" cy="60" r="4" fill="#D32F2F"/><circle cx="50" cy="30" r="5" fill="#E53935"/></svg>`,
+    bier: `<svg viewBox="0 0 100 100"><rect x="30" y="40" width="40" height="50" fill="#FFC107" rx="5"/><path d="M 70 50 Q 85 50 85 65 Q 85 80 70 80" stroke="#FFC107" stroke-width="6" fill="none"/><ellipse cx="50" cy="35" rx="25" ry="12" fill="#FFFFFF"/><circle cx="35" cy="30" r="8" fill="#FFFFFF"/><circle cx="65" cy="30" r="8" fill="#FFFFFF"/><line x1="40" y1="45" x2="40" y2="85" stroke="#FFCA28" stroke-width="4"/><line x1="60" y1="45" x2="60" y2="85" stroke="#FFCA28" stroke-width="4"/></svg>`,
+    wein: `<svg viewBox="0 0 100 100"><path d="M 50 85 L 50 50" stroke="#E0E0E0" stroke-width="4"/><path d="M 30 20 L 70 20 L 50 55 Z" fill="#E53935"/><path d="M 25 20 Q 50 70 75 20" stroke="#E0E0E0" stroke-width="4" fill="none"/><line x1="30" y1="85" x2="70" y2="85" stroke="#E0E0E0" stroke-width="4"/></svg>`,
+    marmelade: `<svg viewBox="0 0 100 100"><path d="M 30 40 L 70 40 L 65 80 L 35 80 Z" fill="#E53935"/><rect x="25" y="30" width="50" height="10" fill="#FFCDD2" rx="2"/><path d="M 35 45 Q 50 60 65 45 Z" fill="#D32F2F"/></svg>`,
 
     kaeserei: `<svg viewBox="0 0 100 100"><rect x="10" y="40" width="80" height="50" fill="#BCAAA4"/><polygon points="10,40 50,10 90,40" fill="#8D6E63"/><rect x="40" y="60" width="20" height="30" fill="#5D4037"/><circle cx="30" cy="65" r="8" fill="#FFCA28"/></svg>`,
-    weberei: `<svg viewBox="0 0 100 100"><rect x="15" y="30" width="70" height="60" fill="#90A4AE"/><rect x="25" y="20" width="50" height="10" fill="#607D8B"/><line x1="30" y1="30" x2="30" y2="90" stroke="#CFD8DC" stroke-width="4"/><line x1="50" y1="30" x2="50" y2="90" stroke="#CFD8DC" stroke-width="4"/><line x1="70" y1="30" x2="70" y2="90" stroke="#CFD8DC" stroke-width="4"/><rect x="40" y="50" width="20" height="20" fill="#00BCD4"/></svg>`,
-    ketchupfabrik: `<svg viewBox="0 0 100 100"><rect x="20" y="40" width="60" height="50" fill="#EF9A9A"/><polygon points="20,40 50,20 80,40" fill="#E53935"/><rect x="70" y="10" width="10" height="30" fill="#78909C"/><path d="M 70 10 Q 80 0 90 20" stroke="#E53935" stroke-width="4" fill="none"/></svg>`,
-    solarzellen: `<svg viewBox="0 0 100 100"><rect x="10" y="40" width="80" height="40" fill="#1976D2" transform="skewX(-20)"/><line x1="15" y1="50" x2="85" y2="50" stroke="#64B5F6" stroke-width="2" transform="skewX(-20)"/><line x1="25" y1="60" x2="95" y2="60" stroke="#64B5F6" stroke-width="2" transform="skewX(-20)"/><line x1="30" y1="40" x2="30" y2="80" stroke="#64B5F6" stroke-width="2" transform="skewX(-20)"/><line x1="50" y1="40" x2="50" y2="80" stroke="#64B5F6" stroke-width="2" transform="skewX(-20)"/><line x1="70" y1="40" x2="70" y2="80" stroke="#64B5F6" stroke-width="2" transform="skewX(-20)"/><circle cx="85" cy="20" r="15" fill="#FFC107"/></svg>`,
-    muehle: `<svg viewBox="0 0 100 100"><polygon points="30,90 40,40 60,40 70,90" fill="#D7CCC8"/><polygon points="35,40 50,15 65,40" fill="#795548"/><circle cx="50" cy="50" r="5" fill="#3E2723"/><line x1="50" y1="50" x2="50" y2="10" stroke="#BCAAA4" stroke-width="6"/><line x1="50" y1="50" x2="15" y2="70" stroke="#BCAAA4" stroke-width="6"/><line x1="50" y1="50" x2="85" y2="70" stroke="#BCAAA4" stroke-width="6"/></svg>`,
-    baeckerei: `<svg viewBox="0 0 100 100"><rect x="15" y="45" width="70" height="45" fill="#FFCC80"/><path d="M 15 45 Q 50 10 85 45 Z" fill="#FFA726"/><rect x="40" y="65" width="20" height="25" fill="#5D4037"/><path d="M 45 40 Q 50 30 55 40" stroke="#FFF" stroke-width="3" fill="none"/></svg>`,
+    weberei: `<svg viewBox="0 0 100 100"><rect x="15" y="30" width="70" height="60" fill="#90A4AE"/><rect x="25" y="20" width="50" height="10" fill="#607D8B"/><line x1="30" y1="30" x2="30" y2="90" stroke="#CFD8DC" stroke-width="4"/><rect x="40" y="50" width="20" height="20" fill="#00BCD4"/></svg>`,
+    ketchupfabrik: `<svg viewBox="0 0 100 100"><rect x="20" y="40" width="60" height="50" fill="#EF9A9A"/><polygon points="20,40 50,20 80,40" fill="#E53935"/><rect x="70" y="10" width="10" height="30" fill="#78909C"/></svg>`,
+    muehle: `<svg viewBox="0 0 100 100"><polygon points="30,90 40,40 60,40 70,90" fill="#D7CCC8"/><polygon points="35,40 50,15 65,40" fill="#795548"/><line x1="50" y1="50" x2="50" y2="10" stroke="#BCAAA4" stroke-width="6"/><line x1="50" y1="50" x2="15" y2="70" stroke="#BCAAA4" stroke-width="6"/><line x1="50" y1="50" x2="85" y2="70" stroke="#BCAAA4" stroke-width="6"/></svg>`,
+    baeckerei: `<svg viewBox="0 0 100 100"><rect x="15" y="45" width="70" height="45" fill="#FFCC80"/><path d="M 15 45 Q 50 10 85 45 Z" fill="#FFA726"/><rect x="40" y="65" width="20" height="25" fill="#5D4037"/></svg>`,
     metzgerei: `<svg viewBox="0 0 100 100"><rect x="20" y="30" width="60" height="60" fill="#FFCDD2"/><polygon points="10,30 50,10 90,30" fill="#D32F2F"/><rect x="25" y="40" width="20" height="20" fill="#FFF"/><rect x="55" y="40" width="20" height="20" fill="#FFF"/><path d="M 40 70 L 60 70 L 60 90 L 40 90 Z" fill="#795548"/></svg>`,
-    zuckerfabrik: `<svg viewBox="0 0 100 100"><rect x="15" y="50" width="70" height="40" fill="#E0E0E0"/><polygon points="15,50 30,30 85,50" fill="#9E9E9E"/><rect x="30" y="10" width="10" height="30" fill="#757575"/><rect x="60" y="20" width="10" height="30" fill="#757575"/><circle cx="50" cy="70" r="10" fill="#FFF"/></svg>`,
-    saftpresse: `<svg viewBox="0 0 100 100"><rect x="30" y="20" width="40" height="50" fill="#CFD8DC"/><rect x="20" y="70" width="60" height="20" fill="#90A4AE"/><path d="M 40 20 L 40 5 L 60 5 L 60 20 Z" fill="#78909C"/><rect x="45" y="75" width="10" height="10" fill="#FFC107"/><circle cx="50" cy="45" r="15" fill="#FFECB3"/></svg>`,
-    mayofabrik: `<svg viewBox="0 0 100 100"><rect x="20" y="40" width="60" height="50" fill="#FFF9C4"/><polygon points="20,40 50,20 80,40" fill="#FFF176"/><rect x="40" y="60" width="20" height="30" fill="#81D4FA"/><circle cx="50" cy="30" r="8" fill="#FFF"/></svg>`
+    zuckerfabrik: `<svg viewBox="0 0 100 100"><rect x="15" y="50" width="70" height="40" fill="#E0E0E0"/><polygon points="15,50 30,30 85,50" fill="#9E9E9E"/><rect x="30" y="10" width="10" height="30" fill="#757575"/></svg>`,
+    saftpresse: `<svg viewBox="0 0 100 100"><rect x="30" y="20" width="40" height="50" fill="#CFD8DC"/><rect x="20" y="70" width="60" height="20" fill="#90A4AE"/><circle cx="50" cy="45" r="15" fill="#FFECB3"/></svg>`,
+    mayofabrik: `<svg viewBox="0 0 100 100"><rect x="20" y="40" width="60" height="50" fill="#FFF9C4"/><polygon points="20,40 50,20 80,40" fill="#FFF176"/><rect x="40" y="60" width="20" height="30" fill="#81D4FA"/></svg>`,
+    molkerei: `<svg viewBox="0 0 100 100"><rect x="15" y="40" width="70" height="50" fill="#E3F2FD"/><polygon points="15,40 50,15 85,40" fill="#64B5F6"/><rect x="35" y="60" width="30" height="30" fill="#1E88E5"/><circle cx="25" cy="55" r="5" fill="#FFF"/></svg>`,
+    sandwichfabrik: `<svg viewBox="0 0 100 100"><rect x="15" y="40" width="70" height="50" fill="#D7CCC8"/><polygon points="15,40 50,20 85,40" fill="#8D6E63"/><rect x="20" y="50" width="20" height="15" fill="#8BC34A"/><rect x="60" y="50" width="20" height="15" fill="#FFCA28"/></svg>`,
+    gewuerzfabrik: `<svg viewBox="0 0 100 100"><rect x="20" y="30" width="60" height="60" fill="#C8E6C9"/><polygon points="10,30 50,10 90,30" fill="#4CAF50"/><rect x="40" y="60" width="20" height="30" fill="#388E3C"/></svg>`,
+    minenschacht: `<svg viewBox="0 0 100 100"><path d="M 10 90 L 30 40 L 70 40 L 90 90 Z" fill="#5D4037"/><rect x="35" y="50" width="30" height="40" fill="#3E2723"/><path d="M 35 50 Q 50 30 65 50" fill="#795548"/></svg>`,
+    prozessorfabrik: `<svg viewBox="0 0 100 100"><rect x="10" y="40" width="80" height="50" fill="#424242"/><polygon points="10,40 30,20 70,20 90,40" fill="#212121"/><rect x="25" y="55" width="50" height="20" fill="#81D4FA"/><line x1="40" y1="55" x2="40" y2="75" stroke="#424242" stroke-width="4"/><line x1="60" y1="55" x2="60" y2="75" stroke="#424242" stroke-width="4"/></svg>`,
+    plastikfabrik: `<svg viewBox="0 0 100 100"><rect x="15" y="40" width="70" height="50" fill="#B3E5FC"/><polygon points="15,40 50,20 85,40" fill="#0288D1"/><path d="M 40 60 L 60 60 L 50 80 Z" fill="#4CAF50"/></svg>`,
+    plastikverarbeitung: `<svg viewBox="0 0 100 100"><rect x="10" y="30" width="80" height="60" fill="#81D4FA"/><polygon points="10,30 50,10 90,30" fill="#0277BD"/><rect x="30" y="60" width="40" height="30" fill="#01579B"/></svg>`,
+    computerfabrik: `<svg viewBox="0 0 100 100"><rect x="10" y="40" width="80" height="50" fill="#F5F5F5"/><polygon points="10,40 50,20 90,40" fill="#E0E0E0"/><rect x="20" y="50" width="60" height="20" fill="#80DEEA"/><circle cx="50" cy="30" r="6" fill="#00BCD4"/></svg>`,
+    kissenfabrik: `<svg viewBox="0 0 100 100"><rect x="15" y="40" width="70" height="50" fill="#E1F5FE" rx="5"/><path d="M 15 40 Q 50 10 85 40" fill="#B3E5FC"/><rect x="40" y="60" width="20" height="30" fill="#0288D1"/></svg>`,
+    brauerei: `<svg viewBox="0 0 100 100"><rect x="10" y="40" width="80" height="50" fill="#A1887F"/><polygon points="10,40 50,10 90,40" fill="#5D4037"/><rect x="20" y="60" width="20" height="30" fill="#FFC107" rx="5"/><rect x="60" y="60" width="20" height="30" fill="#FFC107" rx="5"/></svg>`,
+    winzerei: `<svg viewBox="0 0 100 100"><rect x="15" y="40" width="70" height="50" fill="#EF9A9A"/><polygon points="15,40 50,10 85,40" fill="#C62828"/><rect x="40" y="60" width="20" height="30" fill="#7F0000"/><circle cx="50" cy="50" r="6" fill="#FFCDD2"/></svg>`,
+    marmeladenfabrik: `<svg viewBox="0 0 100 100"><rect x="15" y="40" width="70" height="50" fill="#FFCDD2"/><polygon points="15,40 50,20 85,40" fill="#E53935"/><rect x="30" y="60" width="40" height="30" fill="#B71C1C"/></svg>`,
+    doenerfabrik: `<svg viewBox="0 0 100 100"><rect x="10" y="40" width="80" height="50" fill="#FFCC80"/><polygon points="10,40 50,15 90,40" fill="#E65100"/><rect x="40" y="55" width="20" height="35" fill="#5D4037"/><rect x="20" y="55" width="10" height="20" fill="#8D6E63" rx="2"/></svg>`
 };
 
 /** --- DATENSTRUKTUREN & KONFIGURATION --- */
 const GAME_CONFIG = {
-    dayDurationMs: 600000, // 10 Minuten = 1 Tag
+    dayDurationMs: 600000, 
     tickRateMs: 1000,
     baseWorkerSalary: 50,  
 };
 
 const PLANTS = {
-    weizen: { id: "weizen", name: "Weizen", growTime: 2, seedCost: 10, yield: 2, sellPrice: 15 },
-    mais: { id: "mais", name: "Mais", growTime: 3, seedCost: 20, yield: 3, sellPrice: 25 },
-    tomaten: { id: "tomaten", name: "Tomaten", growTime: 1.5, seedCost: 15, yield: 4, sellPrice: 12 },
-    sonnenblumen: { id: "sonnenblumen", name: "Sonnenblumen", growTime: 4, seedCost: 30, yield: 1, sellPrice: 80 },
-    erdbeeren: { id: "erdbeeren", name: "Erdbeeren", growTime: 1, seedCost: 25, yield: 5, sellPrice: 10 },
-    apfel: { id: "apfel", name: "Apfelbaum", growTime: 5, seedCost: 100, yield: 3, sellPrice: 80 },
-    zuckerrohr: { id: "zuckerrohr", name: "Zuckerrohr", growTime: 3, seedCost: 40, yield: 3, sellPrice: 30 },
-    karotten: { id: "karotten", name: "Karotten", growTime: 2, seedCost: 12, yield: 3, sellPrice: 14 },
-    kartoffeln: { id: "kartoffeln", name: "Kartoffeln", growTime: 2.5, seedCost: 18, yield: 4, sellPrice: 16 },
-    kuerbis: { id: "kuerbis", name: "Kürbis", growTime: 4, seedCost: 35, yield: 1, sellPrice: 100 }
+    weizen: { id: "weizen", name: "Weizen", baseGrowTime: 2, seedCost: 10, yield: 2, sellPrice: 15 },
+    karotten: { id: "karotten", name: "Karotten", baseGrowTime: 2, seedCost: 12, yield: 3, sellPrice: 14 },
+    tomaten: { id: "tomaten", name: "Tomaten", baseGrowTime: 1.5, seedCost: 15, yield: 4, sellPrice: 12 },
+    kartoffeln: { id: "kartoffeln", name: "Kartoffeln", baseGrowTime: 2.5, seedCost: 18, yield: 4, sellPrice: 16 },
+    mais: { id: "mais", name: "Mais", baseGrowTime: 3, seedCost: 20, yield: 3, sellPrice: 25 },
+    erdbeeren: { id: "erdbeeren", name: "Erdbeeren", baseGrowTime: 1, seedCost: 25, yield: 5, sellPrice: 10 },
+    wilde_kraeuter: { id: "wilde_kraeuter", name: "Wilde Kräuter", baseGrowTime: 1.5, seedCost: 20, yield: 3, sellPrice: 15 },
+    rosmarin: { id: "rosmarin", name: "Rosmarin", baseGrowTime: 2, seedCost: 30, yield: 2, sellPrice: 20 },
+    sonnenblumen: { id: "sonnenblumen", name: "Sonnenblumen", baseGrowTime: 4, seedCost: 30, yield: 1, sellPrice: 80 },
+    kuerbis: { id: "kuerbis", name: "Kürbis", baseGrowTime: 4, seedCost: 35, yield: 1, sellPrice: 100 },
+    zuckerrohr: { id: "zuckerrohr", name: "Zuckerrohr", baseGrowTime: 3, seedCost: 40, yield: 3, sellPrice: 30 },
+    trauben: { id: "trauben", name: "Trauben", baseGrowTime: 3, seedCost: 50, yield: 4, sellPrice: 25 },
+    kaffee: { id: "kaffee", name: "Kaffee", baseGrowTime: 4, seedCost: 80, yield: 2, sellPrice: 60 },
+    apfel: { id: "apfel", name: "Apfelbaum", baseGrowTime: 5, seedCost: 100, yield: 3, sellPrice: 80 },
+    goldbeeren: { id: "goldbeeren", name: "Goldbeeren", baseGrowTime: 6, seedCost: 500, yield: 1, sellPrice: 1000 }
 };
 
 const ANIMALS = {
     huhn: { id: "huhn", name: "Huhn", cost: 50, products: ["ei", "federn"], cycle: 0.5 },
+    enten: { id: "enten", name: "Ente", cost: 100, products: ["federn", "ei"], cycle: 0.8 },
     schaf: { id: "schaf", name: "Schaf", cost: 150, products: ["wolle", "schafsmilch"], cycle: 1 },
-    schwein: { id: "schwein", name: "Schwein", cost: 200, products: ["schweinefleisch", "trueffel"], cycle: 1.5 },
+    schwein: { id: "schwein", name: "Schwein", cost: 200, products: ["schweinefleisch"], cycle: 1.5, special: "trueffel" },
+    bienen: { id: "bienen", name: "Bienenstock", cost: 300, products: ["honig"], cycle: 1, needsWorker: true },
     kuh: { id: "kuh", name: "Kuh", cost: 500, products: ["milch", "rindfleisch"], cycle: 1 },
     doenertier: { id: "doenertier", name: "Mächtiges Dönertier", cost: 10000, products: ["doenerfleisch", "magische_sosse"], cycle: 0.2, max: 1 }
 };
 
 const ITEMS = {
-    ei: { name: "Ei", sellPrice: 5 },
-    federn: { name: "Federn", sellPrice: 3 },
-    wolle: { name: "Wolle", sellPrice: 20 },
-    schafsmilch: { name: "Schafsmilch", sellPrice: 18 },
-    schweinefleisch: { name: "Schweinefleisch", sellPrice: 40 },
-    trueffel: { name: "Trüffel", sellPrice: 100 },
-    milch: { name: "Milch", sellPrice: 15 },
-    rindfleisch: { name: "Rindfleisch", sellPrice: 50 },
-    doenerfleisch: { name: "Dönerfleisch", sellPrice: 200 },
-    magische_sosse: { name: "Magische Soße", sellPrice: 300 },
-    
-    kaese: { name: "Käse", sellPrice: 45 },
-    stoff: { name: "Stoff", sellPrice: 60 },
-    ketchup: { name: "Ketchup", sellPrice: 35 },
-    energie: { name: "Energie", sellPrice: 5 },
-    mehl: { name: "Mehl", sellPrice: 25 },
-    brot: { name: "Brot", sellPrice: 50 },
-    wurst: { name: "Wurst", sellPrice: 80 },
-    zucker: { name: "Zucker", sellPrice: 70 },
-    apfelsaft: { name: "Apfelsaft", sellPrice: 200 },
-    mayonnaise: { name: "Mayonnaise", sellPrice: 20 }
+    ei: { name: "Ei", sellPrice: 5 }, federn: { name: "Federn", sellPrice: 3 }, wolle: { name: "Wolle", sellPrice: 20 },
+    schafsmilch: { name: "Schafsmilch", sellPrice: 18 }, schweinefleisch: { name: "Schweinefleisch", sellPrice: 40 },
+    trueffel: { name: "Trüffel", sellPrice: 100 }, milch: { name: "Milch", sellPrice: 15 }, rindfleisch: { name: "Rindfleisch", sellPrice: 50 },
+    doenerfleisch: { name: "Dönerfleisch", sellPrice: 200 }, magische_sosse: { name: "Magische Soße", sellPrice: 300 },
+    honig: { name: "Honig", sellPrice: 35 },
+    kaese: { name: "Käse", sellPrice: 45 }, stoff: { name: "Stoff", sellPrice: 60 }, ketchup: { name: "Ketchup", sellPrice: 35 },
+    energie: { name: "Energie", sellPrice: 5 }, mehl: { name: "Mehl", sellPrice: 25 }, brot: { name: "Brot", sellPrice: 50 },
+    wurst: { name: "Wurst", sellPrice: 80 }, zucker: { name: "Zucker", sellPrice: 70 }, apfelsaft: { name: "Apfelsaft", sellPrice: 200 },
+    mayonnaise: { name: "Mayonnaise", sellPrice: 20 }, schafskaese: { name: "Schafskäse", sellPrice: 60 },
+    sandwich: { name: "Sandwich", sellPrice: 350 }, gewuerze: { name: "Gewürze", sellPrice: 80 },
+    eisen: { name: "Eisen", sellPrice: 30 }, kupfer: { name: "Kupfer", sellPrice: 40 }, gold: { name: "Gold", sellPrice: 250 },
+    stein: { name: "Stein", sellPrice: 10 }, plastik: { name: "Plastik", sellPrice: 50 }, computerchips: { name: "Computerchips", sellPrice: 400 },
+    strandspielzeug: { name: "Strandspielzeug", sellPrice: 120 }, verpackungsmaterial: { name: "Verpackung", sellPrice: 80 },
+    tupperware: { name: "Tupperware", sellPrice: 100 }, computer: { name: "Computer", sellPrice: 1500 },
+    handy: { name: "Handy", sellPrice: 1200 }, server: { name: "Server", sellPrice: 2000 }, rechencenter: { name: "Rechencenter", sellPrice: 10000 },
+    kissen: { name: "Kissen", sellPrice: 100 }, kuchen: { name: "Kuchen", sellPrice: 250 }, bier: { name: "Bier", sellPrice: 150 },
+    wein: { name: "Wein", sellPrice: 300 }, marmelade: { name: "Marmelade", sellPrice: 180 }
 };
-
 Object.values(PLANTS).forEach(p => { ITEMS[p.id] = { name: p.name, sellPrice: p.sellPrice }; });
 
 const MACHINES = {
-    kaeserei: { id: "kaeserei", name: "Käserei", cost: 1000, input: { milch: 2 }, output: { kaese: 1 }, time: 0.5 },
-    weberei: { id: "weberei", name: "Weberei", cost: 1500, input: { wolle: 2 }, output: { stoff: 1 }, time: 0.5 },
-    ketchupfabrik: { id: "ketchupfabrik", name: "Ketchup-Fabrik", cost: 800, input: { tomaten: 3 }, output: { ketchup: 1 }, time: 0.2 },
-    solarzellen: { id: "solarzellen", name: "Solarzellen", cost: 2000, input: {}, output: { energie: 5 }, time: 0.1, autoSell: true },
-    muehle: { id: "muehle", name: "Mühle", cost: 600, input: { weizen: 1 }, output: { mehl: 1 }, time: 0.1 },
-    baeckerei: { id: "baeckerei", name: "Bäckerei", cost: 1200, input: { mehl: 1, ei: 1 }, output: { brot: 1 }, time: 0.3 },
-    metzgerei: { id: "metzgerei", name: "Metzgerei", cost: 2500, input: { schweinefleisch: 1 }, output: { wurst: 2 }, time: 0.5 },
-    zuckerfabrik: { id: "zuckerfabrik", name: "Zuckerfabrik", cost: 1800, input: { zuckerrohr: 2 }, output: { zucker: 1 }, time: 0.4 },
-    saftpresse: { id: "saftpresse", name: "Saftpresse", cost: 5000, input: { apfel: 2 }, output: { apfelsaft: 1 }, time: 1.0 },
-    mayofabrik: { id: "mayofabrik", name: "Mayo-Fabrik", cost: 900, input: { ei: 3 }, output: { mayonnaise: 1 }, time: 0.2 }
+    muehle: { id: "muehle", name: "Mühle", cost: 600, recipes: [{ input: { weizen: 1 }, output: { mehl: 1 }, time: 0.1 }] },
+    mayofabrik: { id: "mayofabrik", name: "Mayo-Fabrik", cost: 900, recipes: [{ input: { ei: 3 }, output: { mayonnaise: 1 }, time: 0.2 }] },
+    ketchupfabrik: { id: "ketchupfabrik", name: "Ketchup-Fabrik", cost: 800, recipes: [{ input: { tomaten: 3 }, output: { ketchup: 1 }, time: 0.2 }] },
+    kaeserei: { id: "kaeserei", name: "Käserei", cost: 1000, recipes: [{ input: { milch: 2 }, output: { kaese: 1 }, time: 0.5 }] },
+    molkerei: { id: "molkerei", name: "Molkerei", cost: 1200, recipes: [{ input: { schafsmilch: 2 }, output: { schafskaese: 1 }, time: 0.5 }] },
+    baeckerei: { id: "baeckerei", name: "Bäckerei", cost: 1200, recipes: [
+        { name: "Kuchen", input: { mehl: 1, ei: 1, zucker: 1, milch: 1, erdbeeren: 1 }, output: { kuchen: 1 }, time: 0.6 },
+        { name: "Brot", input: { mehl: 1, ei: 1 }, output: { brot: 1 }, time: 0.3 }
+    ]},
+    gewuerzfabrik: { id: "gewuerzfabrik", name: "Gewürzfabrik", cost: 1500, recipes: [{ input: { rosmarin: 1, wilde_kraeuter: 1 }, output: { gewuerze: 1 }, time: 0.4 }] },
+    weberei: { id: "weberei", name: "Weberei", cost: 1500, recipes: [{ input: { wolle: 2 }, output: { stoff: 1 }, time: 0.5 }] },
+    kissenfabrik: { id: "kissenfabrik", name: "Kissenfabrik", cost: 1600, recipes: [{ input: { federn: 3, stoff: 1 }, output: { kissen: 1 }, time: 0.4 }] },
+    zuckerfabrik: { id: "zuckerfabrik", name: "Zuckerfabrik", cost: 1800, recipes: [{ input: { zuckerrohr: 2 }, output: { zucker: 1 }, time: 0.4 }] },
+    metzgerei: { id: "metzgerei", name: "Metzgerei", cost: 2500, recipes: [{ input: { schweinefleisch: 1 }, output: { wurst: 2 }, time: 0.5 }] },
+    marmeladenfabrik: { id: "marmeladenfabrik", name: "Marmeladenfabrik", cost: 2800, recipes: [{ input: { trauben: 2, erdbeeren: 2, zucker: 1 }, output: { marmelade: 1 }, time: 0.5 }] },
+    brauerei: { id: "brauerei", name: "Brauerei", cost: 3000, recipes: [{ input: { weizen: 3, zucker: 1 }, output: { bier: 1 }, time: 0.6 }] },
+    winzerei: { id: "winzerei", name: "Winzerei", cost: 3500, recipes: [{ input: { trauben: 3, zucker: 1 }, output: { wein: 1 }, time: 0.8 }] },
+    sandwichfabrik: { id: "sandwichfabrik", name: "Sandwichfabrik", cost: 4000, recipes: [{ input: { wurst: 1, brot: 1, kaese: 1, mayonnaise: 1, tomaten: 1, gewuerze: 1 }, output: { sandwich: 1 }, time: 0.8 }] },
+    saftpresse: { id: "saftpresse", name: "Saftpresse", cost: 5000, recipes: [{ input: { apfel: 2 }, output: { apfelsaft: 1 }, time: 1.0 }] },
+    doenerfabrik: { id: "doenerfabrik", name: "Dönerfabrik", cost: 15000, unlock: (s) => s.animals.some(a=>a.type==='doenertier'), recipes: [{ input: { doenerfleisch: 1, magische_sosse: 1, brot: 1 }, output: { sandwich: 5 }, time: 0.5 }] },
+    
+    // Industrie & Tech
+    minenschacht: { id: "minenschacht", name: "Minenschacht", cost: 8000, recipes: [{ input: {}, randomOutput: [{id:'eisen', chance:0.4}, {id:'kupfer', chance:0.3}, {id:'stein', chance:0.25}, {id:'gold', chance:0.05}], time: 0.5 }] },
+    plastikfabrik: { id: "plastikfabrik", name: "Plastikfabrik (Recycling)", cost: 5000, isRecycler: true, time: 0.2 },
+    plastikverarbeitung: { id: "plastikverarbeitung", name: "Plastikverarbeitung", cost: 6000, recipes: [{ input: { plastik: 1 }, randomOutput: [{id:'strandspielzeug', chance:0.4}, {id:'verpackungsmaterial', chance:0.4}, {id:'tupperware', chance:0.2}], time: 0.5 }] },
+    prozessorfabrik: { id: "prozessorfabrik", name: "Prozessorfabrik", cost: 12000, recipes: [{ input: { gold: 1, eisen: 2, plastik: 1 }, output: { computerchips: 2 }, time: 0.8 }] },
+    computerfabrik: { id: "computerfabrik", name: "Computerfabrik", cost: 25000, recipes: [
+        { name: "Rechencenter", input: { server: 4 }, output: { rechencenter: 1 }, time: 2.0 },
+        { name: "Elektronik", input: { computerchips: 2, gold: 1, kupfer: 1, plastik: 1 }, randomOutput: [{id:'computer', chance:0.4}, {id:'handy', chance:0.4}, {id:'server', chance:0.2}], time: 1.0 }
+    ]}
 };
 
 /** --- SPIELSTATUS (STATE) --- */
 let state = {
-    farmName: "JT Farm",
-    money: 150,
-    timeElapsedDays: 0, 
-    inventory: {}, // item_id: count
-    seeds: { 'weizen': 5 }, // plant_id: count
+    farmName: "JT Farm", money: 150, timeElapsedDays: 0,
+    inventory: {}, seeds: { 'weizen': 5 },
     fields: [
         { id: 0, plantId: 'weizen', plantedAt: 0, workerAssigned: false },
         { id: 1, plantId: null, plantedAt: null, workerAssigned: false },
@@ -292,20 +347,14 @@ let state = {
         { id: 3, plantId: null, plantedAt: null, workerAssigned: false }
     ],
     animals: [
-        { id: 'a1', type: 'huhn', lastProduced: 0, producedCount: 0 },
-        { id: 'a2', type: 'huhn', lastProduced: 0, producedCount: 0 }
+        { id: 'a1', type: 'huhn', lastProduced: 0, producedCount: 0, workerAssigned: false }
     ], 
     machines: [], 
-    workersTotal: 0,
-    workersIdle: 0,
-    activeTab: 'farm',
-    timeScale: 1, 
-    lastTickTime: Date.now(),
-    strike: false,
-    nextPayday: 7
+    workersTotal: 0, workersIdle: 0, activeTab: 'farm', timeScale: 1, lastTickTime: Date.now(), strike: false, nextPayday: 7,
+    upgrades: { fertilizer: 0 }, solarPanels: 0, itCompanies: 0, hasPower: true
 };
 
-/** --- FIREBASE SETUP & PERSISTENCE --- */
+/** --- FIREBASE SETUP --- */
 let db, auth, currentUserId;
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
@@ -313,14 +362,11 @@ async function initFirebase() {
     try {
         const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
         const app = initializeApp(firebaseConfig);
-        auth = getAuth(app);
-        db = getFirestore(app);
+        auth = getAuth(app); db = getFirestore(app);
 
         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
             await signInWithCustomToken(auth, __initial_auth_token);
-        } else {
-            await signInAnonymously(auth);
-        }
+        } else await signInAnonymously(auth);
 
         onAuthStateChanged(auth, async (user) => {
             if (user) {
@@ -328,11 +374,11 @@ async function initFirebase() {
                 await loadState();
                 document.getElementById('loading-screen').style.display = 'none';
                 requestAnimationFrame(gameLoop);
-                setInterval(saveState, 10000); // Save every 10s
+                setInterval(saveState, 10000);
             }
         });
     } catch (e) {
-        console.error("Firebase init failed, running in-memory fallback", e);
+        console.error("Firebase init failed", e);
         document.getElementById('loading-screen').style.display = 'none';
         requestAnimationFrame(gameLoop);
     }
@@ -347,8 +393,10 @@ async function loadState() {
             const savedState = docSnap.data();
             const now = Date.now();
             const deltaMs = now - (savedState.lastTickTime || now);
-            
             state = { ...state, ...savedState };
+            
+            // Clean up 0 items to prevent UI clutter
+            for(let key in state.inventory) { if(state.inventory[key] <= 0) delete state.inventory[key]; }
             
             if (deltaMs > 60000) { 
                 simulateOfflineProgress(deltaMs);
@@ -371,31 +419,25 @@ async function saveState() {
 
 function simulateOfflineProgress(deltaMs) {
     let offlineDays = deltaMs / GAME_CONFIG.dayDurationMs;
-    if (offlineDays > 30) offlineDays = 30; // Cap to max 30 days
-    
+    if (offlineDays > 30) offlineDays = 30; 
     const step = 0.1; 
     while(offlineDays > 0) {
         const currentStep = Math.min(step, offlineDays);
         state.timeElapsedDays += currentStep;
-        
-        if (!state.strike) {
-            processFields();
-            processAnimals();
-            processMachines();
-            processWorkers();
-        }
+        if (!state.strike) { processFields(); processAnimals(); processMachines(); processWorkers(); }
         offlineDays -= currentStep;
     }
 }
 
-/** --- TIME FORMAT HELPER --- */
-function formatRemainingTime(gameDaysRemaining) {
-    if(gameDaysRemaining <= 0) return "Fertig!";
-    let realSeconds = Math.max(0, Math.ceil((gameDaysRemaining * GAME_CONFIG.dayDurationMs / state.timeScale) / 1000));
-    let m = Math.floor(realSeconds / 60);
-    let s = realSeconds % 60;
-    return `${m}m ${s}s`;
+/** --- HELPER --- */
+function formatTime(days) {
+    if(days <= 0) return "Fertig!";
+    let realSecs = Math.max(0, Math.ceil((days * GAME_CONFIG.dayDurationMs / state.timeScale) / 1000));
+    return `${Math.floor(realSecs / 60)}m ${realSecs % 60}s`;
 }
+function getActualGrowTime(plant) { return plant.baseGrowTime * (1 - (state.upgrades?.fertilizer || 0) * 0.1); }
+function addToInventory(id, amount) { if (!state.inventory[id]) state.inventory[id] = 0; state.inventory[id] += amount; }
+function addSeed(id, amount) { if (!state.seeds[id]) state.seeds[id] = 0; state.seeds[id] += amount; }
 
 /** --- GAME LOOP & LOGIK --- */
 function gameLoop() {
@@ -403,20 +445,19 @@ function gameLoop() {
     const dtReal = now - state.lastTickTime;
     state.lastTickTime = now;
 
-    const gameMsPassed = dtReal * state.timeScale;
-    const daysPassed = gameMsPassed / GAME_CONFIG.dayDurationMs;
+    const daysPassed = (dtReal * state.timeScale) / GAME_CONFIG.dayDurationMs;
     state.timeElapsedDays += daysPassed;
 
     if (!state.strike) {
-        processFields();
-        processAnimals();
-        processMachines();
-        processWorkers();
+        processFields(); processAnimals(); processMachines(); processWorkers();
+    }
+    
+    // Passive Income IT-Unternehmen
+    if(state.itCompanies > 0 && !state.strike && state.hasPower) {
+        state.money += state.itCompanies * 100 * daysPassed; // 100 per game day
     }
 
     updateUI();
-    
-    // Smooth updates WITHOUT destroying the DOM
     if(state.activeTab === 'farm') updateFarmDOM();
     if(state.activeTab === 'machines') renderMachinesProgress();
 
@@ -427,45 +468,72 @@ function processFields() {
     state.fields.forEach(field => {
         if (field.plantId && field.workerAssigned) {
             const plant = PLANTS[field.plantId];
-            if (state.timeElapsedDays >= field.plantedAt + plant.growTime) {
+            if (state.timeElapsedDays >= field.plantedAt + getActualGrowTime(plant)) {
                 addToInventory(field.plantId, plant.yield);
-                field.plantedAt = state.timeElapsedDays; // Auto replant
+                field.plantedAt = state.timeElapsedDays;
             }
         }
     });
 }
 
 function processAnimals() {
-    state.animals.forEach(animalData => {
-        const animalDef = ANIMALS[animalData.type];
-        if (state.timeElapsedDays >= animalData.lastProduced + animalDef.cycle) {
-            animalDef.products.forEach(prodId => addToInventory(prodId, 1));
-            animalData.lastProduced = state.timeElapsedDays;
-            animalData.producedCount = (animalData.producedCount || 0) + animalDef.products.length;
+    state.animals.forEach(a => {
+        const def = ANIMALS[a.type];
+        if(def.needsWorker && !a.workerAssigned) return;
+
+        if (state.timeElapsedDays >= a.lastProduced + def.cycle) {
+            def.products.forEach(prodId => addToInventory(prodId, 1));
+            // Pig Truffle Logic
+            if(def.special === 'trueffel' && Math.random() < 0.2) addToInventory('trueffel', 1);
+            
+            a.lastProduced = state.timeElapsedDays;
+            a.producedCount = (a.producedCount || 0) + def.products.length;
         }
     });
 }
 
 function processMachines() {
-    let changed = false;
-    state.machines.forEach(machineData => {
-        const machineDef = MACHINES[machineData.type];
-        if (state.timeElapsedDays >= machineData.lastProduced + machineDef.time) {
-            let canProduce = true;
-            for (let inputId in machineDef.input) {
-                if ((state.inventory[inputId] || 0) < machineDef.input[inputId]) {
-                    canProduce = false; break;
-                }
-            }
+    const factoryCount = state.machines.length;
+    const requiredSolar = Math.floor(factoryCount / 5);
+    state.hasPower = (state.solarPanels || 0) >= requiredSolar;
+    
+    document.getElementById('ui-power-warning').style.display = state.hasPower ? 'none' : 'block';
+    if (!state.hasPower) return;
 
-            if (canProduce) {
-                for (let inputId in machineDef.input) state.inventory[inputId] -= machineDef.input[inputId];
-                for (let outputId in machineDef.output) {
-                    if(machineDef.autoSell) state.money += ITEMS[outputId].sellPrice * machineDef.output[outputId];
-                    else addToInventory(outputId, machineDef.output[outputId]);
-                }
-                machineData.lastProduced = state.timeElapsedDays;
+    let changed = false;
+    state.machines.forEach(m => {
+        const def = MACHINES[m.type];
+        
+        if(def.isRecycler) {
+            if((m.itemsLoaded || 0) >= 5 && state.timeElapsedDays >= m.lastProduced + def.time) {
+                m.itemsLoaded -= 5;
+                addToInventory('plastik', 1);
+                m.lastProduced = state.timeElapsedDays;
                 changed = true;
+            }
+            return;
+        }
+
+        const recipes = def.recipes || [];
+        for(let r of recipes) {
+            if (state.timeElapsedDays >= m.lastProduced + r.time) {
+                let canProduce = true;
+                for (let id in r.input) { if ((state.inventory[id] || 0) < r.input[id]) { canProduce = false; break; } }
+
+                if (canProduce) {
+                    for (let id in r.input) { state.inventory[id] -= r.input[id]; if(state.inventory[id]<=0) delete state.inventory[id]; }
+                    if(r.output) { for (let id in r.output) addToInventory(id, r.output[id]); }
+                    if(r.randomOutput) {
+                        const roll = Math.random(); let cum = 0;
+                        for(let ro of r.randomOutput) {
+                            cum += ro.chance;
+                            if(roll <= cum) { addToInventory(ro.id, 1); break; }
+                        }
+                    }
+                    m.lastProduced = state.timeElapsedDays;
+                    changed = true;
+                    break; // Only 1 recipe processed per tick
+                }
             }
         }
     });
@@ -478,47 +546,34 @@ function processWorkers() {
         if (state.money >= totalSalary) {
             state.money -= totalSalary;
             state.nextPayday += 7;
-            showNotification(`Löhne bezahlt: -${totalSalary}€`, 'info');
         } else {
             state.strike = true;
             document.getElementById('worker-warning').style.display = 'block';
-            showNotification(`Streik! Nicht genug Geld für Löhne!`, 'error');
+            showNotification(`Streik! Löhne konnten nicht gezahlt werden!`, 'error');
         }
     }
-}
-
-function addToInventory(id, amount) {
-    if (!state.inventory[id]) state.inventory[id] = 0;
-    state.inventory[id] += amount;
-}
-function addSeed(id, amount) {
-    if (!state.seeds[id]) state.seeds[id] = 0;
-    state.seeds[id] += amount;
 }
 
 /** --- UI & RENDERING --- */
 function updateUI() {
     document.getElementById('ui-money').innerText = Math.floor(state.money).toLocaleString('de-DE');
-    
-    const currentDay = Math.floor(state.timeElapsedDays) + 1;
-    const dayFraction = state.timeElapsedDays % 1;
-    const hours = Math.floor(dayFraction * 24);
-    const minutes = Math.floor((dayFraction * 24 * 60) % 60);
-    document.getElementById('ui-day').innerText = currentDay;
-    document.getElementById('ui-time').innerText = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    const dayFract = state.timeElapsedDays % 1;
+    document.getElementById('ui-day').innerText = Math.floor(state.timeElapsedDays) + 1;
+    document.getElementById('ui-time').innerText = `${Math.floor(dayFract * 24).toString().padStart(2, '0')}:${Math.floor((dayFract * 24 * 60) % 60).toString().padStart(2, '0')}`;
     document.getElementById('ui-workers').innerText = `${state.workersIdle}/${state.workersTotal}`;
+    
+    const passiveEl = document.getElementById('passive-income-display');
+    if(state.itCompanies > 0) {
+        passiveEl.innerText = `IT-Firmen: +${state.itCompanies * 100}€/Tag`;
+        passiveEl.style.display = 'block';
+    } else { passiveEl.style.display = 'none'; }
 }
 
 function updateFarmNameUI() {
     document.getElementById('ui-farmname').innerText = state.farmName;
     const speedBtn = document.getElementById('btn-speed');
-    if(state.farmName.toLowerCase() === 'admin') {
-        speedBtn.classList.remove('hidden');
-    } else { 
-        speedBtn.classList.add('hidden'); 
-        state.timeScale = 1; 
-        speedBtn.innerText = "Admin Zeitraffer"; 
-    }
+    if(state.farmName.toLowerCase() === 'admin') speedBtn.classList.remove('hidden');
+    else { speedBtn.classList.add('hidden'); state.timeScale = 1; speedBtn.innerText = "Admin Zeitraffer"; }
 }
 
 window.changeTab = function(tabName) {
@@ -539,582 +594,477 @@ function renderContent() {
             <h2 class="text-3xl font-black mb-6 text-[#4e342e]">Meine Felder & Tiere</h2>
             <div class="mb-8">
                 <h3 class="text-xl font-bold mb-4 border-b-4 border-[#D4A373] pb-2 text-[#5d4037]">Felder</h3>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-6" id="fields-container"></div>
+                <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6" id="fields-container"></div>
             </div>
             <div>
                 <h3 class="text-xl font-bold mb-4 border-b-4 border-[#D4A373] pb-2 text-[#5d4037]">Tiergehege</h3>
-                <div class="bg-[#e9edc9] rounded-2xl p-6 border-4 border-[#8B5A2B] min-h-[200px] flex flex-wrap gap-6 items-end relative overflow-visible shadow-inner" id="animals-container">
-                </div>
+                <div class="bg-[#e9edc9] rounded-2xl p-6 border-4 border-[#8B5A2B] min-h-[200px] flex flex-wrap gap-6 items-end relative overflow-visible shadow-inner" id="animals-container"></div>
             </div>
         `;
-        buildFarmStatic(); // Build DOM once
+        buildFarmStatic();
     } else if (state.activeTab === 'inventory') {
-        let html = `
-            <div class="flex justify-between items-center mb-6">
-                <h2 class="text-3xl font-black text-[#4e342e]">Mein Inventar</h2>
-                <button onclick="sellAll()" class="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-xl shadow font-bold">Alles Verkaufen</button>
-            </div>
-            
-            <h3 class="font-bold text-lg mb-2 text-[#5d4037]">Produkte</h3>
-            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-8">
-        `;
+        let html = `<div class="flex justify-between items-center mb-6"><h2 class="text-3xl font-black text-[#4e342e]">Inventar</h2>
+            <button onclick="sellAll()" class="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-xl shadow font-bold">Alles Verkaufen</button></div>
+            <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">`;
         let hasItems = false;
-        for (let itemId in state.inventory) {
-            if (state.inventory[itemId] > 0) {
-                hasItems = true;
-                const item = ITEMS[itemId];
-                html += `
-                    <div class="bg-white border-4 border-[#D4A373] rounded-2xl p-4 flex flex-col items-center shadow-md">
-                        <div class="w-16 h-16 mb-2 drop-shadow-md">${SVG[itemId] || SVG.sprout}</div>
-                        <div class="font-black text-center text-[#4e342e]">${item.name}</div>
-                        <div class="text-gray-500 mb-3 font-bold">Menge: <span class="text-gray-800">${Math.floor(state.inventory[itemId])}</span></div>
-                        <button onclick="sellItem('${itemId}')" class="w-full bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold py-2 rounded-xl shadow-sm">Verkaufen (+${item.sellPrice}€)</button>
-                    </div>
-                `;
+        for (let id in state.inventory) {
+            if (state.inventory[id] > 0) {
+                hasItems = true; const it = ITEMS[id];
+                html += `<div class="bg-white border-4 border-[#D4A373] rounded-2xl p-4 flex flex-col items-center shadow-md">
+                    <div class="w-16 h-16 mb-2 drop-shadow-md">${SVG[id] || SVG.sprout}</div>
+                    <div class="font-black text-center text-[#4e342e] leading-tight">${it.name}</div>
+                    <div class="text-gray-500 mb-2 font-bold text-sm">Menge: <span class="text-gray-800">${Math.floor(state.inventory[id])}</span></div>
+                    <button onclick="sellItem('${id}')" class="w-full bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold py-1 rounded-lg shadow-sm text-sm">Verkaufen (+${it.sellPrice}€)</button>
+                </div>`;
             }
         }
-        if (!hasItems) html += `<div class="col-span-full text-center text-gray-500 py-4 font-bold">Keine Produkte.</div>`;
-        html += `</div><h3 class="font-bold text-lg mb-2 text-[#5d4037]">Saatgut</h3><div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">`;
-        
+        if (!hasItems) html += `<div class="col-span-full text-center text-gray-500 py-4 font-bold">Leer.</div>`;
+        html += `</div><h3 class="font-bold text-lg mb-2 text-[#5d4037]">Saatgut</h3><div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">`;
         let hasSeeds = false;
-        for(let seedId in state.seeds) {
-            if(state.seeds[seedId] > 0) {
+        for(let id in state.seeds) {
+            if(state.seeds[id] > 0) {
                 hasSeeds = true;
-                html += `
-                    <div class="bg-white border-4 border-[#8BC34A] rounded-2xl p-4 flex flex-col items-center shadow-md">
-                        <div class="w-16 h-16 mb-2 drop-shadow-md relative">
-                            ${SVG.saatgut}
-                            <div class="absolute bottom-0 right-0 w-6 h-6">${SVG[seedId] || ''}</div>
-                        </div>
-                        <div class="font-black text-center text-[#4e342e]">${PLANTS[seedId].name}-Samen</div>
-                        <div class="text-gray-500 font-bold">Menge: <span class="text-gray-800">${Math.floor(state.seeds[seedId])}</span></div>
-                    </div>
-                `;
+                html += `<div class="bg-white border-4 border-[#8BC34A] rounded-2xl p-4 flex flex-col items-center shadow-md">
+                    <div class="w-12 h-12 mb-2 relative">${SVG.saatgut}<div class="absolute bottom-0 right-0 w-6 h-6">${SVG[id]}</div></div>
+                    <div class="font-black text-center text-[#4e342e] text-sm">${PLANTS[id].name}</div>
+                    <div class="text-gray-500 font-bold text-sm">Menge: ${Math.floor(state.seeds[id])}</div>
+                </div>`;
             }
         }
-        if(!hasSeeds) html += `<div class="col-span-full text-center text-gray-500 py-4 font-bold">Kein Saatgut. Kaufe welches im Shop.</div>`;
-        html += `</div>`;
-        area.innerHTML = html;
-        
+        if(!hasSeeds) html += `<div class="col-span-full text-center text-gray-500 py-4 font-bold">Kein Saatgut.</div>`;
+        area.innerHTML = html + `</div>`;
     } else if (state.activeTab === 'shop') {
+        const fieldCost = calculateFieldCost();
+        const solarCost = 2000 * (state.solarPanels + 1);
+        const fertLevel = state.upgrades.fertilizer || 0;
+        const fertCost = 500 * (fertLevel + 1);
+        
         area.innerHTML = `
             <h2 class="text-3xl font-black mb-6 text-[#4e342e]">Dorfladen</h2>
-            <div class="space-y-8">
+            <div class="space-y-6">
+                <!-- Upgrades & Infrastruktur -->
                 <section>
-                    <h3 class="text-2xl font-black bg-[#8BC34A] text-white p-3 rounded-t-2xl shadow-sm">Saatgut kaufen</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 border-4 border-[#8BC34A] rounded-b-2xl bg-white">
+                    <h3 class="text-xl font-black bg-[#9C27B0] text-white p-2 rounded-t-xl shadow-sm">Upgrades & Infrastruktur</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 border-4 border-[#9C27B0] rounded-b-xl bg-white">
+                        <div class="border-2 rounded-xl p-3 flex flex-col justify-between shadow-sm">
+                            <div class="font-black text-lg">Erntehelfer</div>
+                            <div class="text-xs text-gray-600 mb-2 font-bold">Erntet automatisch.<br>Lohn: ${GAME_CONFIG.baseWorkerSalary}€/Woche</div>
+                            <button onclick="buyWorker()" class="bg-purple-500 hover:bg-purple-600 text-white p-2 rounded-lg font-bold w-full">200€</button>
+                        </div>
+                        <div class="border-2 rounded-xl p-3 flex flex-col justify-between shadow-sm">
+                            <div class="font-black text-lg">Neues Feld</div>
+                            <div class="text-xs text-gray-600 mb-2 font-bold">Mehr Platz für Pflanzen.</div>
+                            <button onclick="buyField()" class="bg-purple-500 hover:bg-purple-600 text-white p-2 rounded-lg font-bold w-full">${fieldCost}€</button>
+                        </div>
+                        <div class="border-2 rounded-xl p-3 flex flex-col justify-between shadow-sm">
+                            <div class="font-black text-lg">Solaranlage (${state.solarPanels})</div>
+                            <div class="text-xs text-gray-600 mb-2 font-bold">Liefert Strom für 5 Fabriken.</div>
+                            <button onclick="buySolar()" class="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-lg font-bold w-full">${solarCost}€</button>
+                        </div>
+                        <div class="border-2 rounded-xl p-3 flex flex-col justify-between shadow-sm">
+                            <div class="font-black text-lg">Dünger Lvl ${fertLevel}/5</div>
+                            <div class="text-xs text-gray-600 mb-2 font-bold">Pflanzen wachsen 10% schneller.</div>
+                            <button onclick="buyFertilizer()" class="bg-green-600 hover:bg-green-700 text-white p-2 rounded-lg font-bold w-full" ${fertLevel>=5?'disabled':''}>${fertLevel>=5?'Max':fertCost+'€'}</button>
+                        </div>
+                        <div class="border-2 rounded-xl p-3 flex flex-col justify-between shadow-sm">
+                            <div class="font-black text-lg">IT-Unternehmen (${state.itCompanies})</div>
+                            <div class="text-xs text-gray-600 mb-2 font-bold">Passives Einkommen: +100€/Tag</div>
+                            <button onclick="buyITCompany()" class="bg-gray-800 hover:bg-gray-900 text-white p-2 rounded-lg font-bold w-full text-xs">Kosten: 3x Computer, 2x Rechencenter</button>
+                        </div>
+                        <div class="border-2 rounded-xl p-3 flex flex-col justify-between shadow-sm bg-red-50">
+                            <div class="font-black text-red-700 text-lg">Schulden begleichen</div>
+                            <button onclick="endStrike()" class="bg-red-600 hover:bg-red-700 text-white p-2 rounded-lg font-bold w-full mt-2">Bezahlen</button>
+                        </div>
+                    </div>
+                </section>
+                
+                <section>
+                    <h3 class="text-xl font-black bg-[#8BC34A] text-white p-2 rounded-t-xl shadow-sm">Saatgut</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 p-3 border-4 border-[#8BC34A] rounded-b-xl bg-white">
                         ${Object.values(PLANTS).map(p => `
-                            <div class="border-2 border-gray-200 rounded-xl p-3 flex justify-between items-center shadow-sm">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-12 h-12 relative">${SVG.saatgut}<div class="absolute bottom-0 right-0 w-4 h-4">${SVG[p.id]}</div></div>
-                                    <div>
-                                        <div class="font-black text-[#4e342e]">${p.name}-Samen</div>
-                                        <div class="text-xs text-gray-500 font-bold">Wächst: ${p.growTime} Tage</div>
-                                    </div>
-                                </div>
-                                <button onclick="buySeed('${p.id}')" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-xl font-bold shadow">${p.seedCost}€</button>
+                            <div class="border-2 rounded-xl p-2 flex flex-col items-center shadow-sm">
+                                <div class="w-10 h-10 relative mb-1">${SVG.saatgut}<div class="absolute bottom-0 right-0 w-4 h-4">${SVG[p.id]}</div></div>
+                                <div class="font-black text-sm text-center">${p.name}</div>
+                                <button onclick="buySeed('${p.id}')" class="mt-2 w-full bg-green-500 hover:bg-green-600 text-white py-1 rounded font-bold text-sm">${p.seedCost}€</button>
                             </div>
                         `).join('')}
                     </div>
                 </section>
                 <section>
-                    <h3 class="text-2xl font-black bg-[#4FC3F7] text-white p-3 rounded-t-2xl shadow-sm">Tiere kaufen</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 border-4 border-[#4FC3F7] rounded-b-2xl bg-white">
+                    <h3 class="text-xl font-black bg-[#4FC3F7] text-white p-2 rounded-t-xl shadow-sm">Tiere</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 p-3 border-4 border-[#4FC3F7] rounded-b-xl bg-white">
                         ${Object.values(ANIMALS).map(a => `
-                            <div class="border-2 border-gray-200 rounded-xl p-3 flex justify-between items-center shadow-sm">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-12 h-12 drop-shadow-md">${SVG[a.id]}</div>
-                                    <div>
-                                        <div class="font-black text-[#4e342e]">${a.name}</div>
-                                        <div class="text-xs text-gray-500 font-bold">Prod. alle ${a.cycle} Tage</div>
-                                    </div>
-                                </div>
-                                <button onclick="buyAnimal('${a.id}')" class="bg-[#03A9F4] hover:bg-[#0288D1] text-white px-4 py-2 rounded-xl font-bold shadow">${a.cost}€</button>
+                            <div class="border-2 rounded-xl p-2 flex flex-col items-center shadow-sm">
+                                <div class="w-12 h-12 mb-1">${SVG[a.id]}</div>
+                                <div class="font-black text-sm text-center">${a.name}</div>
+                                <button onclick="buyAnimal('${a.id}')" class="mt-2 w-full bg-[#03A9F4] hover:bg-[#0288D1] text-white py-1 rounded font-bold text-sm">${a.cost}€</button>
                             </div>
                         `).join('')}
                     </div>
                 </section>
                 <section>
-                    <h3 class="text-2xl font-black bg-[#FF9800] text-white p-3 rounded-t-2xl shadow-sm">Fabriken bauen</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 border-4 border-[#FF9800] rounded-b-2xl bg-white">
-                        ${Object.values(MACHINES).map(m => `
-                            <div class="border-2 border-gray-200 rounded-xl p-4 shadow-sm flex flex-col">
-                                <div class="flex items-center gap-3 mb-2">
-                                    <div class="w-12 h-12 drop-shadow-md">${SVG[m.id]}</div>
-                                    <div class="font-black text-[#4e342e]">${m.name}</div>
+                    <h3 class="text-xl font-black bg-[#FF9800] text-white p-2 rounded-t-xl shadow-sm">Fabriken</h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 p-3 border-4 border-[#FF9800] rounded-b-xl bg-white">
+                        ${Object.values(MACHINES).map(m => {
+                            if(m.unlock && !m.unlock(state)) return '';
+                            return `
+                            <div class="border-2 rounded-xl p-3 shadow-sm flex flex-col">
+                                <div class="flex items-center gap-2 mb-2"><div class="w-10 h-10">${SVG[m.id]}</div><div class="font-black">${m.name}</div></div>
+                                <div class="text-xs text-gray-600 mb-2 flex-1 font-bold bg-gray-50 p-2 rounded border">
+                                    ${m.recipes ? m.recipes.map(r => `Aus ${Object.keys(r.input).map(k=>ITEMS[k]?.name||k).join(', ')||'Nichts'} -> ${r.output ? Object.keys(r.output).map(k=>ITEMS[k]?.name||k).join(', ') : 'Zufällig'}`).join('<br>') : 'Recycelt Müll'}
                                 </div>
-                                <div class="text-xs text-gray-600 mb-4 flex-1 font-bold bg-gray-50 p-2 rounded-lg border">
-                                    Braucht: <span class="text-red-500">${Object.keys(m.input).map(k => ITEMS[k]?.name || k).join(', ') || 'Nichts'}</span><br>
-                                    Macht: <span class="text-green-600">${Object.keys(m.output).map(k => ITEMS[k]?.name || k).join(', ')}</span>
-                                </div>
-                                <button onclick="buyMachine('${m.id}')" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-xl font-bold w-full shadow">${m.cost}€</button>
-                            </div>
-                        `).join('')}
+                                <button onclick="buyMachine('${m.id}')" class="bg-orange-500 hover:bg-orange-600 text-white p-2 rounded-lg font-bold w-full">${m.cost}€</button>
+                            </div>`
+                        }).join('')}
                     </div>
                 </section>
-                <section>
-                    <h3 class="text-2xl font-black bg-[#9C27B0] text-white p-3 rounded-t-2xl shadow-sm">Upgrades & Personal</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border-4 border-[#9C27B0] rounded-b-2xl bg-white">
-                        <div class="border-2 border-gray-200 rounded-xl p-4 flex justify-between items-center shadow-sm">
-                            <div>
-                                <div class="font-black text-[#4e342e] text-lg">Erntehelfer</div>
-                                <div class="text-xs text-gray-600 font-bold">Erntet/Pflanzt automatisch.</div>
-                                <div class="text-xs text-red-500 font-black mt-1">Lohn: ${GAME_CONFIG.baseWorkerSalary}€ / Woche</div>
-                            </div>
-                            <button onclick="buyWorker()" class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-xl font-bold shadow">200€</button>
-                        </div>
-                        <div class="border-2 border-gray-200 rounded-xl p-4 flex justify-between items-center shadow-sm">
-                            <div>
-                                <div class="font-black text-[#4e342e] text-lg">Neues Feld</div>
-                                <div class="text-xs text-gray-600 font-bold">Erweitere deine Farm.</div>
-                            </div>
-                            <button onclick="buyField()" class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded-xl font-bold shadow">${calculateFieldCost()}€</button>
-                        </div>
-                        <div class="border-2 border-gray-200 rounded-xl p-4 flex justify-between items-center shadow-sm col-span-full bg-red-50">
-                            <div>
-                                <div class="font-black text-red-700 text-lg">Schulden begleichen</div>
-                                <div class="text-xs text-gray-600 font-bold">Streik beenden.</div>
-                            </div>
-                            <button onclick="endStrike()" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-xl font-bold shadow">Bezahlen</button>
-                        </div>
-                    </div>
-                </section>
-            </div>
-        `;
+            </div>`;
     } else if (state.activeTab === 'machines') {
-        area.innerHTML = `
-            <h2 class="text-3xl font-black mb-6 text-[#4e342e]">Meine Fabriken</h2>
-            <div id="machines-container" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
-        `;
+        area.innerHTML = `<h2 class="text-3xl font-black mb-6 text-[#4e342e]">Fabriken & Industrie</h2>
+            <div class="mb-4 bg-blue-50 p-4 rounded-xl border-4 border-blue-200 font-bold text-blue-800 flex justify-between items-center">
+                <span>Strombedarf: ${state.machines.length} Fabriken benötigen ${Math.floor(state.machines.length/5)} Solaranlagen. Du hast ${state.solarPanels}.</span>
+                <span class="${state.hasPower ? 'text-green-600' : 'text-red-600 font-black'}">${state.hasPower ? '✅ Ausreichend' : '❌ Stromausfall'}</span>
+            </div>
+            <div id="machines-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>`;
         renderMachinesProgress();
     }
 }
 
-function calculateFieldCost() {
-    return 100 * Math.pow(2, state.fields.length - 4); 
-}
+function calculateFieldCost() { return 100 * Math.pow(2, state.fields.length - 4); }
 
-/** * Build DOM exactly ONCE per tab visit to prevent visual resets of the progress bar 
- */
 function buildFarmStatic() {
-    const fieldsContainer = document.getElementById('fields-container');
-    const animalsContainer = document.getElementById('animals-container');
-    if(!fieldsContainer || !animalsContainer) return;
+    const fc = document.getElementById('fields-container');
+    const ac = document.getElementById('animals-container');
+    if(!fc || !ac) return;
 
-    fieldsContainer.innerHTML = state.fields.map((field, idx) => `
-        <div class="dirt-field h-40 cursor-pointer group flex flex-col justify-end items-center pb-2" onclick="handleFieldClick(${idx})">
-            ${field.workerAssigned ? `<div class="absolute top-2 right-2 bg-white rounded-full w-8 h-8 flex justify-center items-center shadow-md font-bold text-xs z-10 border-2 border-gray-200"><svg class="w-4 h-4 text-gray-800" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg></div>` : ''}
-            
-            <div id="field-content-${idx}" class="w-20 h-20 mb-1 drop-shadow-xl"></div>
-            
-            <div class="w-11/12 h-3 bg-[#4e342e] rounded-full overflow-hidden border-2 border-[#3e2723] mb-1">
-                <div id="field-bar-${idx}" class="h-full bg-green-400" style="width: 0%"></div>
-            </div>
-            
-            <div id="field-time-${idx}" class="text-[10px] font-black text-white drop-shadow-md">Leer</div>
+    fc.innerHTML = state.fields.map((field, idx) => `
+        <div class="dirt-field h-32 cursor-pointer group flex flex-col justify-end items-center pb-2" onclick="handleFieldClick(${idx})" title="${field.plantId ? 'Wächst: '+PLANTS[field.plantId].name : 'Leer'}">
+            ${field.workerAssigned ? `<div class="absolute top-1 right-1 bg-white rounded-full w-6 h-6 flex justify-center items-center shadow-md font-bold text-xs z-10 border border-gray-300">👷</div>` : ''}
+            <div id="field-content-${idx}" class="w-16 h-16 mb-1 drop-shadow-xl"></div>
+            <div class="w-11/12 h-2 bg-[#4e342e] rounded-full overflow-hidden mb-1"><div id="field-bar-${idx}" class="h-full bg-green-400" style="width:0%"></div></div>
+            <div id="field-time-${idx}" class="text-[9px] font-black text-white drop-shadow-md">Leer</div>
         </div>
     `).join('');
 
-    if(state.animals.length === 0) {
-        animalsContainer.innerHTML = `<span class="text-gray-500 w-full text-center font-bold">Keine Tiere vorhanden.</span>`;
-    } else {
-        animalsContainer.innerHTML = state.animals.map((a) => {
-            const def = ANIMALS[a.type];
-            return `
-            <div class="relative group cursor-pointer" id="animal-node-${a.id}">
-                <div class="w-20 h-20 drop-shadow-xl transform transition hover:scale-110 hover:-translate-y-2">
-                    ${SVG[a.type]}
-                </div>
-                <!-- Tooltip -->
-                <div class="animal-tooltip absolute bg-white border-4 border-[#8B5A2B] p-3 rounded-2xl shadow-xl w-48 text-center" id="tooltip-${a.id}">
-                    <div class="font-black text-[#5d4037] border-b-2 border-gray-200 pb-1 mb-2">${def.name}</div>
-                    
-                    <div class="text-xs font-bold text-gray-600 mb-1">Erzeugt: ${def.products.map(p=>ITEMS[p].name).join(', ')}</div>
-                    <div class="text-xs font-bold text-gray-600 mb-2">Bisher produziert: <span id="prod-count-${a.id}" class="text-green-600">${a.producedCount||0}</span>x</div>
-                    
-                    <div class="w-full bg-gray-200 h-2 rounded-full mb-1 overflow-hidden">
-                        <div id="animal-bar-${a.id}" class="bg-blue-400 h-full" style="width:0%"></div>
-                    </div>
-                    <div id="animal-time-${a.id}" class="text-[10px] font-black text-blue-600 mb-2 text-left"></div>
-
-                    <button onclick="sellAnimal('${a.id}')" class="w-full bg-red-500 hover:bg-red-600 text-white font-bold py-1 rounded-lg text-xs shadow">Verkaufen (+${def.cost/2}€)</button>
-                </div>
-            </div>`;
-        }).join('');
+    if(state.animals.length === 0) ac.innerHTML = `<span class="text-gray-500 w-full text-center font-bold">Keine Tiere.</span>`;
+    else {
+        const groups = {};
+        state.animals.forEach(a => { if(!groups[a.type]) groups[a.type] = []; groups[a.type].push(a); });
+        
+        let html = '';
+        for(let type in groups) {
+            const list = groups[type];
+            if(list.length > 10) html += renderAnimalNode(list[0], list.length, list); 
+            else list.forEach(a => html += renderAnimalNode(a, 1, [a])); 
+        }
+        ac.innerHTML = html;
     }
     updateFarmDOM();
 }
 
-/**
- * Update logic that does NOT rebuild the HTML to prevent flickering
- */
+function renderAnimalNode(a, count, list) {
+    const def = ANIMALS[a.type];
+    const needsWorker = def.needsWorker;
+    const totalProd = list.reduce((sum, an) => sum + (an.producedCount || 0), 0);
+    const hasWorker = list.some(an => an.workerAssigned); 
+    
+    return `
+    <div class="relative group cursor-pointer" onclick="handleAnimalClick('${a.id}', ${count > 1})">
+        ${count > 1 ? `<div class="absolute -top-2 -right-2 bg-red-500 text-white font-black text-xs rounded-full w-6 h-6 flex justify-center items-center z-10 border-2 border-white shadow-md">${count}</div>` : ''}
+        ${needsWorker && hasWorker ? `<div class="absolute -top-2 -left-2 bg-white rounded-full w-6 h-6 flex justify-center items-center shadow-md font-bold text-xs z-10 border border-gray-300">👷</div>` : ''}
+        
+        <div class="w-16 h-16 drop-shadow-xl transform transition hover:scale-110 hover:-translate-y-1">${SVG[a.type]}</div>
+        
+        <div class="animal-tooltip absolute bg-white border-4 border-[#8B5A2B] p-3 rounded-xl shadow-xl w-48 text-center pointer-events-none">
+            <div class="font-black text-[#5d4037] border-b-2 border-gray-200 pb-1 mb-1">${def.name} ${count > 1 ? `(x${count})` : ''}</div>
+            <div class="text-xs font-bold text-gray-600 mb-1">Prod: <span id="prod-count-${a.id}" class="text-green-600">${totalProd}</span>x</div>
+            <div class="w-full bg-gray-200 h-2 rounded-full mb-1 overflow-hidden"><div id="animal-bar-${a.id}" class="bg-blue-400 h-full" style="width:0%"></div></div>
+            <div id="animal-time-${a.id}" class="text-[9px] font-black text-blue-600 mb-2"></div>
+            <div class="text-xs text-gray-500 font-bold mb-1">Klicken für Optionen</div>
+        </div>
+    </div>`;
+}
+
 function updateFarmDOM() {
     if (state.activeTab !== 'farm') return;
 
-    // Fields
     state.fields.forEach((field, idx) => {
         const contentEl = document.getElementById(`field-content-${idx}`);
         const barEl = document.getElementById(`field-bar-${idx}`);
         const timeEl = document.getElementById(`field-time-${idx}`);
-        if(!contentEl || !barEl || !timeEl) return;
+        if(!contentEl) return;
 
         if (!field.plantId) {
-            if(contentEl.dataset.state !== 'empty') {
-                contentEl.innerHTML = '';
-                contentEl.dataset.state = 'empty';
-            }
-            barEl.style.width = '0%';
-            timeEl.innerText = 'Leer';
+            if(contentEl.dataset.state !== 'empty') { contentEl.innerHTML = ''; contentEl.dataset.state = 'empty'; }
+            barEl.style.width = '0%'; timeEl.innerText = 'Leer';
         } else {
             const plant = PLANTS[field.plantId];
+            const growTime = getActualGrowTime(plant);
             const timeGrown = state.timeElapsedDays - field.plantedAt;
-            const progress = Math.min(100, (timeGrown / plant.growTime) * 100);
-            const daysRemaining = plant.growTime - timeGrown;
+            const progress = Math.min(100, (timeGrown / growTime) * 100);
+            const daysRemaining = growTime - timeGrown;
             
             barEl.style.width = `${progress}%`;
             
             if (progress >= 100) {
-                if(contentEl.dataset.state !== 'grown') {
-                    contentEl.innerHTML = SVG[field.plantId];
-                    contentEl.dataset.state = 'grown';
-                    barEl.style.backgroundColor = '#FFC107'; // Yellow
-                }
+                if(contentEl.dataset.state !== 'grown') { contentEl.innerHTML = SVG[field.plantId]; contentEl.dataset.state = 'grown'; barEl.style.backgroundColor = '#FFC107'; }
                 timeEl.innerText = 'Erntebereit!';
             } else {
-                if(contentEl.dataset.state !== 'growing') {
-                    contentEl.innerHTML = SVG.sprout;
-                    contentEl.dataset.state = 'growing';
-                    barEl.style.backgroundColor = '#4CAF50'; // Green
-                }
-                timeEl.innerText = formatRemainingTime(daysRemaining);
+                if(contentEl.dataset.state !== 'growing') { contentEl.innerHTML = SVG.sprout; contentEl.dataset.state = 'growing'; barEl.style.backgroundColor = '#4CAF50'; }
+                timeEl.innerText = formatTime(daysRemaining);
             }
         }
     });
 
-    // Animals Progress
-    state.animals.forEach(a => {
+    const groups = {};
+    state.animals.forEach(a => { if(!groups[a.type]) groups[a.type] = []; groups[a.type].push(a); });
+    
+    for(let type in groups) {
+        const list = groups[type];
+        const a = list[0]; 
         const barEl = document.getElementById(`animal-bar-${a.id}`);
         const timeEl = document.getElementById(`animal-time-${a.id}`);
         const countEl = document.getElementById(`prod-count-${a.id}`);
-        if(barEl && timeEl && countEl) {
+        if(barEl) {
             const def = ANIMALS[a.type];
-            const timeSinceProd = state.timeElapsedDays - a.lastProduced;
-            const prog = Math.min(100, (timeSinceProd / def.cycle) * 100);
-            const daysRemaining = def.cycle - timeSinceProd;
+            const timeSince = state.timeElapsedDays - a.lastProduced;
+            const prog = Math.min(100, (timeSince / def.cycle) * 100);
+            
+            let isWorking = true;
+            if(def.needsWorker && !a.workerAssigned) isWorking = false;
 
             barEl.style.width = `${prog}%`;
-            timeEl.innerText = formatRemainingTime(daysRemaining);
-            if(countEl.innerText !== (a.producedCount || 0).toString()) {
-                countEl.innerText = a.producedCount || 0;
-            }
+            timeEl.innerText = isWorking ? formatTime(def.cycle - timeSince) : 'Arbeiter fehlt!';
+            if(!isWorking) barEl.style.backgroundColor = '#fca5a5';
+            else barEl.style.backgroundColor = '#60a5fa';
+            
+            const totalProd = list.reduce((sum, an) => sum + (an.producedCount || 0), 0);
+            if(countEl.innerText !== totalProd.toString()) countEl.innerText = totalProd;
         }
-    });
+    }
 }
 
 function renderMachinesProgress() {
     const container = document.getElementById('machines-container');
     if(!container) return;
+    if (state.machines.length === 0) { container.innerHTML = `<div class="col-span-full text-center text-gray-500 font-bold py-10">Keine Fabriken.</div>`; return; }
 
-    if (state.machines.length === 0) {
-        container.innerHTML = `<div class="col-span-full text-center text-gray-500 font-bold py-10">Keine Maschinen vorhanden.</div>`;
-        return;
-    }
+    const groups = {};
+    state.machines.forEach(m => { if(!groups[m.type]) groups[m.type] = []; groups[m.type].push(m); });
 
     let html = '';
-    state.machines.forEach((machineData) => {
-        const def = MACHINES[machineData.type];
-        const progress = Math.min(100, ((state.timeElapsedDays - machineData.lastProduced) / def.time) * 100);
+    for(let type in groups) {
+        const list = groups[type];
+        const count = list.length;
+        const def = MACHINES[type];
+        const m = list[0]; 
         
-        let hasInput = true;
-        for (let inputId in def.input) {
-            if ((state.inventory[inputId] || 0) < def.input[inputId]) { hasInput = false; break; }
+        if(def.isRecycler) {
+            const totalLoaded = list.reduce((s, an) => s + (an.itemsLoaded||0), 0);
+            const maxCapacity = count * 5;
+            const prog = Math.min(100, (totalLoaded / maxCapacity) * 100);
+            html += `<div class="bg-white border-4 border-[#D4A373] rounded-2xl p-4 shadow-md flex flex-col relative">
+                ${count > 1 ? `<div class="absolute -top-3 -right-3 bg-red-500 text-white font-black text-sm rounded-full w-8 h-8 flex justify-center items-center z-10 border-2 border-white shadow-md">x${count}</div>` : ''}
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="w-12 h-12">${SVG[def.id]}</div>
+                    <div class="flex-1"><h3 class="text-lg font-black">${def.name}</h3></div>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2 mb-2"><div class="bg-orange-500 h-full" style="width: ${prog}%"></div></div>
+                <div class="text-xs font-bold text-gray-600 mb-2">Items gesamt: ${totalLoaded}/${maxCapacity}</div>
+                <button onclick="openRecycleGroupModal('${type}')" class="mt-auto bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg font-bold w-full shadow">Material hinzufügen</button>
+            </div>`;
+            continue;
         }
 
-        const statusText = hasInput ? (progress >= 100 ? "Fertig!" : "Läuft...") : "Material fehlt";
-        const statusColor = hasInput ? "text-green-600" : "text-red-500";
+        const recipes = def.recipes || [];
+        let activeRecipe = recipes[0];
+        let hasInput = false;
+        
+        for(let r of recipes) {
+            let can = true;
+            for(let id in r.input) { if((state.inventory[id]||0) < r.input[id]) {can=false; break;} }
+            if(can) { hasInput = true; activeRecipe = r; break; }
+        }
+
+        const prog = Math.min(100, ((state.timeElapsedDays - m.lastProduced) / activeRecipe.time) * 100);
+        const statusText = state.hasPower ? (hasInput ? (prog >= 100 ? "Fertig!" : "Läuft...") : "Material fehlt") : "Kein Strom";
+        const statusColor = state.hasPower ? (hasInput ? "text-green-600" : "text-red-500") : "text-red-600";
 
         html += `
-            <div class="bg-white border-4 border-[#D4A373] rounded-2xl p-5 shadow-md">
-                <div class="flex items-center gap-4 mb-4">
-                    <div class="w-16 h-16 bg-gray-50 p-2 rounded-xl border-2 border-gray-200 shadow-inner">${SVG[def.id]}</div>
-                    <div class="flex-1">
-                        <h3 class="text-xl font-black text-[#5d4037]">${def.name}</h3>
-                        <p class="text-sm font-bold ${statusColor}">${statusText}</p>
-                    </div>
+            <div class="bg-white border-4 border-[#D4A373] rounded-2xl p-4 shadow-md flex flex-col relative opacity-${state.hasPower? '100' : '60'}">
+                ${count > 1 ? `<div class="absolute -top-3 -right-3 bg-red-500 text-white font-black text-sm rounded-full w-8 h-8 flex justify-center items-center z-10 border-2 border-white shadow-md">x${count}</div>` : ''}
+                <div class="flex items-center gap-3 mb-2">
+                    <div class="w-12 h-12">${SVG[def.id]}</div>
+                    <div class="flex-1"><h3 class="text-lg font-black">${def.name}</h3><p class="text-xs font-bold ${statusColor}">${statusText}</p></div>
                 </div>
-                <div class="w-full bg-gray-200 rounded-full h-3 mb-4 border border-gray-300">
-                  <div class="bg-orange-500 h-full rounded-full" style="width: ${hasInput ? progress : 0}%"></div>
+                <div class="w-full bg-gray-200 rounded-full h-2 mb-3"><div class="bg-orange-500 h-full" style="width: ${hasInput&&state.hasPower ? prog : 0}%"></div></div>
+                <div class="text-[10px] font-bold text-gray-600 flex gap-2">
+                    <div class="bg-gray-50 p-1 flex-1 rounded border"><b>In:</b> ${Object.keys(activeRecipe.input).map(k=>`${activeRecipe.input[k]}x ${ITEMS[k]?.name}`).join(', ') || '-'}</div>
+                    <div class="bg-gray-50 p-1 flex-1 rounded border"><b>Out:</b> ${activeRecipe.output ? Object.keys(activeRecipe.output).map(k=>ITEMS[k]?.name).join(', ') : 'Zufällig'}</div>
                 </div>
-                <div class="text-xs font-bold text-gray-600 grid grid-cols-2 gap-3">
-                    <div class="bg-gray-50 p-2 rounded-xl border-2 border-gray-100">
-                        <span class="uppercase block mb-1 text-gray-400">Eingang:</span>
-                        ${Object.keys(def.input).map(k => `${def.input[k]}x ${ITEMS[k]?.name}`).join('<br>') || 'Nichts'}
-                    </div>
-                    <div class="bg-gray-50 p-2 rounded-xl border-2 border-gray-100">
-                        <span class="uppercase block mb-1 text-gray-400">Ausgang:</span>
-                        ${Object.keys(def.output).map(k => `${def.output[k]}x ${ITEMS[k]?.name}`).join('<br>')}
-                    </div>
-                </div>
-            </div>
-        `;
-    });
+            </div>`;
+    }
     container.innerHTML = html;
 }
 
 /** --- INTERAKTIONEN --- */
-window.handleFieldClick = function(fieldIdx) {
-    const field = state.fields[fieldIdx];
-    
-    if (field.plantId) {
+window.handleFieldClick = function(idx) {
+    const field = state.fields[idx];
+    if (!field.plantId) openModal(`Feld ${idx+1} Bepflanzen`, generatePlantSelectionHTML(idx));
+    else {
         const plant = PLANTS[field.plantId];
-        if (state.timeElapsedDays >= field.plantedAt + plant.growTime) {
+        const ready = state.timeElapsedDays >= field.plantedAt + getActualGrowTime(plant);
+        if (ready) {
             addToInventory(field.plantId, plant.yield);
             field.plantId = null;
-            document.getElementById(`field-content-${fieldIdx}`).dataset.state = 'empty'; // reset local visual state
+            document.getElementById(`field-content-${idx}`).dataset.state = 'empty';
             showNotification(`Ernte: + ${plant.yield}x ${plant.name}`, 'success');
-            buildFarmStatic(); // Rebuild structure since we harvested
+            buildFarmStatic();
         } else {
-            showNotification(`Wächst noch...`, 'info');
+            let html = `<div class="mb-4">Auf diesem Feld wächst aktuell <b>${plant.name}</b>.</div>
+                <button onclick="clearField(${idx})" class="w-full bg-red-500 text-white font-bold py-2 rounded-xl mb-3">Pflanze entfernen (Abbrechen)</button>`;
+            if (state.workersIdle > 0 && !field.workerAssigned) html += `<button onclick="assignWorkerField(${idx})" class="w-full bg-purple-500 text-white font-bold py-2 rounded-xl">Helfer zuweisen</button>`;
+            else if (field.workerAssigned) html += `<button onclick="removeWorkerField(${idx})" class="w-full bg-orange-500 text-white font-bold py-2 rounded-xl">Helfer abziehen</button>`;
+            openModal(`Feld ${idx+1} Verwalten`, html);
         }
-    } else {
-        openModal("Feld bepflanzen", generatePlantSelectionHTML(fieldIdx));
     }
 }
 
-function generatePlantSelectionHTML(fieldIdx) {
-    let html = `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">`;
-    let hasAnySeed = false;
-    for (let id in PLANTS) {
-        const seedCount = state.seeds[id] || 0;
-        if(seedCount > 0) {
-            hasAnySeed = true;
-            const p = PLANTS[id];
-            html += `
-                <button class="bg-green-500 hover:bg-green-600 text-white flex items-center p-3 rounded-xl shadow border-b-4 border-green-700 active:translate-y-1 active:border-b-0" 
-                        onclick="plantSeed(${fieldIdx}, '${id}')">
-                    <div class="w-10 h-10 mr-3 drop-shadow-md">${SVG[id]}</div>
-                    <div class="text-left flex-1">
-                        <div class="font-black text-lg">${p.name} pflanzen</div>
-                        <div class="text-xs font-bold bg-green-700 px-2 py-1 rounded inline-block mt-1">${seedCount} Samen vorrätig</div>
-                    </div>
-                </button>
-            `;
-        }
-    }
-    if(!hasAnySeed) html += `<div class="col-span-full text-center py-4 font-bold text-gray-500">Du hast kein Saatgut im Inventar. Kaufe es zuerst im Shop!</div>`;
+window.handleAnimalClick = function(id, isGrouped) {
+    const aIdx = state.animals.findIndex(an => an.id === id);
+    if(aIdx === -1) return;
+    const a = state.animals[aIdx];
+    const def = ANIMALS[a.type];
     
-    const field = state.fields[fieldIdx];
-    if (state.workersIdle > 0 && !field.workerAssigned) {
-        html += `<div class="col-span-full mt-2 pt-4 border-t-2 border-[#D4A373]">
-            <button onclick="assignWorker(${fieldIdx})" class="w-full bg-purple-500 hover:bg-purple-600 text-white font-black py-3 rounded-xl shadow border-b-4 border-purple-700 flex justify-center items-center">
-                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-                Helfer zuweisen (${state.workersIdle} frei)
-            </button>
-        </div>`;
-    } else if (field.workerAssigned) {
-        html += `<div class="col-span-full mt-2 pt-4 border-t-2 border-[#D4A373]">
-            <button onclick="removeWorker(${fieldIdx})" class="w-full bg-red-500 hover:bg-red-600 text-white font-black py-3 rounded-xl shadow border-b-4 border-red-700 flex justify-center items-center">
-                <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-                Helfer abziehen
-            </button>
-        </div>`;
+    let html = `<div class="mb-4 text-center">Was möchtest du mit dem ${def.name} tun?</div>`;
+    
+    if(def.needsWorker) {
+        if(!a.workerAssigned && state.workersIdle > 0) html += `<button onclick="assignWorkerAnimal('${id}')" class="w-full bg-purple-500 text-white font-bold py-2 rounded-xl mb-3">Helfer zuweisen (braucht 1)</button>`;
+        else if(a.workerAssigned) html += `<button onclick="removeWorkerAnimal('${id}')" class="w-full bg-orange-500 text-white font-bold py-2 rounded-xl mb-3">Helfer abziehen</button>`;
+        else html += `<div class="text-red-500 font-bold mb-3 text-center">Keine freien Arbeiter!</div>`;
     }
-    html += `</div>`;
-    return html;
+
+    html += `<button onclick="sellAnimal('${id}')" class="w-full bg-red-500 text-white font-bold py-2 rounded-xl">Verkaufen (+${def.cost/2}€) ${isGrouped ? '(Verkauft nur 1)' : ''}</button>`;
+    openModal(`${def.name} Verwalten`, html);
 }
 
-window.plantSeed = function(fieldIdx, plantId) {
-    if (state.seeds[plantId] > 0) {
-        state.seeds[plantId]--;
-        state.fields[fieldIdx].plantId = plantId;
-        state.fields[fieldIdx].plantedAt = state.timeElapsedDays;
-        closeModal();
-        buildFarmStatic(); // Rebuild structure since we planted
-    }
-}
-
-window.assignWorker = function(fieldIdx) {
-    if (state.workersIdle > 0) {
-        state.workersIdle--;
-        state.fields[fieldIdx].workerAssigned = true;
-        closeModal();
-        buildFarmStatic();
-    }
-}
-
-window.removeWorker = function(fieldIdx) {
-    if (state.fields[fieldIdx].workerAssigned) {
-        state.fields[fieldIdx].workerAssigned = false;
-        state.workersIdle++;
-        closeModal();
-        buildFarmStatic();
-    }
-}
-
-window.buySeed = function(plantId) {
-    const p = PLANTS[plantId];
-    if (state.money >= p.seedCost) {
-        state.money -= p.seedCost;
-        addSeed(plantId, 1);
-        showNotification(`${p.name}-Samen gekauft!`, 'success');
-    } else showNotification(`Nicht genug Geld!`, 'error');
-}
-
-window.buyAnimal = function(animalId) {
-    const a = ANIMALS[animalId];
-    if(a.max && state.animals.filter(an => an.type === animalId).length >= a.max) {
-        showNotification(`Maximal ${a.max}x erlaubt!`, 'error'); return;
-    }
-    if (state.money >= a.cost) {
-        state.money -= a.cost;
-        state.animals.push({ id: 'a'+Date.now(), type: animalId, lastProduced: state.timeElapsedDays, producedCount: 0 });
-        showNotification(`${a.name} gekauft!`, 'success');
-    } else showNotification(`Nicht genug Geld!`, 'error');
-}
-
-window.sellAnimal = function(id) {
-    const idx = state.animals.findIndex(a => a.id === id);
-    if(idx > -1) {
-        const type = state.animals[idx].type;
-        const refund = ANIMALS[type].cost / 2;
-        state.money += refund;
-        state.animals.splice(idx, 1);
-        showNotification(`${ANIMALS[type].name} verkauft für ${refund}€`, 'success');
-        if(state.activeTab === 'farm') buildFarmStatic(); // Rebuild animal DOM
-    }
-}
-
-window.buyMachine = function(machineId) {
-    const m = MACHINES[machineId];
-    if (state.money >= m.cost) {
-        state.money -= m.cost;
-        state.machines.push({ type: machineId, lastProduced: state.timeElapsedDays });
-        showNotification(`${m.name} gebaut!`, 'success');
-    } else showNotification(`Nicht genug Geld!`, 'error');
-}
-
-window.buyWorker = function() {
-    if (state.money >= 200) {
-        state.money -= 200;
-        state.workersTotal++;
-        state.workersIdle++;
-        showNotification(`Helfer eingestellt!`, 'success');
-        updateUI();
-    } else showNotification(`Nicht genug Geld!`, 'error');
-}
-
-window.buyField = function() {
-    const cost = calculateFieldCost();
-    if (state.money >= cost) {
-        state.money -= cost;
-        state.fields.push({ id: state.fields.length, plantId: null, plantedAt: null, workerAssigned: false });
-        showNotification(`Feld erweitert!`, 'success');
-        renderContent(); 
-    } else showNotification(`Brauche ${cost}€!`, 'error');
-}
-
-window.sellItem = function(itemId) {
-    if (state.inventory[itemId] > 0) {
-        state.inventory[itemId]--;
-        state.money += ITEMS[itemId].sellPrice;
-        renderContent();
-    }
-}
-
-window.sellAll = function() {
-    let totalEarned = 0;
-    for (let id in state.inventory) {
-        if (state.inventory[id] > 0) {
-            totalEarned += state.inventory[id] * ITEMS[id].sellPrice;
-            state.inventory[id] = 0;
+function generatePlantSelectionHTML(idx) {
+    let html = `<div class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto p-1">`;
+    let hasSeed = false;
+    for (let id in PLANTS) {
+        if(state.seeds[id] > 0) {
+            hasSeed = true;
+            html += `<button class="bg-green-500 hover:bg-green-600 text-white flex items-center p-2 rounded-xl shadow" onclick="plantSeed(${idx}, '${id}')">
+                <div class="w-10 h-10 mr-2">${SVG[id]}</div>
+                <div class="text-left flex-1"><div class="font-black text-sm">${PLANTS[id].name}</div><div class="text-xs font-bold bg-green-700 px-1 rounded inline-block">Menge: ${Math.floor(state.seeds[id])}</div></div>
+            </button>`;
         }
     }
-    if(totalEarned > 0) {
-        state.money += totalEarned;
-        showNotification(`Verkauft für ${totalEarned}€!`, 'success');
-        renderContent();
-    } else showNotification(`Nichts zu verkaufen!`, 'info');
+    if(!hasSeed) html += `<div class="col-span-full text-center py-4 font-bold text-gray-500">Kein Saatgut. Kaufe es im Shop!</div>`;
+    return html + `</div>`;
 }
 
-window.endStrike = function() {
-    if(!state.strike) return showNotification(`Kein Streik!`, 'info');
-    const debt = state.workersTotal * GAME_CONFIG.baseWorkerSalary;
-    if(state.money >= debt) {
-        state.money -= debt;
-        state.strike = false;
-        state.nextPayday = state.timeElapsedDays + 7;
-        document.getElementById('worker-warning').style.display = 'none';
-        showNotification(`Schulden bezahlt!`, 'success');
-    } else showNotification(`Nicht genug Geld!`, 'error');
+window.clearField = function(idx) { state.fields[idx].plantId = null; closeModal(); buildFarmStatic(); }
+window.plantSeed = function(idx, pId) { if(state.seeds[pId]>0){ state.seeds[pId]--; state.fields[idx].plantId = pId; state.fields[idx].plantedAt = state.timeElapsedDays; closeModal(); buildFarmStatic(); } }
+window.assignWorkerField = function(idx) { if(state.workersIdle>0){ state.workersIdle--; state.fields[idx].workerAssigned=true; closeModal(); buildFarmStatic(); } }
+window.removeWorkerField = function(idx) { if(state.fields[idx].workerAssigned){ state.fields[idx].workerAssigned=false; state.workersIdle++; closeModal(); buildFarmStatic(); } }
+
+window.assignWorkerAnimal = function(id) {
+    const a = state.animals.find(an => an.id === id);
+    if(a && state.workersIdle>0){ state.workersIdle--; a.workerAssigned=true; closeModal(); buildFarmStatic(); }
+}
+window.removeWorkerAnimal = function(id) {
+    const a = state.animals.find(an => an.id === id);
+    if(a && a.workerAssigned){ a.workerAssigned=false; state.workersIdle++; closeModal(); buildFarmStatic(); }
 }
 
-window.renameFarm = function() {
-    const newName = prompt("Wie soll deine Farm heißen?", state.farmName);
-    if(newName && newName.trim() !== '') {
-        state.farmName = newName.trim();
-        updateFarmNameUI();
+window.buySeed = function(id) { const p=PLANTS[id]; if(state.money>=p.seedCost){state.money-=p.seedCost; addSeed(id,1); showNotification(`${p.name}-Samen!`, 'success'); updateUI(); changeTab('shop');} else showNotification('Zu wenig Geld', 'error'); }
+window.buyAnimal = function(id) { const a=ANIMALS[id]; if(a.max && state.animals.filter(an=>an.type===id).length>=a.max){showNotification(`Maximal ${a.max}!`, 'error'); return;} if(state.money>=a.cost){state.money-=a.cost; state.animals.push({id:'a'+Date.now()+Math.random(), type:id, lastProduced:state.timeElapsedDays, producedCount:0, workerAssigned:false}); showNotification(`${a.name} gekauft!`, 'success'); updateUI();} else showNotification('Zu wenig Geld', 'error'); }
+window.sellAnimal = function(id) { const idx=state.animals.findIndex(a=>a.id===id); if(idx>-1){ const a=state.animals[idx]; state.money+=ANIMALS[a.type].cost/2; if(a.workerAssigned) state.workersIdle++; state.animals.splice(idx,1); closeModal(); buildFarmStatic(); updateUI(); showNotification('Verkauft!', 'success'); } }
+window.buyMachine = function(id) { const m=MACHINES[id]; if(state.money>=m.cost){state.money-=m.cost; state.machines.push({type:id, lastProduced:state.timeElapsedDays, itemsLoaded:0}); showNotification(`${m.name} gebaut!`, 'success'); updateUI(); changeTab('shop');} else showNotification('Zu wenig Geld', 'error'); }
+
+window.buyWorker = function() { if(state.money>=200){state.money-=200; state.workersTotal++; state.workersIdle++; showNotification('Helfer eingestellt!', 'success'); updateUI();} else showNotification('Zu wenig Geld', 'error'); }
+window.buyField = function() { const c=calculateFieldCost(); if(state.money>=c){state.money-=c; state.fields.push({id:state.fields.length, plantId:null, plantedAt:null, workerAssigned:false}); showNotification('Feld erweitert!', 'success'); changeTab('shop');} else showNotification('Zu wenig Geld', 'error'); }
+window.buyFertilizer = function() { const l=state.upgrades.fertilizer||0; const c=500*(l+1); if(l>=5)return; if(state.money>=c){state.money-=c; state.upgrades.fertilizer=l+1; showNotification('Dünger Upgrade!', 'success'); changeTab('shop');} else showNotification('Zu wenig Geld', 'error'); }
+window.buySolar = function() { const c=2000*(state.solarPanels+1); if(state.money>=c){state.money-=c; state.solarPanels++; showNotification('Solaranlage gebaut!', 'success'); changeTab('shop');} else showNotification('Zu wenig Geld', 'error'); }
+window.buyITCompany = function() {
+    if((state.inventory.computer||0)>=3 && (state.inventory.rechencenter||0)>=2) {
+        state.inventory.computer-=3; state.inventory.rechencenter-=2;
+        state.itCompanies++; showNotification('IT-Firma gegründet!', 'success'); changeTab('shop');
+    } else showNotification('Material fehlt!', 'error');
+}
+
+window.sellItem = function(id) { if(state.inventory[id]>0){state.inventory[id]--; state.money+=ITEMS[id].sellPrice; renderContent();} }
+window.sellAll = function() {
+    let e=0; for(let id in state.inventory){if(state.inventory[id]>0){e+=state.inventory[id]*ITEMS[id].sellPrice; delete state.inventory[id];}}
+    if(e>0){state.money+=e; showNotification(`+${e}€`, 'success'); renderContent();}
+}
+window.endStrike = function() { const d=state.workersTotal*GAME_CONFIG.baseWorkerSalary; if(state.money>=d){state.money-=d; state.strike=false; state.nextPayday=state.timeElapsedDays+7; document.getElementById('worker-warning').style.display='none'; showNotification('Schulden bezahlt!', 'success');} else showNotification('Zu wenig Geld!', 'error'); }
+
+window.renameFarm = function() { const n=prompt("Name:", state.farmName); if(n && n.trim()!==''){state.farmName=n.trim(); updateFarmNameUI();} }
+
+window.openRecycleGroupModal = function(type) {
+    const list = state.machines.filter(m => m.type === type);
+    const totalLoaded = list.reduce((s, m) => s + (m.itemsLoaded||0), 0);
+    const maxCapacity = list.length * 5;
+
+    let html = `<div class="mb-4">Wähle ein Item zum Recyceln. (Status: ${totalLoaded}/${maxCapacity})</div><div class="grid grid-cols-2 gap-2 max-h-[50vh] overflow-y-auto">`;
+    for(let id in state.inventory) {
+        if(state.inventory[id] > 0) {
+            html += `<button onclick="recycleItemGroup('${id}', '${type}')" class="bg-gray-100 hover:bg-gray-200 p-2 rounded flex justify-between items-center border">
+                <span class="font-bold">${ITEMS[id].name} (x${Math.floor(state.inventory[id])})</span>
+                <span class="w-8 h-8 drop-shadow-md">${SVG[id]||''}</span>
+            </button>`;
+        }
+    }
+    if(Object.keys(state.inventory).length===0) html += `<div>Inventar leer.</div>`;
+    html += `</div>`;
+    openModal('Recycling', html);
+}
+window.recycleItemGroup = function(id, type) {
+    if(state.inventory[id] > 0) {
+        const target = state.machines.find(m => m.type === type && (m.itemsLoaded||0) < 5);
+        if(target) {
+            state.inventory[id]--;
+            if(state.inventory[id] <= 0) delete state.inventory[id];
+            target.itemsLoaded = (target.itemsLoaded || 0) + 1;
+            
+            const list = state.machines.filter(m => m.type === type);
+            const totalLoaded = list.reduce((s, m) => s + (m.itemsLoaded||0), 0);
+            const maxCapacity = list.length * 5;
+            
+            if(totalLoaded >= maxCapacity) closeModal(); 
+            else openRecycleGroupModal(type); 
+        } else {
+            showNotification('Alle Recycler sind voll!', 'error');
+        }
     }
 }
 
 /** --- MODALS & NOTIFICATIONS --- */
-function openModal(title, content) {
-    document.getElementById('modal-title').innerText = title;
-    document.getElementById('modal-content').innerHTML = content;
-    document.getElementById('modal').classList.remove('hidden');
-}
-
-window.closeModal = function() {
-    document.getElementById('modal').classList.add('hidden');
-}
-
+function openModal(t, c) { document.getElementById('modal-title').innerText=t; document.getElementById('modal-content').innerHTML=c; document.getElementById('modal').classList.remove('hidden'); }
+window.closeModal = function() { document.getElementById('modal').classList.add('hidden'); }
 document.getElementById('modal-close').addEventListener('click', closeModal);
-document.getElementById('modal').addEventListener('click', (e) => {
-    if (e.target.id === 'modal') closeModal();
-});
-
-document.querySelectorAll('.nav-btn').forEach(btn => {
-    btn.addEventListener('click', () => changeTab(btn.dataset.tab));
-});
+document.getElementById('modal').addEventListener('click', (e) => { if (e.target.id === 'modal') closeModal(); });
+document.querySelectorAll('.nav-btn').forEach(b => b.addEventListener('click', () => changeTab(b.dataset.tab)));
 
 const speedBtn = document.getElementById('btn-speed');
 speedBtn.addEventListener('click', () => {
-    if (state.timeScale === 1) {
-        state.timeScale = 60; 
-        speedBtn.innerText = "Zeitraffer: 60x (Admin)";
-        speedBtn.classList.replace('bg-red-500', 'bg-yellow-500');
-        speedBtn.classList.replace('border-red-700', 'border-yellow-600');
-        showNotification("Zeitraffer aktiviert!", "info");
-    } else {
-        state.timeScale = 1;
-        speedBtn.innerText = "Admin Zeitraffer";
-        speedBtn.classList.replace('bg-yellow-500', 'bg-red-500');
-        speedBtn.classList.replace('border-yellow-600', 'border-red-700');
-        showNotification("Echtzeit aktiviert.", "info");
-    }
+    if(state.timeScale===1){ state.timeScale=60; speedBtn.innerText="60x (Admin)"; speedBtn.classList.replace('bg-red-500','bg-yellow-500'); }
+    else { state.timeScale=1; speedBtn.innerText="Admin Zeitraffer"; speedBtn.classList.replace('bg-yellow-500','bg-red-500'); }
 });
 
 function showNotification(msg, type) {
-    const toast = document.createElement('div');
-    toast.className = `fixed bottom-6 right-6 px-6 py-4 rounded-2xl shadow-2xl font-black text-white transform transition-all duration-300 translate-y-20 opacity-0 z-[200] border-b-4`;
-    if(type === 'success') { toast.classList.add('bg-green-500', 'border-green-700'); }
-    else if(type === 'error') { toast.classList.add('bg-red-500', 'border-red-700'); }
-    else { toast.classList.add('bg-blue-500', 'border-blue-700'); }
-    
-    toast.innerText = msg;
-    document.body.appendChild(toast);
-    
-    setTimeout(() => toast.classList.remove('translate-y-20', 'opacity-0'), 10);
-    setTimeout(() => {
-        toast.classList.add('translate-y-20', 'opacity-0');
-        setTimeout(() => toast.remove(), 300);
-    }, 3000);
+    const t = document.createElement('div');
+    t.className = `fixed bottom-6 right-6 px-6 py-4 rounded-2xl shadow-2xl font-black text-white transform transition-all duration-300 translate-y-20 opacity-0 z-[200] border-b-4 ${type==='success'?'bg-green-500 border-green-700':type==='error'?'bg-red-500 border-red-700':'bg-blue-500 border-blue-700'}`;
+    t.innerText = msg; document.body.appendChild(t);
+    setTimeout(() => t.classList.remove('translate-y-20', 'opacity-0'), 10);
+    setTimeout(() => { t.classList.add('translate-y-20', 'opacity-0'); setTimeout(() => t.remove(), 300); }, 3000);
 }
 
-// Start
 initFirebase();
 updateFarmNameUI();
 changeTab('farm');
-
 </script>
 </body>
 </html>
