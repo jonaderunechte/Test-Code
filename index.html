@@ -103,7 +103,7 @@
                 <span class="font-black">Geld:</span> <span id="ui-money">0</span> €
             </div>
             <div class="text-lg font-bold bg-blue-100 text-blue-800 px-4 py-2 rounded-xl border-4 border-blue-400 shadow-sm">
-                Tag <span id="ui-day">1</span> - <span id="ui-time">00:00</span>
+                Tag <span id="ui-day">1</span> - <span id="ui-time">00:00 Uhr</span>
             </div>
             <div class="text-lg font-bold bg-orange-100 text-orange-800 px-4 py-2 rounded-xl border-4 border-orange-400 shadow-sm" title="Freie Arbeiter / Gesamte Arbeiter">
                 Arbeiter: <span id="ui-workers">0/0</span>
@@ -137,6 +137,9 @@
             </button>
             <button class="nav-btn tab-inactive p-4 text-left font-bold text-lg border-b-2 border-[#D4A373] transition flex items-center" data-tab="achievements">
                 <svg class="w-6 h-6 mr-3 text-yellow-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg> Erfolge
+            </button>
+            <button class="nav-btn tab-inactive p-4 text-left font-bold text-lg border-b-2 border-[#D4A373] transition flex items-center" data-tab="settings">
+                ⚙️ Optionen
             </button>
             
             <div class="mt-auto p-4 bg-[#e9edc9] border-t-4 border-[#D4A373] text-sm text-[#4b5563] font-bold">
@@ -377,10 +380,10 @@ let state = {
     machines: [], 
     workersTotal: 0, workersIdle: 0, activeTab: 'farm', timeScale: 1, lastTickTime: Date.now(), strike: false, nextPayday: 7,
     upgrades: { fertilizer: 0 }, solarPanels: 0, itCompanies: 0, hasPower: true,
-    achievements: {} // Speichert freigeschaltete Achievements
+    achievements: {} 
 };
 
-/** --- FIREBASE SETUP --- */
+/** --- FIREBASE & LOCAL STORAGE SETUP --- */
 let db, auth, currentUserId;
 const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
@@ -404,44 +407,69 @@ async function initFirebase() {
             }
         });
     } catch (e) {
-        console.error("Firebase init failed", e);
+        console.error("Firebase init failed. Nutze reinen lokalen Speicher.", e);
+        await loadState();
         document.getElementById('loading-screen').style.display = 'none';
         requestAnimationFrame(gameLoop);
+        setInterval(saveState, 10000);
     }
 }
 
 async function loadState() {
-    if (!currentUserId || !db) return;
+    let localData = null;
     try {
-        const docRef = doc(db, 'artifacts', appId, 'users', currentUserId, 'farmState');
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-            const savedState = docSnap.data();
-            const now = Date.now();
-            const deltaMs = now - (savedState.lastTickTime || now);
-            state = { ...state, ...savedState };
-            if(!state.achievements) state.achievements = {};
-            
-            // Clean up 0 items to prevent UI clutter
-            for(let key in state.inventory) { if(state.inventory[key] <= 0) delete state.inventory[key]; }
-            
-            if (deltaMs > 60000) { 
-                simulateOfflineProgress(deltaMs);
-                showNotification(`Willkommen zurück! Offline-Zeit berechnet.`, 'info');
-            }
-            state.lastTickTime = now;
+        const localStr = localStorage.getItem('jtFarmState');
+        if (localStr) localData = JSON.parse(localStr);
+    } catch(e) {}
+
+    let cloudData = null;
+    if (currentUserId && db) {
+        try {
+            const docRef = doc(db, 'artifacts', appId, 'users', currentUserId, 'farmState');
+            const docSnap = await getDoc(docRef);
+            if (docSnap.exists()) cloudData = docSnap.data();
+        } catch(e) { console.error("Cloud Load failed", e); }
+    }
+
+    // Wähle den neuesten Speicherstand (Lokal vs. Cloud)
+    let bestData = localData;
+    if (cloudData && localData) {
+        if ((cloudData.lastTickTime || 0) > (localData.lastTickTime || 0)) bestData = cloudData;
+    } else if (cloudData) {
+        bestData = cloudData;
+    }
+
+    if (bestData) {
+        const now = Date.now();
+        const deltaMs = now - (bestData.lastTickTime || now);
+        state = { ...state, ...bestData };
+        if(!state.achievements) state.achievements = {};
+        
+        for(let key in state.inventory) { if(state.inventory[key] <= 0) delete state.inventory[key]; }
+        
+        if (deltaMs > 60000) { 
+            simulateOfflineProgress(deltaMs);
+            showNotification(`Willkommen zurück! Offline-Zeit berechnet.`, 'info');
         }
-    } catch(e) { console.error("Load failed", e); }
+        state.lastTickTime = now;
+    }
     updateFarmNameUI();
 }
 
 async function saveState() {
-    if (!currentUserId || !db) return;
     state.lastTickTime = Date.now();
+    
+    // 1. Lokal im Browser speichern
+    try {
+        localStorage.setItem('jtFarmState', JSON.stringify(state));
+    } catch(e) { console.error("Local Save failed", e); }
+
+    // 2. In der Cloud speichern (falls verbunden)
+    if (!currentUserId || !db) return;
     try {
         const docRef = doc(db, 'artifacts', appId, 'users', currentUserId, 'farmState');
         await setDoc(docRef, state);
-    } catch(e) { console.error("Save failed", e); }
+    } catch(e) { console.error("Cloud Save failed", e); }
 }
 
 function simulateOfflineProgress(deltaMs) {
@@ -599,7 +627,7 @@ function updateUI() {
     document.getElementById('ui-money').innerText = Math.floor(state.money).toLocaleString('de-DE');
     const dayFract = state.timeElapsedDays % 1;
     document.getElementById('ui-day').innerText = Math.floor(state.timeElapsedDays) + 1;
-    document.getElementById('ui-time').innerText = `${Math.floor(dayFract * 24).toString().padStart(2, '0')}:${Math.floor((dayFract * 24 * 60) % 60).toString().padStart(2, '0')}`;
+    document.getElementById('ui-time').innerText = `${Math.floor(dayFract * 24).toString().padStart(2, '0')}:${Math.floor((dayFract * 24 * 60) % 60).toString().padStart(2, '0')} Uhr`;
     document.getElementById('ui-workers').innerText = `${state.workersIdle}/${state.workersTotal}`;
     
     const passiveEl = document.getElementById('passive-income-display');
@@ -786,6 +814,22 @@ function renderContent() {
                         </div>
                     </div>`;
                 }).join('')}
+            </div>
+        `;
+    } else if (state.activeTab === 'settings') {
+        area.innerHTML = `
+            <h2 class="text-3xl font-black mb-6 text-[#4e342e]">⚙️ Optionen & Spielstand</h2>
+            <div class="bg-white border-4 border-[#D4A373] rounded-2xl p-6 shadow-md max-w-2xl">
+                <h3 class="text-xl font-bold mb-4">Lokaler Spielstand</h3>
+                <p class="mb-4 text-gray-600 font-bold">Dein Spielstand wird automatisch in deinem Browser (und in der Cloud) gespeichert. Du kannst ihn hier aber zusätzlich exportieren, um ihn auf einem anderen Gerät manuell zu laden.</p>
+                
+                <div class="flex gap-4 mb-8">
+                    <button onclick="exportSave()" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-xl shadow">Exportieren (Code kopieren)</button>
+                    <button onclick="importSave()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-xl shadow">Spielstand Importieren</button>
+                </div>
+
+                <h3 class="text-xl font-bold mb-4 text-red-600">Gefahrenzone</h3>
+                <button onclick="resetGame()" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-xl shadow">Kompletten Spielstand löschen</button>
             </div>
         `;
     }
@@ -1063,6 +1107,40 @@ window.sellAll = function() {
 window.endStrike = function() { const d=state.workersTotal*GAME_CONFIG.baseWorkerSalary; if(state.money>=d){state.money-=d; state.strike=false; state.nextPayday=state.timeElapsedDays+7; document.getElementById('worker-warning').style.display='none'; showNotification('Schulden bezahlt!', 'success');} else showNotification('Zu wenig Geld!', 'error'); }
 
 window.renameFarm = function() { const n=prompt("Name:", state.farmName); if(n && n.trim()!==''){state.farmName=n.trim(); updateFarmNameUI();} }
+
+/* EXPORT / IMPORT FUNKTIONEN */
+window.exportSave = async function() {
+    const saveStr = btoa(JSON.stringify(state));
+    try {
+        await navigator.clipboard.writeText(saveStr);
+        showNotification("Spielstand erfolgreich kopiert!", "success");
+    } catch(err) {
+        prompt("Kopiere diesen Code (Strg+C / Cmd+C):", saveStr);
+    }
+}
+window.importSave = function() {
+    const saveStr = prompt("Füge hier deinen kopierten Spielstand-Code ein:");
+    if(saveStr) {
+        try {
+            const parsed = JSON.parse(atob(saveStr));
+            if(parsed && typeof parsed === 'object') {
+                state = { ...state, ...parsed };
+                saveState();
+                updateFarmNameUI();
+                showNotification("Spielstand erfolgreich geladen!", "success");
+                changeTab('farm');
+            }
+        } catch(e) {
+            showNotification("Fehlerhafter Code!", "error");
+        }
+    }
+}
+window.resetGame = function() {
+    if(confirm("Möchtest du WIRKLICH von vorne anfangen? Dieser Schritt kann nicht rückgängig gemacht werden!")) {
+        localStorage.removeItem('jtFarmState');
+        location.reload();
+    }
+}
 
 window.openRecycleGroupModal = function(type) {
     const list = state.machines.filter(m => m.type === type);
