@@ -72,17 +72,9 @@
             display: flex; flex-direction: column; align-items: center; justify-content: center; color: white;
         }
         
-        .achievement-card {
-            transition: all 0.3s ease;
-        }
-        .achievement-unlocked {
-            border-color: #F59E0B;
-            background: linear-gradient(135deg, #FFFDE7 0%, #FFF8E1 100%);
-        }
-        .achievement-locked {
-            filter: grayscale(100%);
-            opacity: 0.6;
-        }
+        .achievement-card { transition: all 0.3s ease; }
+        .achievement-unlocked { border-color: #F59E0B; background: linear-gradient(135deg, #FFFDE7 0%, #FFF8E1 100%); }
+        .achievement-locked { filter: grayscale(100%); opacity: 0.6; }
     </style>
 </head>
 <body class="min-h-screen text-gray-800 selection:bg-green-300">
@@ -166,7 +158,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getAuth, signInAnonymously, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 /** --- NATIVE SVG ASSETS (Cartoon Design) --- */
@@ -322,35 +314,35 @@ const ITEMS = {
 Object.values(PLANTS).forEach(p => { ITEMS[p.id] = { name: p.name, sellPrice: p.sellPrice }; });
 
 const MACHINES = {
-    muehle: { id: "muehle", name: "Mühle", cost: 600, recipes: [{ input: { weizen: 1 }, output: { mehl: 1 }, time: 0.1 }] },
-    mayofabrik: { id: "mayofabrik", name: "Mayo-Fabrik", cost: 900, recipes: [{ input: { ei: 3 }, output: { mayonnaise: 1 }, time: 0.2 }] },
-    ketchupfabrik: { id: "ketchupfabrik", name: "Ketchup-Fabrik", cost: 800, recipes: [{ input: { tomaten: 3 }, output: { ketchup: 1 }, time: 0.2 }] },
-    kaeserei: { id: "kaeserei", name: "Käserei", cost: 1000, recipes: [{ input: { milch: 2 }, output: { kaese: 1 }, time: 0.5 }] },
-    molkerei: { id: "molkerei", name: "Molkerei", cost: 1200, recipes: [{ input: { schafsmilch: 2 }, output: { schafskaese: 1 }, time: 0.5 }] },
+    muehle: { id: "muehle", name: "Mühle", cost: 600, recipes: [{ name: "Mehl", input: { weizen: 1 }, output: { mehl: 1 }, time: 0.1 }] },
+    mayofabrik: { id: "mayofabrik", name: "Mayo-Fabrik", cost: 900, recipes: [{ name: "Mayonnaise", input: { ei: 3 }, output: { mayonnaise: 1 }, time: 0.2 }] },
+    ketchupfabrik: { id: "ketchupfabrik", name: "Ketchup-Fabrik", cost: 800, recipes: [{ name: "Ketchup", input: { tomaten: 3 }, output: { ketchup: 1 }, time: 0.2 }] },
+    kaeserei: { id: "kaeserei", name: "Käserei", cost: 1000, recipes: [{ name: "Käse", input: { milch: 2 }, output: { kaese: 1 }, time: 0.5 }] },
+    molkerei: { id: "molkerei", name: "Molkerei", cost: 1200, recipes: [{ name: "Schafskäse", input: { schafsmilch: 2 }, output: { schafskaese: 1 }, time: 0.5 }] },
     baeckerei: { id: "baeckerei", name: "Bäckerei", cost: 1200, recipes: [
-        { name: "Kuchen", input: { mehl: 1, ei: 1, zucker: 1, milch: 1, erdbeeren: 1 }, output: { kuchen: 1 }, time: 0.6 },
-        { name: "Brot", input: { mehl: 1, ei: 1 }, output: { brot: 1 }, time: 0.3 }
+        { name: "Brot", input: { mehl: 1, ei: 1 }, output: { brot: 1 }, time: 0.3 },
+        { name: "Kuchen", input: { mehl: 1, ei: 1, zucker: 1, milch: 1, erdbeeren: 1 }, output: { kuchen: 1 }, time: 0.6 }
     ]},
-    gewuerzfabrik: { id: "gewuerzfabrik", name: "Gewürzfabrik", cost: 1500, recipes: [{ input: { rosmarin: 1, wilde_kraeuter: 1 }, output: { gewuerze: 1 }, time: 0.4 }] },
-    weberei: { id: "weberei", name: "Weberei", cost: 1500, recipes: [{ input: { wolle: 2 }, output: { stoff: 1 }, time: 0.5 }] },
-    kissenfabrik: { id: "kissenfabrik", name: "Kissenfabrik", cost: 1600, recipes: [{ input: { federn: 3, stoff: 1 }, output: { kissen: 1 }, time: 0.4 }] },
-    zuckerfabrik: { id: "zuckerfabrik", name: "Zuckerfabrik", cost: 1800, recipes: [{ input: { zuckerrohr: 2 }, output: { zucker: 1 }, time: 0.4 }] },
-    metzgerei: { id: "metzgerei", name: "Metzgerei", cost: 2500, recipes: [{ input: { schweinefleisch: 1 }, output: { wurst: 1 }, time: 0.5 }] },
-    marmeladenfabrik: { id: "marmeladenfabrik", name: "Marmeladenfabrik", cost: 2800, recipes: [{ input: { trauben: 2, erdbeeren: 2, zucker: 1 }, output: { marmelade: 1 }, time: 0.5 }] },
-    brauerei: { id: "brauerei", name: "Brauerei", cost: 3000, recipes: [{ input: { weizen: 3, zucker: 1 }, output: { bier: 1 }, time: 0.6 }] },
-    winzerei: { id: "winzerei", name: "Winzerei", cost: 3500, recipes: [{ input: { trauben: 3, zucker: 1 }, output: { wein: 1 }, time: 0.8 }] },
-    sandwichfabrik: { id: "sandwichfabrik", name: "Sandwichfabrik", cost: 4000, recipes: [{ input: { wurst: 1, brot: 1, kaese: 1, mayonnaise: 1, tomaten: 1, gewuerze: 1 }, output: { sandwich: 1 }, time: 0.8 }] },
-    saftpresse: { id: "saftpresse", name: "Saftpresse", cost: 5000, recipes: [{ input: { apfel: 2 }, output: { apfelsaft: 1 }, time: 1.0 }] },
-    doenerfabrik: { id: "doenerfabrik", name: "Dönerfabrik", cost: 15000, unlock: (s) => s.animals.some(a=>a.type==='doenertier'), recipes: [{ input: { doenerfleisch: 1, magische_sosse: 1, brot: 1 }, output: { sandwich: 5 }, time: 0.5 }] },
+    gewuerzfabrik: { id: "gewuerzfabrik", name: "Gewürzfabrik", cost: 1500, recipes: [{ name: "Gewürze", input: { rosmarin: 1, wilde_kraeuter: 1 }, output: { gewuerze: 1 }, time: 0.4 }] },
+    weberei: { id: "weberei", name: "Weberei", cost: 1500, recipes: [{ name: "Stoff", input: { wolle: 2 }, output: { stoff: 1 }, time: 0.5 }] },
+    kissenfabrik: { id: "kissenfabrik", name: "Kissenfabrik", cost: 1600, recipes: [{ name: "Kissen", input: { federn: 3, stoff: 1 }, output: { kissen: 1 }, time: 0.4 }] },
+    zuckerfabrik: { id: "zuckerfabrik", name: "Zuckerfabrik", cost: 1800, recipes: [{ name: "Zucker", input: { zuckerrohr: 2 }, output: { zucker: 1 }, time: 0.4 }] },
+    metzgerei: { id: "metzgerei", name: "Metzgerei", cost: 2500, recipes: [{ name: "Wurst", input: { schweinefleisch: 1 }, output: { wurst: 1 }, time: 0.5 }] },
+    marmeladenfabrik: { id: "marmeladenfabrik", name: "Marmeladenfabrik", cost: 2800, recipes: [{ name: "Marmelade", input: { trauben: 2, erdbeeren: 2, zucker: 1 }, output: { marmelade: 1 }, time: 0.5 }] },
+    brauerei: { id: "brauerei", name: "Brauerei", cost: 3000, recipes: [{ name: "Bier", input: { weizen: 3, zucker: 1 }, output: { bier: 1 }, time: 0.6 }] },
+    winzerei: { id: "winzerei", name: "Winzerei", cost: 3500, recipes: [{ name: "Wein", input: { trauben: 3, zucker: 1 }, output: { wein: 1 }, time: 0.8 }] },
+    sandwichfabrik: { id: "sandwichfabrik", name: "Sandwichfabrik", cost: 4000, recipes: [{ name: "Sandwich", input: { wurst: 1, brot: 1, kaese: 1, mayonnaise: 1, tomaten: 1, gewuerze: 1 }, output: { sandwich: 1 }, time: 0.8 }] },
+    saftpresse: { id: "saftpresse", name: "Saftpresse", cost: 5000, recipes: [{ name: "Apfelsaft", input: { apfel: 2 }, output: { apfelsaft: 1 }, time: 1.0 }] },
+    doenerfabrik: { id: "doenerfabrik", name: "Dönerfabrik", cost: 15000, unlock: (s) => s.animals.some(a=>a.type==='doenertier') || s.adminUnlockAll, recipes: [{ name: "Super Döner", input: { doenerfleisch: 1, magische_sosse: 1, brot: 1 }, output: { sandwich: 5 }, time: 0.5 }] },
     
     // Industrie & Tech
-    minenschacht: { id: "minenschacht", name: "Minenschacht", cost: 8000, recipes: [{ input: {}, randomOutput: [{id:'eisen', chance:0.4}, {id:'kupfer', chance:0.3}, {id:'stein', chance:0.25}, {id:'gold', chance:0.05}], time: 0.5 }] },
+    minenschacht: { id: "minenschacht", name: "Minenschacht", cost: 8000, recipes: [{ name: "Bergbau", input: {}, randomOutput: [{id:'eisen', chance:0.4}, {id:'kupfer', chance:0.3}, {id:'stein', chance:0.25}, {id:'gold', chance:0.05}], time: 0.5 }] },
     plastikfabrik: { id: "plastikfabrik", name: "Plastikfabrik (Recycling)", cost: 5000, isRecycler: true, time: 0.2 },
-    plastikverarbeitung: { id: "plastikverarbeitung", name: "Plastikverarbeitung", cost: 6000, recipes: [{ input: { plastik: 1 }, randomOutput: [{id:'strandspielzeug', chance:0.4}, {id:'verpackungsmaterial', chance:0.4}, {id:'tupperware', chance:0.2}], time: 0.5 }] },
-    prozessorfabrik: { id: "prozessorfabrik", name: "Prozessorfabrik", cost: 12000, recipes: [{ input: { gold: 1, eisen: 2, plastik: 1 }, output: { computerchips: 2 }, time: 0.8 }] },
+    plastikverarbeitung: { id: "plastikverarbeitung", name: "Plastikverarbeitung", cost: 6000, recipes: [{ name: "Plastikprodukte", input: { plastik: 1 }, randomOutput: [{id:'strandspielzeug', chance:0.4}, {id:'verpackungsmaterial', chance:0.4}, {id:'tupperware', chance:0.2}], time: 0.5 }] },
+    prozessorfabrik: { id: "prozessorfabrik", name: "Prozessorfabrik", cost: 12000, recipes: [{ name: "Chips", input: { gold: 1, eisen: 2, plastik: 1 }, output: { computerchips: 2 }, time: 0.8 }] },
     computerfabrik: { id: "computerfabrik", name: "Computerfabrik", cost: 25000, recipes: [
-        { name: "Rechencenter", input: { server: 4 }, output: { rechencenter: 1 }, time: 2.0 },
-        { name: "Elektronik", input: { computerchips: 2, gold: 1, kupfer: 1, plastik: 1 }, randomOutput: [{id:'computer', chance:0.4}, {id:'handy', chance:0.4}, {id:'server', chance:0.2}], time: 1.0 }
+        { name: "Elektronik", input: { computerchips: 2, gold: 1, kupfer: 1, plastik: 1 }, randomOutput: [{id:'computer', chance:0.4}, {id:'handy', chance:0.4}, {id:'server', chance:0.2}], time: 1.0 },
+        { name: "Rechencenter", input: { server: 4 }, output: { rechencenter: 1 }, time: 2.0 }
     ]}
 };
 
@@ -380,39 +372,46 @@ let state = {
     machines: [], 
     workersTotal: 0, workersIdle: 0, activeTab: 'farm', timeScale: 1, lastTickTime: Date.now(), strike: false, nextPayday: 7,
     upgrades: { fertilizer: 0 }, solarPanels: 0, itCompanies: 0, hasPower: true,
-    achievements: {} 
+    achievements: {}, adminUnlockAll: false
 };
 
 /** --- FIREBASE & LOCAL STORAGE SETUP --- */
-let db, auth, currentUserId;
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+// Firebase Configuration provided by user
+const firebaseConfig = {
+  apiKey: "AIzaSyD0jgwojcplK5AxdLtP1OKXBIuuZkaySKg",
+  authDomain: "game-38294.firebaseapp.com",
+  projectId: "game-38294",
+  storageBucket: "game-38294.firebasestorage.app",
+  messagingSenderId: "203646717713",
+  appId: "1:203646717713:web:938d5df7af849cfd29c6b0"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+let currentUserId = null;
+let isForcedAuthModalOpen = false;
 
 async function initFirebase() {
-    try {
-        const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-        const app = initializeApp(firebaseConfig);
-        auth = getAuth(app); db = getFirestore(app);
-
-        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-            await signInWithCustomToken(auth, __initial_auth_token);
-        } else await signInAnonymously(auth);
-
-        onAuthStateChanged(auth, async (user) => {
-            if (user) {
-                currentUserId = user.uid;
-                await loadState();
-                document.getElementById('loading-screen').style.display = 'none';
-                requestAnimationFrame(gameLoop);
-                setInterval(saveState, 10000);
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            currentUserId = user.uid;
+            if(!user.isAnonymous && isForcedAuthModalOpen) {
+                closeModal();
+                isForcedAuthModalOpen = false;
+                state.timeScale = 1; // Unpause
             }
-        });
-    } catch (e) {
-        console.error("Firebase init failed. Nutze reinen lokalen Speicher.", e);
-        await loadState();
+            await loadState();
+        } else {
+            currentUserId = null;
+            await signInAnonymously(auth);
+        }
         document.getElementById('loading-screen').style.display = 'none';
-        requestAnimationFrame(gameLoop);
-        setInterval(saveState, 10000);
-    }
+    });
+
+    requestAnimationFrame(gameLoop);
+    setInterval(saveState, 10000);
 }
 
 async function loadState() {
@@ -425,13 +424,12 @@ async function loadState() {
     let cloudData = null;
     if (currentUserId && db) {
         try {
-            const docRef = doc(db, 'artifacts', appId, 'users', currentUserId, 'farmState');
+            const docRef = doc(db, 'users', currentUserId, 'game', 'farmState');
             const docSnap = await getDoc(docRef);
             if (docSnap.exists()) cloudData = docSnap.data();
         } catch(e) { console.error("Cloud Load failed", e); }
     }
 
-    // Wähle den neuesten Speicherstand (Lokal vs. Cloud)
     let bestData = localData;
     if (cloudData && localData) {
         if ((cloudData.lastTickTime || 0) > (localData.lastTickTime || 0)) bestData = cloudData;
@@ -454,20 +452,16 @@ async function loadState() {
         state.lastTickTime = now;
     }
     updateFarmNameUI();
+    if(state.activeTab) renderContent();
 }
 
 async function saveState() {
     state.lastTickTime = Date.now();
-    
-    // 1. Lokal im Browser speichern
-    try {
-        localStorage.setItem('jtFarmState', JSON.stringify(state));
-    } catch(e) { console.error("Local Save failed", e); }
+    try { localStorage.setItem('jtFarmState', JSON.stringify(state)); } catch(e) {}
 
-    // 2. In der Cloud speichern (falls verbunden)
-    if (!currentUserId || !db) return;
+    if (!currentUserId || !db || auth.currentUser?.isAnonymous) return;
     try {
-        const docRef = doc(db, 'artifacts', appId, 'users', currentUserId, 'farmState');
+        const docRef = doc(db, 'users', currentUserId, 'game', 'farmState');
         await setDoc(docRef, state);
     } catch(e) { console.error("Cloud Save failed", e); }
 }
@@ -484,6 +478,69 @@ function simulateOfflineProgress(deltaMs) {
     }
 }
 
+/** --- AUTHENTICATION UI & LOGIC --- */
+window.showAuthModal = function(forced = false) {
+    isForcedAuthModalOpen = forced;
+    if(forced) state.timeScale = 0; // Pause game during forced login
+    
+    let html = `
+        <div class="flex flex-col gap-4 text-center">
+            ${forced ? `<p class="font-black text-red-600 mb-2">Tag 3 erreicht! Um deinen Fortschritt dauerhaft zu sichern, musst du dich jetzt anmelden oder registrieren.</p>` : ''}
+            <input id="auth-email" type="email" placeholder="E-Mail" class="p-3 border-4 border-gray-300 rounded-xl focus:border-[#8B5A2B] outline-none font-bold">
+            <input id="auth-pw" type="password" placeholder="Passwort" class="p-3 border-4 border-gray-300 rounded-xl focus:border-[#8B5A2B] outline-none font-bold">
+            <div class="flex gap-2 mt-2">
+                <button onclick="handleEmailLogin()" class="flex-1 bg-[#8B5A2B] hover:bg-[#5d4037] text-white font-black py-3 rounded-xl shadow-md border-b-4 border-[#4e342e] active:translate-y-1 active:border-b-0">Login</button>
+                <button onclick="handleEmailRegister()" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-black py-3 rounded-xl shadow-md border-b-4 border-green-800 active:translate-y-1 active:border-b-0">Registrieren</button>
+            </div>
+            <div class="font-black text-gray-400 my-2">ODER</div>
+            <button onclick="handleGoogleLogin()" class="w-full bg-white hover:bg-gray-100 text-gray-800 font-black py-3 rounded-xl shadow-md border-4 border-gray-300 flex justify-center items-center gap-3">
+                <svg class="w-6 h-6" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+                Mit Google anmelden
+            </button>
+        </div>
+    `;
+    openModal("Sichere deine Farm", html, forced);
+}
+
+window.handleEmailLogin = async function() {
+    const email = document.getElementById('auth-email').value;
+    const pw = document.getElementById('auth-pw').value;
+    try {
+        await signInWithEmailAndPassword(auth, email, pw);
+        showNotification("Erfolgreich angemeldet!", "success");
+        if(!isForcedAuthModalOpen) closeModal();
+    } catch(e) { showNotification(e.message, "error"); }
+}
+
+window.handleEmailRegister = async function() {
+    const email = document.getElementById('auth-email').value;
+    const pw = document.getElementById('auth-pw').value;
+    try {
+        await createUserWithEmailAndPassword(auth, email, pw);
+        await saveState(); // Save current local state to their new cloud account
+        showNotification("Erfolgreich registriert!", "success");
+        if(!isForcedAuthModalOpen) closeModal();
+    } catch(e) { showNotification(e.message, "error"); }
+}
+
+window.handleGoogleLogin = async function() {
+    try {
+        const provider = new GoogleAuthProvider();
+        await signInWithPopup(auth, provider);
+        await saveState(); // Save state to their cloud
+        showNotification("Erfolgreich mit Google angemeldet!", "success");
+        if(!isForcedAuthModalOpen) closeModal();
+    } catch(e) { showNotification(e.message, "error"); }
+}
+
+window.handleLogout = async function() {
+    if(confirm("Möchtest du dich wirklich abmelden? Lokale Daten könnten überschrieben werden.")) {
+        await signOut(auth);
+        localStorage.removeItem('jtFarmState');
+        location.reload();
+    }
+}
+
 /** --- HELPER --- */
 function formatTime(days) {
     if(days <= 0) return "Fertig!";
@@ -496,6 +553,8 @@ function addSeed(id, amount) { if (!state.seeds[id]) state.seeds[id] = 0; state.
 
 /** --- GAME LOOP & LOGIK --- */
 function gameLoop() {
+    if(state.timeScale === 0) { requestAnimationFrame(gameLoop); return; } // Paused
+    
     const now = Date.now();
     const dtReal = now - state.lastTickTime;
     state.lastTickTime = now;
@@ -503,10 +562,14 @@ function gameLoop() {
     const daysPassed = (dtReal * state.timeScale) / GAME_CONFIG.dayDurationMs;
     state.timeElapsedDays += daysPassed;
 
-    processFields(); 
-    processAnimals(); 
-    processMachines(); 
-    processWorkers();
+    // Day 3 Auth Check
+    if (state.timeElapsedDays >= 3 && auth.currentUser?.isAnonymous && !isForcedAuthModalOpen) {
+        showAuthModal(true);
+    }
+
+    if (!state.strike) {
+        processFields(); processAnimals(); processMachines(); processWorkers();
+    }
     
     // Passive Income IT-Unternehmen
     if(state.itCompanies > 0 && !state.strike && state.hasPower) {
@@ -584,25 +647,25 @@ function processMachines() {
         }
 
         const recipes = def.recipes || [];
-        for(let r of recipes) {
-            if (state.timeElapsedDays >= m.lastProduced + r.time) {
-                let canProduce = true;
-                for (let id in r.input) { if ((state.inventory[id] || 0) < r.input[id]) { canProduce = false; break; } }
+        const activeRecipeIndex = m.selectedRecipe || 0;
+        const r = recipes[activeRecipeIndex] || recipes[0];
+        
+        if (state.timeElapsedDays >= m.lastProduced + r.time) {
+            let canProduce = true;
+            for (let id in r.input) { if ((state.inventory[id] || 0) < r.input[id]) { canProduce = false; break; } }
 
-                if (canProduce) {
-                    for (let id in r.input) { state.inventory[id] -= r.input[id]; if(state.inventory[id]<=0) delete state.inventory[id]; }
-                    if(r.output) { for (let id in r.output) addToInventory(id, r.output[id]); }
-                    if(r.randomOutput) {
-                        const roll = Math.random(); let cum = 0;
-                        for(let ro of r.randomOutput) {
-                            cum += ro.chance;
-                            if(roll <= cum) { addToInventory(ro.id, 1); break; }
-                        }
+            if (canProduce) {
+                for (let id in r.input) { state.inventory[id] -= r.input[id]; if(state.inventory[id]<=0) delete state.inventory[id]; }
+                if(r.output) { for (let id in r.output) addToInventory(id, r.output[id]); }
+                if(r.randomOutput) {
+                    const roll = Math.random(); let cum = 0;
+                    for(let ro of r.randomOutput) {
+                        cum += ro.chance;
+                        if(roll <= cum) { addToInventory(ro.id, 1); break; }
                     }
-                    m.lastProduced = state.timeElapsedDays;
-                    changed = true;
-                    break; // Only 1 recipe processed per tick
                 }
+                m.lastProduced = state.timeElapsedDays;
+                changed = true;
             }
         }
     });
@@ -615,10 +678,14 @@ function processWorkers() {
         if (state.money >= totalSalary) {
             state.money -= totalSalary;
             state.nextPayday += 7;
+            state.strike = false;
+            document.getElementById('worker-warning').style.display = 'none';
         } else {
-            state.strike = true;
-            document.getElementById('worker-warning').style.display = 'block';
-            showNotification(`Streik! Löhne konnten nicht gezahlt werden!`, 'error');
+            if(!state.strike) {
+                state.strike = true;
+                document.getElementById('worker-warning').style.display = 'block';
+                showNotification(`Streik! Löhne konnten nicht gezahlt werden!`, 'error');
+            }
         }
     }
 }
@@ -827,20 +894,42 @@ function renderContent() {
             </div>
         `;
     } else if (state.activeTab === 'settings') {
+        const isAnon = auth.currentUser?.isAnonymous;
+        
         area.innerHTML = `
             <h2 class="text-3xl font-black mb-6 text-[#4e342e]">⚙️ Optionen & Spielstand</h2>
+            
+            <div class="bg-white border-4 border-[#D4A373] rounded-2xl p-6 shadow-md max-w-2xl mb-6">
+                <h3 class="text-xl font-bold mb-4">Cloud Speicher (Account)</h3>
+                <p class="mb-4 text-gray-600 font-bold">
+                    ${isAnon ? 'Dein Spielstand ist aktuell nur lokal und temporär gespeichert. Melde dich an, um ihn sicher in der Cloud aufzubewahren!' : `Du bist sicher angemeldet (ID: <span class="text-xs">${auth.currentUser.uid}</span>). Dein Fortschritt wird in der Cloud gesichert.`}
+                </p>
+                <div class="flex gap-4">
+                    ${isAnon ? `<button onclick="showAuthModal()" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-xl shadow">Account erstellen / Anmelden</button>` : `<button onclick="handleLogout()" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-xl shadow">Abmelden</button>`}
+                </div>
+            </div>
+            
             <div class="bg-white border-4 border-[#D4A373] rounded-2xl p-6 shadow-md max-w-2xl">
-                <h3 class="text-xl font-bold mb-4">Lokaler Spielstand</h3>
-                <p class="mb-4 text-gray-600 font-bold">Dein Spielstand wird automatisch in deinem Browser (und in der Cloud) gespeichert. Du kannst ihn hier aber zusätzlich exportieren, um ihn auf einem anderen Gerät manuell zu laden.</p>
-                
+                <h3 class="text-xl font-bold mb-4">Lokaler Spielstand (Code)</h3>
+                <p class="mb-4 text-gray-600 font-bold">Du kannst deinen Spielstand zusätzlich als Code exportieren, um ihn auf einem anderen Gerät manuell zu laden.</p>
                 <div class="flex gap-4 mb-8">
-                    <button onclick="exportSave()" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-xl shadow">Exportieren (Code kopieren)</button>
-                    <button onclick="importSave()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-xl shadow">Spielstand Importieren</button>
+                    <button onclick="exportSave()" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-xl shadow">Code kopieren</button>
+                    <button onclick="importSave()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-xl shadow">Code einfügen</button>
                 </div>
 
                 <h3 class="text-xl font-bold mb-4 text-red-600">Gefahrenzone</h3>
                 <button onclick="resetGame()" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-xl shadow">Kompletten Spielstand löschen</button>
             </div>
+            
+            ${state.farmName.toLowerCase() === 'admin' ? `
+            <div class="bg-red-100 border-4 border-red-500 rounded-2xl p-6 shadow-md max-w-2xl mt-6">
+                <h3 class="text-xl font-black text-red-700 mb-4">Admin Panel</h3>
+                <div class="flex flex-wrap gap-4">
+                    <button onclick="adminGiveMoney()" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-xl shadow">+1.000.000€</button>
+                    <button onclick="adminTriggerStrike()" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-xl shadow">Streik auslösen</button>
+                    <button onclick="adminUnlockAll()" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-xl shadow">Alle Fabriken freischalten</button>
+                </div>
+            </div>` : ''}
         `;
     }
 }
@@ -971,6 +1060,11 @@ function updateSingleAnimalNode(a, list) {
     }
 }
 
+window.changeRecipe = function(type, recipeIndex) {
+    state.machines.filter(m => m.type === type).forEach(m => m.selectedRecipe = parseInt(recipeIndex));
+    renderMachinesProgress();
+}
+
 function renderMachinesProgress() {
     const container = document.getElementById('machines-container');
     if(!container) return;
@@ -1004,18 +1098,23 @@ function renderMachinesProgress() {
         }
 
         const recipes = def.recipes || [];
-        let activeRecipe = recipes[0];
-        let hasInput = false;
-        
-        for(let r of recipes) {
-            let can = true;
-            for(let id in r.input) { if((state.inventory[id]||0) < r.input[id]) {can=false; break;} }
-            if(can) { hasInput = true; activeRecipe = r; break; }
-        }
+        const activeRecipeIndex = m.selectedRecipe || 0;
+        const activeRecipe = recipes[activeRecipeIndex] || recipes[0];
+        let hasInput = true;
+        for(let id in activeRecipe.input) { if((state.inventory[id]||0) < activeRecipe.input[id]) {hasInput=false; break;} }
 
         const prog = Math.min(100, ((state.timeElapsedDays - m.lastProduced) / activeRecipe.time) * 100);
         const statusText = state.hasPower ? (hasInput ? (prog >= 100 ? "Fertig!" : "Läuft...") : "Material fehlt") : "Kein Strom";
         const statusColor = state.hasPower ? (hasInput ? "text-green-600" : "text-red-500") : "text-red-600";
+
+        let recipeSelector = '';
+        if (recipes.length > 1) {
+            recipeSelector = `
+                <select onchange="changeRecipe('${type}', this.value)" class="w-full text-xs font-bold p-1 rounded border mb-2 bg-gray-50 outline-none cursor-pointer">
+                    ${recipes.map((r, i) => `<option value="${i}" ${i === activeRecipeIndex ? 'selected' : ''}>${r.name || 'Rezept '+(i+1)}</option>`).join('')}
+                </select>
+            `;
+        }
 
         html += `
             <div class="bg-white border-4 border-[#D4A373] rounded-2xl p-4 shadow-md flex flex-col relative opacity-${state.hasPower? '100' : '60'}">
@@ -1024,6 +1123,7 @@ function renderMachinesProgress() {
                     <div class="w-12 h-12">${SVG[def.id]}</div>
                     <div class="flex-1"><h3 class="text-lg font-black">${def.name}</h3><p class="text-xs font-bold ${statusColor}">${statusText}</p></div>
                 </div>
+                ${recipeSelector}
                 <div class="w-full bg-gray-200 rounded-full h-2 mb-3"><div class="bg-orange-500 h-full" style="width: ${hasInput&&state.hasPower ? prog : 0}%"></div></div>
                 <div class="text-[10px] font-bold text-gray-600 flex gap-2">
                     <div class="bg-gray-50 p-1 flex-1 rounded border"><b>In:</b> ${Object.keys(activeRecipe.input).map(k=>`${activeRecipe.input[k]}x ${ITEMS[k]?.name}`).join(', ') || '-'}</div>
@@ -1108,7 +1208,7 @@ window.removeWorkerAnimal = function(id) {
 window.buySeed = function(id) { const p=PLANTS[id]; if(state.money>=p.seedCost){state.money-=p.seedCost; addSeed(id,1); showNotification(`${p.name}-Samen!`, 'success'); updateUI(); changeTab('shop');} else showNotification('Zu wenig Geld', 'error'); }
 window.buyAnimal = function(id) { const a=ANIMALS[id]; if(a.max && state.animals.filter(an=>an.type===id).length>=a.max){showNotification(`Maximal ${a.max}!`, 'error'); return;} if(state.money>=a.cost){state.money-=a.cost; state.animals.push({id:'a'+Date.now()+Math.random(), type:id, lastProduced:state.timeElapsedDays, producedCount:0, workerAssigned:false}); showNotification(`${a.name} gekauft!`, 'success'); updateUI();} else showNotification('Zu wenig Geld', 'error'); }
 window.sellAnimal = function(id) { const idx=state.animals.findIndex(a=>a.id===id); if(idx>-1){ const a=state.animals[idx]; state.money+=ANIMALS[a.type].cost/2; if(a.workerAssigned) state.workersIdle++; state.animals.splice(idx,1); closeModal(); buildFarmStatic(); updateUI(); showNotification('Verkauft!', 'success'); } }
-window.buyMachine = function(id) { const m=MACHINES[id]; if(state.money>=m.cost){state.money-=m.cost; state.machines.push({type:id, lastProduced:state.timeElapsedDays, itemsLoaded:0}); showNotification(`${m.name} gebaut!`, 'success'); updateUI(); changeTab('shop');} else showNotification('Zu wenig Geld', 'error'); }
+window.buyMachine = function(id) { const m=MACHINES[id]; if(state.money>=m.cost){state.money-=m.cost; state.machines.push({type:id, lastProduced:state.timeElapsedDays, itemsLoaded:0, selectedRecipe: 0}); showNotification(`${m.name} gebaut!`, 'success'); updateUI(); changeTab('shop');} else showNotification('Zu wenig Geld', 'error'); }
 
 window.buyWorker = function() { if(state.money>=200){state.money-=200; state.workersTotal++; state.workersIdle++; showNotification('Helfer eingestellt!', 'success'); updateUI();} else showNotification('Zu wenig Geld', 'error'); }
 window.buyField = function() { const c=calculateFieldCost(); if(state.money>=c){state.money-=c; state.fields.push({id:state.fields.length, plantId:null, plantedAt:null, workerAssigned:false}); showNotification('Feld erweitert!', 'success'); changeTab('shop');} else showNotification('Zu wenig Geld', 'error'); }
@@ -1133,7 +1233,12 @@ window.endStrike = function() {
     else showNotification('Zu wenig Geld!', 'error'); 
 }
 
-window.renameFarm = function() { const n=prompt("Name:", state.farmName); if(n && n.trim()!==''){state.farmName=n.trim(); updateFarmNameUI();} }
+window.renameFarm = function() { const n=prompt("Name:", state.farmName); if(n && n.trim()!==''){state.farmName=n.trim(); updateFarmNameUI(); if(state.activeTab === 'settings') renderContent();} }
+
+/* ADMIN FUNKTIONEN */
+window.adminGiveMoney = function() { state.money += 1000000; updateUI(); showNotification("Admin: +1M€", "success"); }
+window.adminTriggerStrike = function() { state.money = 0; state.strike = true; document.getElementById('worker-warning').style.display = 'block'; showNotification("Admin: Streik ausgelöst!", "error"); renderContent(); }
+window.adminUnlockAll = function() { state.adminUnlockAll = true; showNotification("Admin: Fabriken freigeschaltet!", "success"); }
 
 /* EXPORT / IMPORT FUNKTIONEN */
 window.exportSave = async function() {
@@ -1171,13 +1276,19 @@ window.resetGame = function() {
 
 window.openRecycleGroupModal = function(type) {
     const list = state.machines.filter(m => m.type === type);
+    if(list.length === 0) return;
+    
+    // The target is the first machine in this group that has space
+    const targetIdx = state.machines.findIndex(m => m.type === type && (m.itemsLoaded||0) < 5);
+    
     const totalLoaded = list.reduce((s, m) => s + (m.itemsLoaded||0), 0);
     const maxCapacity = list.length * 5;
 
     let html = `<div class="mb-4">Wähle ein Item zum Recyceln. (Status: ${totalLoaded}/${maxCapacity})</div><div class="grid grid-cols-2 gap-2 max-h-[50vh] overflow-y-auto">`;
     for(let id in state.inventory) {
         if(state.inventory[id] > 0) {
-            html += `<button onclick="recycleItemGroup('${id}', '${type}')" class="bg-gray-100 hover:bg-gray-200 p-2 rounded flex justify-between items-center border">
+            // We pass the exact machine index we want to fill to ensure it works properly
+            html += `<button onclick="recycleItemGroup('${id}', ${targetIdx})" class="bg-gray-100 hover:bg-gray-200 p-2 rounded flex justify-between items-center border">
                 <span class="font-bold">${ITEMS[id].name} (x${Math.floor(state.inventory[id])})</span>
                 <span class="w-8 h-8 drop-shadow-md">${SVG[id]||''}</span>
             </button>`;
@@ -1187,31 +1298,41 @@ window.openRecycleGroupModal = function(type) {
     html += `</div>`;
     openModal('Recycling', html);
 }
-window.recycleItemGroup = function(id, type) {
+
+window.recycleItemGroup = function(id, targetIdx) {
+    if(targetIdx === -1) {
+        showNotification('Alle Recycler sind voll!', 'error');
+        return;
+    }
     if(state.inventory[id] > 0) {
-        const target = state.machines.find(m => m.type === type && (m.itemsLoaded||0) < 5);
-        if(target) {
-            state.inventory[id]--;
-            if(state.inventory[id] <= 0) delete state.inventory[id];
-            target.itemsLoaded = (target.itemsLoaded || 0) + 1;
-            
-            const list = state.machines.filter(m => m.type === type);
-            const totalLoaded = list.reduce((s, m) => s + (m.itemsLoaded||0), 0);
-            const maxCapacity = list.length * 5;
-            
-            if(totalLoaded >= maxCapacity) closeModal(); 
-            else openRecycleGroupModal(type); 
-        } else {
-            showNotification('Alle Recycler sind voll!', 'error');
-        }
+        state.inventory[id]--;
+        if(state.inventory[id] <= 0) delete state.inventory[id];
+        
+        const target = state.machines[targetIdx];
+        target.itemsLoaded = (target.itemsLoaded || 0) + 1;
+        
+        const type = target.type;
+        const list = state.machines.filter(m => m.type === type);
+        const totalLoaded = list.reduce((s, m) => s + (m.itemsLoaded||0), 0);
+        const maxCapacity = list.length * 5;
+        
+        if(totalLoaded >= maxCapacity) closeModal(); 
+        else openRecycleGroupModal(type); 
     }
 }
 
 /** --- MODALS & NOTIFICATIONS --- */
-function openModal(t, c) { document.getElementById('modal-title').innerText=t; document.getElementById('modal-content').innerHTML=c; document.getElementById('modal').classList.remove('hidden'); }
-window.closeModal = function() { document.getElementById('modal').classList.add('hidden'); }
+function openModal(t, c, forced = false) { 
+    document.getElementById('modal-title').innerText=t; 
+    document.getElementById('modal-content').innerHTML=c; 
+    document.getElementById('modal-close').style.display = forced ? 'none' : 'block';
+    document.getElementById('modal').classList.remove('hidden'); 
+}
+window.closeModal = function() { 
+    if(!isForcedAuthModalOpen) document.getElementById('modal').classList.add('hidden'); 
+}
 document.getElementById('modal-close').addEventListener('click', closeModal);
-document.getElementById('modal').addEventListener('click', (e) => { if (e.target.id === 'modal') closeModal(); });
+document.getElementById('modal').addEventListener('click', (e) => { if (e.target.id === 'modal' && !isForcedAuthModalOpen) closeModal(); });
 document.querySelectorAll('.nav-btn').forEach(b => b.addEventListener('click', () => changeTab(b.dataset.tab)));
 
 const speedBtn = document.getElementById('btn-speed');
