@@ -380,7 +380,8 @@ let state = {
     machines: [], 
     workersTotal: 0, workersIdle: 0, activeTab: 'farm', timeScale: 1, lastTickTime: Date.now(), strike: false, nextPayday: 7,
     upgrades: { fertilizer: 0 }, solarPanels: 0, itCompanies: 0, hasPower: true,
-    achievements: {} 
+    achievements: {},
+    machineRecipes: {} // Speichert das ausgewählte Rezept für Fabriken
 };
 
 /** --- FIREBASE & LOCAL STORAGE SETUP --- */
@@ -444,6 +445,7 @@ async function loadState() {
         const deltaMs = now - (bestData.lastTickTime || now);
         state = { ...state, ...bestData };
         if(!state.achievements) state.achievements = {};
+        if(!state.machineRecipes) state.machineRecipes = {};
         
         for(let key in state.inventory) { if(state.inventory[key] <= 0) delete state.inventory[key]; }
         
@@ -517,7 +519,7 @@ function gameLoop() {
     updateUI();
     
     if(state.activeTab === 'farm') updateFarmDOM();
-    if(state.activeTab === 'machines') renderMachinesProgress();
+    if(state.activeTab === 'machines') updateMachinesDOM();
 
     requestAnimationFrame(gameLoop);
 }
@@ -584,25 +586,25 @@ function processMachines() {
         }
 
         const recipes = def.recipes || [];
-        for(let r of recipes) {
-            if (state.timeElapsedDays >= m.lastProduced + r.time) {
-                let canProduce = true;
-                for (let id in r.input) { if ((state.inventory[id] || 0) < r.input[id]) { canProduce = false; break; } }
+        const activeIdx = (state.machineRecipes && state.machineRecipes[m.type]) || 0;
+        const r = recipes[activeIdx];
+        
+        if (state.timeElapsedDays >= m.lastProduced + r.time) {
+            let canProduce = true;
+            for (let id in r.input) { if ((state.inventory[id] || 0) < r.input[id]) { canProduce = false; break; } }
 
-                if (canProduce) {
-                    for (let id in r.input) { state.inventory[id] -= r.input[id]; if(state.inventory[id]<=0) delete state.inventory[id]; }
-                    if(r.output) { for (let id in r.output) addToInventory(id, r.output[id]); }
-                    if(r.randomOutput) {
-                        const roll = Math.random(); let cum = 0;
-                        for(let ro of r.randomOutput) {
-                            cum += ro.chance;
-                            if(roll <= cum) { addToInventory(ro.id, 1); break; }
-                        }
+            if (canProduce) {
+                for (let id in r.input) { state.inventory[id] -= r.input[id]; if(state.inventory[id]<=0) delete state.inventory[id]; }
+                if(r.output) { for (let id in r.output) addToInventory(id, r.output[id]); }
+                if(r.randomOutput) {
+                    const roll = Math.random(); let cum = 0;
+                    for(let ro of r.randomOutput) {
+                        cum += ro.chance;
+                        if(roll <= cum) { addToInventory(ro.id, 1); break; }
                     }
-                    m.lastProduced = state.timeElapsedDays;
-                    changed = true;
-                    break; // Only 1 recipe processed per tick
                 }
+                m.lastProduced = state.timeElapsedDays;
+                changed = true;
             }
         }
     });
@@ -804,7 +806,7 @@ function renderContent() {
                 <span class="${state.hasPower ? 'text-green-600' : 'text-red-600 font-black'}">${state.hasPower ? '✅ Ausreichend' : '❌ Stromausfall'}</span>
             </div>
             <div id="machines-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>`;
-        renderMachinesProgress();
+        buildMachinesStatic();
     } else if (state.activeTab === 'achievements') {
         area.innerHTML = `
             <h2 class="text-3xl font-black mb-6 text-[#4e342e]">🏆 Erfolge</h2>
@@ -909,69 +911,13 @@ function updateFarmDOM() {
         const timeEl = document.getElementById(`field-time-${idx}`);
         if(!contentEl) return;
 
-        if (!field.plantId) {
-            if(contentEl.dataset.state !== 'empty') { contentEl.innerHTML = ''; contentEl.dataset.state = 'empty'; }
-            barEl.style.width = '0%'; timeEl.innerText = 'Leer';
-        } else {
-            const plant = PLANTS[field.plantId];
-            const growTime = getActualGrowTime(plant);
-            const timeGrown = state.timeElapsedDays - field.plantedAt;
-            const progress = Math.min(100, (timeGrown / growTime) * 100);
-            const daysRemaining = growTime - timeGrown;
-            
-            barEl.style.width = `${progress}%`;
-            
-            if (progress >= 100) {
-                if(contentEl.dataset.state !== 'grown') { contentEl.innerHTML = SVG[field.plantId]; contentEl.dataset.state = 'grown'; barEl.style.backgroundColor = '#FFC107'; }
-                timeEl.innerText = 'Erntebereit!';
-            } else {
-                if(contentEl.dataset.state !== 'growing') { contentEl.innerHTML = SVG.sprout; contentEl.dataset.state = 'growing'; barEl.style.backgroundColor = '#4CAF50'; }
-                timeEl.innerText = formatTime(daysRemaining);
-            }
-        }
-    });
-
-    const groups = {};
-    state.animals.forEach(a => { if(!groups[a.type]) groups[a.type] = []; groups[a.type].push(a); });
-    
-    for(let type in groups) {
-        const list = groups[type];
-        if(list.length > 10) {
-            updateSingleAnimalNode(list[0], list);
-        } else {
-            list.forEach(a => updateSingleAnimalNode(a, [a]));
+            const totalProd = list.reduce((sum, an) => sum + (an.producedCount || 0), 0);
+            if(countEl.innerText !== totalProd.toString()) countEl.innerText = totalProd;
         }
     }
 }
 
-function updateSingleAnimalNode(a, list) {
-    const barEl = document.getElementById(`animal-bar-${a.id}`);
-    const timeEl = document.getElementById(`animal-time-${a.id}`);
-    const countEl = document.getElementById(`prod-count-${a.id}`);
-    if(barEl) {
-        const def = ANIMALS[a.type];
-        const timeSince = state.timeElapsedDays - a.lastProduced;
-        const prog = Math.min(100, (timeSince / def.cycle) * 100);
-        
-        let isWorking = true;
-        if(def.needsWorker && (!a.workerAssigned || state.strike)) isWorking = false;
-
-        barEl.style.width = `${prog}%`;
-        
-        if(!isWorking) {
-            barEl.style.backgroundColor = '#fca5a5';
-            timeEl.innerText = state.strike ? 'Streik!' : 'Arbeiter fehlt!';
-        } else {
-            barEl.style.backgroundColor = '#60a5fa';
-            timeEl.innerText = formatTime(def.cycle - timeSince);
-        }
-        
-        const totalProd = list.reduce((sum, an) => sum + (an.producedCount || 0), 0);
-        if(countEl.innerText !== totalProd.toString()) countEl.innerText = totalProd;
-    }
-}
-
-function renderMachinesProgress() {
+function buildMachinesStatic() {
     const container = document.getElementById('machines-container');
     if(!container) return;
     if (state.machines.length === 0) { container.innerHTML = `<div class="col-span-full text-center text-gray-500 font-bold py-10">Keine Fabriken.</div>`; return; }
@@ -984,54 +930,110 @@ function renderMachinesProgress() {
         const list = groups[type];
         const count = list.length;
         const def = MACHINES[type];
-        const m = list[0]; 
         
         if(def.isRecycler) {
-            const totalLoaded = list.reduce((s, an) => s + (an.itemsLoaded||0), 0);
-            const maxCapacity = count * 5;
-            const prog = Math.min(100, (totalLoaded / maxCapacity) * 100);
             html += `<div class="bg-white border-4 border-[#D4A373] rounded-2xl p-4 shadow-md flex flex-col relative">
                 ${count > 1 ? `<div class="absolute -top-3 -right-3 bg-red-500 text-white font-black text-sm rounded-full w-8 h-8 flex justify-center items-center z-10 border-2 border-white shadow-md">x${count}</div>` : ''}
                 <div class="flex items-center gap-3 mb-2">
                     <div class="w-12 h-12">${SVG[def.id]}</div>
                     <div class="flex-1"><h3 class="text-lg font-black">${def.name}</h3></div>
                 </div>
-                <div class="w-full bg-gray-200 rounded-full h-2 mb-2"><div class="bg-orange-500 h-full" style="width: ${prog}%"></div></div>
-                <div class="text-xs font-bold text-gray-600 mb-2">Items gesamt: ${totalLoaded}/${maxCapacity}</div>
+                <div class="w-full bg-gray-200 rounded-full h-2 mb-2"><div id="machine-bar-${type}" class="bg-orange-500 h-full" style="width: 0%"></div></div>
+                <div id="machine-status-${type}" class="text-xs font-bold text-gray-600 mb-2">Items gesamt: 0/0</div>
                 <button onclick="openRecycleGroupModal('${type}')" class="mt-auto bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg font-bold w-full shadow">Material hinzufügen</button>
             </div>`;
-            continue;
-        }
+        } else {
+            const hasMultiple = def.recipes && def.recipes.length > 1;
+            const activeIdx = (state.machineRecipes && state.machineRecipes[type]) || 0;
+            
+            let recipeSelector = '';
+            if(hasMultiple) {
+                recipeSelector = `
+                    <select onchange="changeRecipe('${type}', this.value)" class="w-full bg-gray-100 border-2 border-gray-300 text-gray-700 font-bold py-1 px-2 rounded-lg mb-2 text-xs">
+                        ${def.recipes.map((r, i) => `<option value="${i}" ${i === activeIdx ? 'selected' : ''}>Produziere: ${r.name || (r.output ? Object.keys(r.output).map(k=>ITEMS[k].name).join(', ') : 'Zufall')}</option>`).join('')}
+                    </select>
+                `;
+            }
 
-        const recipes = def.recipes || [];
-        let activeRecipe = recipes[0];
-        let hasInput = false;
-        
-        for(let r of recipes) {
-            let can = true;
-            for(let id in r.input) { if((state.inventory[id]||0) < r.input[id]) {can=false; break;} }
-            if(can) { hasInput = true; activeRecipe = r; break; }
-        }
-
-        const prog = Math.min(100, ((state.timeElapsedDays - m.lastProduced) / activeRecipe.time) * 100);
-        const statusText = state.hasPower ? (hasInput ? (prog >= 100 ? "Fertig!" : "Läuft...") : "Material fehlt") : "Kein Strom";
-        const statusColor = state.hasPower ? (hasInput ? "text-green-600" : "text-red-500") : "text-red-600";
-
-        html += `
+            html += `
             <div class="bg-white border-4 border-[#D4A373] rounded-2xl p-4 shadow-md flex flex-col relative opacity-${state.hasPower? '100' : '60'}">
                 ${count > 1 ? `<div class="absolute -top-3 -right-3 bg-red-500 text-white font-black text-sm rounded-full w-8 h-8 flex justify-center items-center z-10 border-2 border-white shadow-md">x${count}</div>` : ''}
                 <div class="flex items-center gap-3 mb-2">
                     <div class="w-12 h-12">${SVG[def.id]}</div>
-                    <div class="flex-1"><h3 class="text-lg font-black">${def.name}</h3><p class="text-xs font-bold ${statusColor}">${statusText}</p></div>
+                    <div class="flex-1"><h3 class="text-lg font-black">${def.name}</h3><p id="machine-status-text-${type}" class="text-xs font-bold text-gray-500">Lädt...</p></div>
                 </div>
-                <div class="w-full bg-gray-200 rounded-full h-2 mb-3"><div class="bg-orange-500 h-full" style="width: ${hasInput&&state.hasPower ? prog : 0}%"></div></div>
-                <div class="text-[10px] font-bold text-gray-600 flex gap-2">
-                    <div class="bg-gray-50 p-1 flex-1 rounded border"><b>In:</b> ${Object.keys(activeRecipe.input).map(k=>`${activeRecipe.input[k]}x ${ITEMS[k]?.name}`).join(', ') || '-'}</div>
-                    <div class="bg-gray-50 p-1 flex-1 rounded border"><b>Out:</b> ${activeRecipe.output ? Object.keys(activeRecipe.output).map(k=>ITEMS[k]?.name).join(', ') : 'Zufällig'}</div>
+                ${recipeSelector}
+                <div class="w-full bg-gray-200 rounded-full h-2 mb-3"><div id="machine-bar-${type}" class="bg-orange-500 h-full" style="width: 0%"></div></div>
+                <div class="text-[10px] font-bold text-gray-600 flex gap-2" id="machine-io-${type}">
+                    <!-- dynamically updated -->
                 </div>
             </div>`;
+        }
     }
     container.innerHTML = html;
+    updateMachinesDOM();
+}
+
+function updateMachinesDOM() {
+    if (state.activeTab !== 'machines') return;
+
+    const groups = {};
+    state.machines.forEach(m => { if(!groups[m.type]) groups[m.type] = []; groups[m.type].push(m); });
+
+    for(let type in groups) {
+        const list = groups[type];
+        const count = list.length;
+        const def = MACHINES[type];
+        const m = list[0]; 
+
+        const barEl = document.getElementById(`machine-bar-${type}`);
+        const statusEl = document.getElementById(`machine-status-${type}`);
+        const statusTextEl = document.getElementById(`machine-status-text-${type}`);
+        const ioEl = document.getElementById(`machine-io-${type}`);
+
+        if(!barEl) continue;
+
+        if(def.isRecycler) {
+            const totalLoaded = list.reduce((s, an) => s + (an.itemsLoaded||0), 0);
+            const maxCapacity = count * 5;
+            const prog = Math.min(100, (totalLoaded / maxCapacity) * 100);
+            barEl.style.width = `${prog}%`;
+            if(statusEl) statusEl.innerText = `Items gesamt: ${totalLoaded}/${maxCapacity}`;
+        } else {
+            const recipes = def.recipes || [];
+            const activeIdx = (state.machineRecipes && state.machineRecipes[type]) || 0;
+            let activeRecipe = recipes[activeIdx];
+            
+            let hasInput = false;
+            let can = true;
+            for(let id in activeRecipe.input) { if((state.inventory[id]||0) < activeRecipe.input[id]) {can=false; break;} }
+            if(can) hasInput = true;
+
+            const prog = Math.min(100, ((state.timeElapsedDays - m.lastProduced) / activeRecipe.time) * 100);
+            const statusText = state.hasPower ? (hasInput ? (prog >= 100 ? "Fertig!" : "Läuft...") : "Material fehlt") : "Kein Strom";
+            const statusColor = state.hasPower ? (hasInput ? "text-green-600" : "text-red-500") : "text-red-600";
+
+            barEl.style.width = `${hasInput&&state.hasPower ? prog : 0}%`;
+            
+            if(statusTextEl) {
+                statusTextEl.innerText = statusText;
+                statusTextEl.className = `text-xs font-bold ${statusColor}`;
+            }
+
+            if(ioEl) {
+                ioEl.innerHTML = `
+                    <div class="bg-gray-50 p-1 flex-1 rounded border"><b>In:</b> ${Object.keys(activeRecipe.input).map(k=>`${activeRecipe.input[k]}x ${ITEMS[k]?.name}`).join(', ') || '-'}</div>
+                    <div class="bg-gray-50 p-1 flex-1 rounded border"><b>Out:</b> ${activeRecipe.output ? Object.keys(activeRecipe.output).map(k=>ITEMS[k]?.name).join(', ') : 'Zufällig'}</div>
+                `;
+            }
+        }
+    }
+}
+
+window.changeRecipe = function(type, idx) {
+    if(!state.machineRecipes) state.machineRecipes = {};
+    state.machineRecipes[type] = parseInt(idx);
+    buildMachinesStatic();
 }
 
 /** --- INTERAKTIONEN --- */
