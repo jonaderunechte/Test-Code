@@ -355,10 +355,10 @@ const MACHINES = {
 };
 
 const ACHIEVEMENTS = [
-    { id: "money1k", name: "Erster Profit", desc: "Besitze 1.000€", icon: "💰", check: s => s.money >= 1000, reward: 500 },
+    { id: "money5k", name: "Erster Profit", desc: "Besitze 5.000€", icon: "💰", check: s => s.money >= 5000, reward: 1000 },
     { id: "money100k", name: "Kapitalist", desc: "Besitze 100.000€", icon: "🏦", check: s => s.money >= 100000, reward: 10000 },
     { id: "fields8", name: "Großbauer", desc: "Besitze 8 Felder", icon: "🚜", check: s => s.fields.length >= 8, reward: 2000 },
-    { id: "animals10", name: "Streichelzoo", desc: "Besitze 10 Tiere", icon: "🐖", check: s => s.animals.length >= 10, reward: 1000 },
+    { id: "animals10", name: "Streichelzoo", desc: "Besitze 10 Tiere", icon: "🐖", check: s => s.animals.length >= 10, reward: 500 },
     { id: "factories5", name: "Industrialisierung", desc: "Besitze 5 Fabriken", icon: "🏭", check: s => s.machines.length >= 5, reward: 2500 },
     { id: "it_company", name: "Tech-Gigant", desc: "Gründe ein IT-Unternehmen", icon: "💻", check: s => s.itCompanies >= 1, reward: 20000 },
     { id: "doener", name: "Der Gerät", desc: "Besitze ein Dönertier", icon: "🥙", check: s => s.animals.some(a => a.type === 'doenertier'), reward: 10000 }
@@ -503,9 +503,10 @@ function gameLoop() {
     const daysPassed = (dtReal * state.timeScale) / GAME_CONFIG.dayDurationMs;
     state.timeElapsedDays += daysPassed;
 
-    if (!state.strike) {
-        processFields(); processAnimals(); processMachines(); processWorkers();
-    }
+    processFields(); 
+    processAnimals(); 
+    processMachines(); 
+    processWorkers();
     
     // Passive Income IT-Unternehmen
     if(state.itCompanies > 0 && !state.strike && state.hasPower) {
@@ -534,7 +535,7 @@ function checkAchievements() {
 
 function processFields() {
     state.fields.forEach(field => {
-        if (field.plantId && field.workerAssigned) {
+        if (field.plantId && field.workerAssigned && !state.strike) {
             const plant = PLANTS[field.plantId];
             if (state.timeElapsedDays >= field.plantedAt + getActualGrowTime(plant)) {
                 addToInventory(field.plantId, plant.yield);
@@ -547,7 +548,7 @@ function processFields() {
 function processAnimals() {
     state.animals.forEach(a => {
         const def = ANIMALS[a.type];
-        if(def.needsWorker && !a.workerAssigned) return;
+        if(def.needsWorker && (!a.workerAssigned || state.strike)) return;
 
         if (state.timeElapsedDays >= a.lastProduced + def.cycle) {
             def.products.forEach(prodId => addToInventory(prodId, 1));
@@ -739,10 +740,12 @@ function renderContent() {
                             <div class="text-xs text-gray-600 mb-2 font-bold">Passives Einkommen: +100€/Tag</div>
                             <button onclick="buyITCompany()" class="bg-gray-800 hover:bg-gray-900 text-white p-2 rounded-lg font-bold w-full text-xs">Kosten: 3x Computer, 2x Rechencenter</button>
                         </div>
+                        ${state.strike ? `
                         <div class="border-2 rounded-xl p-3 flex flex-col justify-between shadow-sm bg-red-50">
                             <div class="font-black text-red-700 text-lg">Schulden begleichen</div>
-                            <button onclick="endStrike()" class="bg-red-600 hover:bg-red-700 text-white p-2 rounded-lg font-bold w-full mt-2">Bezahlen</button>
-                        </div>
+                            <div class="text-xs text-gray-600 mb-2 font-bold">Beende den Streik.</div>
+                            <button onclick="endStrike()" class="bg-red-600 hover:bg-red-700 text-white p-2 rounded-lg font-bold w-full mt-2">Bezahlen (${state.workersTotal * GAME_CONFIG.baseWorkerSalary}€)</button>
+                        </div>` : ''}
                     </div>
                 </section>
                 
@@ -760,12 +763,19 @@ function renderContent() {
                 </section>
                 <section>
                     <h3 class="text-xl font-black bg-[#4FC3F7] text-white p-2 rounded-t-xl shadow-sm">Tiere</h3>
-                    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 p-3 border-4 border-[#4FC3F7] rounded-b-xl bg-white">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 p-3 border-4 border-[#4FC3F7] rounded-b-xl bg-white">
                         ${Object.values(ANIMALS).map(a => `
-                            <div class="border-2 rounded-xl p-2 flex flex-col items-center shadow-sm">
-                                <div class="w-12 h-12 mb-1">${SVG[a.id]}</div>
-                                <div class="font-black text-sm text-center">${a.name}</div>
-                                <button onclick="buyAnimal('${a.id}')" class="mt-2 w-full bg-[#03A9F4] hover:bg-[#0288D1] text-white py-1 rounded font-bold text-sm">${a.cost}€</button>
+                            <div class="border-2 rounded-xl p-3 flex flex-col shadow-sm">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <div class="w-10 h-10">${SVG[a.id]}</div>
+                                    <div class="font-black text-sm">${a.name}</div>
+                                </div>
+                                <div class="text-[10px] text-gray-600 mb-2 flex-1 font-bold bg-gray-50 p-2 rounded border leading-tight">
+                                    ⏱️ Dauer: ${a.cycle} Tage<br>
+                                    📦 Gibt: ${a.products.map(p=>ITEMS[p].name).join(', ')}
+                                    ${a.special ? `<br>✨ Extra: ${ITEMS[a.special].name} (Zufall)` : ''}
+                                </div>
+                                <button onclick="buyAnimal('${a.id}')" class="w-full bg-[#03A9F4] hover:bg-[#0288D1] text-white py-1 rounded-lg font-bold text-sm shadow-sm">${a.cost}€</button>
                             </div>
                         `).join('')}
                     </div>
@@ -926,26 +936,38 @@ function updateFarmDOM() {
     
     for(let type in groups) {
         const list = groups[type];
-        const a = list[0]; 
-        const barEl = document.getElementById(`animal-bar-${a.id}`);
-        const timeEl = document.getElementById(`animal-time-${a.id}`);
-        const countEl = document.getElementById(`prod-count-${a.id}`);
-        if(barEl) {
-            const def = ANIMALS[a.type];
-            const timeSince = state.timeElapsedDays - a.lastProduced;
-            const prog = Math.min(100, (timeSince / def.cycle) * 100);
-            
-            let isWorking = true;
-            if(def.needsWorker && !a.workerAssigned) isWorking = false;
-
-            barEl.style.width = `${prog}%`;
-            timeEl.innerText = isWorking ? formatTime(def.cycle - timeSince) : 'Arbeiter fehlt!';
-            if(!isWorking) barEl.style.backgroundColor = '#fca5a5';
-            else barEl.style.backgroundColor = '#60a5fa';
-            
-            const totalProd = list.reduce((sum, an) => sum + (an.producedCount || 0), 0);
-            if(countEl.innerText !== totalProd.toString()) countEl.innerText = totalProd;
+        if(list.length > 10) {
+            updateSingleAnimalNode(list[0], list);
+        } else {
+            list.forEach(a => updateSingleAnimalNode(a, [a]));
         }
+    }
+}
+
+function updateSingleAnimalNode(a, list) {
+    const barEl = document.getElementById(`animal-bar-${a.id}`);
+    const timeEl = document.getElementById(`animal-time-${a.id}`);
+    const countEl = document.getElementById(`prod-count-${a.id}`);
+    if(barEl) {
+        const def = ANIMALS[a.type];
+        const timeSince = state.timeElapsedDays - a.lastProduced;
+        const prog = Math.min(100, (timeSince / def.cycle) * 100);
+        
+        let isWorking = true;
+        if(def.needsWorker && (!a.workerAssigned || state.strike)) isWorking = false;
+
+        barEl.style.width = `${prog}%`;
+        
+        if(!isWorking) {
+            barEl.style.backgroundColor = '#fca5a5';
+            timeEl.innerText = state.strike ? 'Streik!' : 'Arbeiter fehlt!';
+        } else {
+            barEl.style.backgroundColor = '#60a5fa';
+            timeEl.innerText = formatTime(def.cycle - timeSince);
+        }
+        
+        const totalProd = list.reduce((sum, an) => sum + (an.producedCount || 0), 0);
+        if(countEl.innerText !== totalProd.toString()) countEl.innerText = totalProd;
     }
 }
 
@@ -1104,7 +1126,12 @@ window.sellAll = function() {
     let e=0; for(let id in state.inventory){if(state.inventory[id]>0){e+=state.inventory[id]*ITEMS[id].sellPrice; delete state.inventory[id];}}
     if(e>0){state.money+=e; showNotification(`+${e}€`, 'success'); renderContent();}
 }
-window.endStrike = function() { const d=state.workersTotal*GAME_CONFIG.baseWorkerSalary; if(state.money>=d){state.money-=d; state.strike=false; state.nextPayday=state.timeElapsedDays+7; document.getElementById('worker-warning').style.display='none'; showNotification('Schulden bezahlt!', 'success');} else showNotification('Zu wenig Geld!', 'error'); }
+window.endStrike = function() { 
+    if(!state.strike) { showNotification('Kein Streik!', 'info'); return; }
+    const d=state.workersTotal*GAME_CONFIG.baseWorkerSalary; 
+    if(state.money>=d){state.money-=d; state.strike=false; state.nextPayday=state.timeElapsedDays+7; document.getElementById('worker-warning').style.display='none'; showNotification('Schulden bezahlt!', 'success'); renderContent(); } 
+    else showNotification('Zu wenig Geld!', 'error'); 
+}
 
 window.renameFarm = function() { const n=prompt("Name:", state.farmName); if(n && n.trim()!==''){state.farmName=n.trim(); updateFarmNameUI();} }
 
