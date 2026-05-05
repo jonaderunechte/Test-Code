@@ -35,28 +35,15 @@
             box-shadow: inset 2px 2px 12px rgba(0,0,0,0.6);
             transition: transform 0.1s;
         }
-
         .dirt-field:active { transform: scale(0.98); }
 
-        .svg-icon {
-            width: 100%;
-            height: 100%;
-            filter: drop-shadow(2px 4px 4px rgba(0,0,0,0.3));
-        }
+        .svg-icon { width: 100%; height: 100%; filter: drop-shadow(2px 4px 4px rgba(0,0,0,0.3)); }
 
         .animal-tooltip {
-            visibility: hidden;
-            opacity: 0;
-            transition: opacity 0.2s;
-            bottom: 110%;
-            left: 50%;
-            transform: translateX(-50%);
-            z-index: 10;
+            visibility: hidden; opacity: 0; transition: opacity 0.2s;
+            bottom: 110%; left: 50%; transform: translateX(-50%); z-index: 10;
         }
-        .group:hover .animal-tooltip {
-            visibility: visible;
-            opacity: 1;
-        }
+        .group:hover .animal-tooltip { visibility: visible; opacity: 1; }
 
         ::-webkit-scrollbar { width: 10px; }
         ::-webkit-scrollbar-track { background: #e0e0e0; border-radius: 8px; }
@@ -115,24 +102,12 @@
         <!-- Sidebar Navigation -->
         <div class="w-64 wood-panel flex flex-col overflow-hidden h-[calc(100vh-7rem)] bg-[#FAEDCD] flex-shrink-0">
             <div class="bg-[#8B5A2B] text-white text-center py-4 font-black text-2xl uppercase tracking-widest border-b-4 border-[#5d4037]">Menü</div>
-            <button class="nav-btn tab-active p-4 text-left font-bold text-lg border-b-2 border-[#D4A373] transition flex items-center" data-tab="farm">
-                <svg class="w-6 h-6 mr-3 text-gray-700" fill="currentColor" viewBox="0 0 24 24"><path d="M12 3L4 9v12h16V9l-8-6zm6 16h-3v-6H9v6H6v-9l6-4.5 6 4.5v9z"/></svg> Meine Farm
-            </button>
-            <button class="nav-btn tab-inactive p-4 text-left font-bold text-lg border-b-2 border-[#D4A373] transition flex items-center" data-tab="inventory">
-                <svg class="w-6 h-6 mr-3 text-gray-700" fill="currentColor" viewBox="0 0 24 24"><path d="M20 6h-4V4c0-1.11-.89-2-2-2h-4c-1.11 0-2 .89-2 2v2H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-6 0h-4V4h4v2z"/></svg> Inventar
-            </button>
-            <button class="nav-btn tab-inactive p-4 text-left font-bold text-lg border-b-2 border-[#D4A373] transition flex items-center" data-tab="shop">
-                <svg class="w-6 h-6 mr-3 text-gray-700" fill="currentColor" viewBox="0 0 24 24"><path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z"/></svg> Shop
-            </button>
-            <button class="nav-btn tab-inactive p-4 text-left font-bold text-lg border-b-2 border-[#D4A373] transition flex items-center" data-tab="machines">
-                <svg class="w-6 h-6 mr-3 text-gray-700" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12h7v7h-7zm1 2h5v3h-5zM4 6h16v2H4zm0 5h6v8H4z"/></svg> Fabriken
-            </button>
-            <button class="nav-btn tab-inactive p-4 text-left font-bold text-lg border-b-2 border-[#D4A373] transition flex items-center" data-tab="achievements">
-                <svg class="w-6 h-6 mr-3 text-yellow-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg> Erfolge
-            </button>
-            <button class="nav-btn tab-inactive p-4 text-left font-bold text-lg border-b-2 border-[#D4A373] transition flex items-center" data-tab="settings">
-                ⚙️ Optionen
-            </button>
+            <button class="nav-btn tab-active p-4 text-left font-bold text-lg border-b-2 border-[#D4A373] transition flex items-center" data-tab="farm">🏡 Meine Farm</button>
+            <button class="nav-btn tab-inactive p-4 text-left font-bold text-lg border-b-2 border-[#D4A373] transition flex items-center" data-tab="inventory">📦 Inventar</button>
+            <button class="nav-btn tab-inactive p-4 text-left font-bold text-lg border-b-2 border-[#D4A373] transition flex items-center" data-tab="shop">🏪 Shop</button>
+            <button class="nav-btn tab-inactive p-4 text-left font-bold text-lg border-b-2 border-[#D4A373] transition flex items-center" data-tab="machines">🏭 Fabriken</button>
+            <button class="nav-btn tab-inactive p-4 text-left font-bold text-lg border-b-2 border-[#D4A373] transition flex items-center" data-tab="achievements">🏆 Erfolge</button>
+            <button class="nav-btn tab-inactive p-4 text-left font-bold text-lg border-b-2 border-[#D4A373] transition flex items-center" data-tab="settings">⚙️ Optionen</button>
             
             <div class="mt-auto p-4 bg-[#e9edc9] border-t-4 border-[#D4A373] text-sm text-[#4b5563] font-bold">
                 <p id="passive-income-display" class="text-green-700 font-black mb-1 hidden"></p>
@@ -173,6 +148,7 @@ const SVG = {
     karotten: `<svg viewBox="0 0 100 100"><path d="M 20 30 Q 50 100 80 30 Z" fill="#FF9800"/><path d="M 35 15 Q 40 0 50 5 Q 60 0 65 15 Z" fill="#4CAF50"/></svg>`,
     kartoffeln: `<svg viewBox="0 0 100 100"><ellipse cx="50" cy="50" rx="35" ry="25" fill="#A1887F"/><circle cx="35" cy="45" r="3" fill="#5D4037"/></svg>`,
     kuerbis: `<svg viewBox="0 0 100 100"><ellipse cx="50" cy="60" rx="40" ry="30" fill="#FF9800"/><ellipse cx="35" cy="60" rx="20" ry="28" fill="#F57C00"/><ellipse cx="65" cy="60" rx="20" ry="28" fill="#F57C00"/></svg>`,
+    paprika: `<svg viewBox="0 0 100 100"><path d="M 30 20 Q 10 50 30 80 Q 50 90 70 80 Q 90 50 70 20 Q 50 10 30 20 Z" fill="#E53935"/><path d="M 45 10 Q 50 0 55 10 L 55 25 L 45 25 Z" fill="#4CAF50"/></svg>`,
     saatgut: `<svg viewBox="0 0 100 100"><path d="M 20 80 L 80 80 L 70 30 L 30 30 Z" fill="#8D6E63"/><path d="M 30 30 Q 50 10 70 30 Z" fill="#A1887F"/></svg>`,
     sprout: `<svg viewBox="0 0 100 100"><path d="M 50 90 L 50 50" stroke="#4CAF50" stroke-width="6" stroke-linecap="round"/><path d="M 50 70 Q 30 70 30 40 Q 50 50 50 70 Z" fill="#8BC34A"/><path d="M 50 60 Q 70 60 70 30 Q 50 40 50 60 Z" fill="#4CAF50"/></svg>`,
 
@@ -232,6 +208,10 @@ const SVG = {
     bier: `<svg viewBox="0 0 100 100"><rect x="30" y="40" width="40" height="50" fill="#FFC107" rx="5"/><path d="M 70 50 Q 85 50 85 65 Q 85 80 70 80" stroke="#FFC107" stroke-width="6" fill="none"/><ellipse cx="50" cy="35" rx="25" ry="12" fill="#FFFFFF"/><circle cx="35" cy="30" r="8" fill="#FFFFFF"/><circle cx="65" cy="30" r="8" fill="#FFFFFF"/><line x1="40" y1="45" x2="40" y2="85" stroke="#FFCA28" stroke-width="4"/><line x1="60" y1="45" x2="60" y2="85" stroke="#FFCA28" stroke-width="4"/></svg>`,
     wein: `<svg viewBox="0 0 100 100"><path d="M 50 85 L 50 50" stroke="#E0E0E0" stroke-width="4"/><path d="M 30 20 L 70 20 L 50 55 Z" fill="#E53935"/><path d="M 25 20 Q 50 70 75 20" stroke="#E0E0E0" stroke-width="4" fill="none"/><line x1="30" y1="85" x2="70" y2="85" stroke="#E0E0E0" stroke-width="4"/></svg>`,
     marmelade: `<svg viewBox="0 0 100 100"><path d="M 30 40 L 70 40 L 65 80 L 35 80 Z" fill="#E53935"/><rect x="25" y="30" width="50" height="10" fill="#FFCDD2" rx="2"/><path d="M 35 45 Q 50 60 65 45 Z" fill="#D32F2F"/></svg>`,
+    butter: `<svg viewBox="0 0 100 100"><rect x="25" y="40" width="50" height="30" fill="#FFF59D" rx="4"/><polygon points="25,40 40,25 90,25 75,40" fill="#FFF9C4"/><polygon points="75,40 90,25 90,55 75,70" fill="#FFEE58"/></svg>`,
+    pommes: `<svg viewBox="0 0 100 100"><path d="M 30 40 L 70 40 L 60 90 L 40 90 Z" fill="#D32F2F"/><rect x="35" y="20" width="5" height="30" fill="#FFCA28" rx="2"/><rect x="45" y="10" width="5" height="40" fill="#FFC107" rx="2"/><rect x="55" y="15" width="5" height="35" fill="#FFD54F" rx="2"/><rect x="62" y="25" width="5" height="25" fill="#FFB300" rx="2"/><path d="M 40 60 Q 50 70 60 60" stroke="#FFCDD2" stroke-width="3" fill="none"/></svg>`,
+    burger: `<svg viewBox="0 0 100 100"><path d="M 20 40 Q 50 10 80 40 Z" fill="#FFCC80"/><rect x="18" y="42" width="64" height="6" fill="#4CAF50" rx="3"/><rect x="20" y="50" width="60" height="12" fill="#795548" rx="4"/><rect x="18" y="64" width="64" height="6" fill="#FFCA28" rx="2"/><path d="M 20 72 Q 50 90 80 72 Z" fill="#FFCC80"/></svg>`,
+    pizza: `<svg viewBox="0 0 100 100"><path d="M 50 90 L 10 20 Q 50 10 90 20 Z" fill="#FFCA28"/><path d="M 50 85 L 15 25 Q 50 15 85 25 Z" fill="#FFCC80"/><circle cx="50" cy="40" r="6" fill="#D32F2F"/><circle cx="35" cy="35" r="5" fill="#D32F2F"/><circle cx="65" cy="35" r="5" fill="#D32F2F"/><circle cx="50" cy="60" r="5" fill="#D32F2F"/><path d="M 10 20 Q 50 10 90 20" stroke="#F57C00" stroke-width="6" fill="none"/></svg>`,
 
     kaeserei: `<svg viewBox="0 0 100 100"><rect x="10" y="40" width="80" height="50" fill="#BCAAA4"/><polygon points="10,40 50,10 90,40" fill="#8D6E63"/><rect x="40" y="60" width="20" height="30" fill="#5D4037"/><circle cx="30" cy="65" r="8" fill="#FFCA28"/></svg>`,
     weberei: `<svg viewBox="0 0 100 100"><rect x="15" y="30" width="70" height="60" fill="#90A4AE"/><rect x="25" y="20" width="50" height="10" fill="#607D8B"/><line x1="30" y1="30" x2="30" y2="90" stroke="#CFD8DC" stroke-width="4"/><rect x="40" y="50" width="20" height="20" fill="#00BCD4"/></svg>`,
@@ -254,15 +234,12 @@ const SVG = {
     brauerei: `<svg viewBox="0 0 100 100"><rect x="10" y="40" width="80" height="50" fill="#A1887F"/><polygon points="10,40 50,10 90,40" fill="#5D4037"/><rect x="20" y="60" width="20" height="30" fill="#FFC107" rx="5"/><rect x="60" y="60" width="20" height="30" fill="#FFC107" rx="5"/></svg>`,
     winzerei: `<svg viewBox="0 0 100 100"><rect x="15" y="40" width="70" height="50" fill="#EF9A9A"/><polygon points="15,40 50,10 85,40" fill="#C62828"/><rect x="40" y="60" width="20" height="30" fill="#7F0000"/><circle cx="50" cy="50" r="6" fill="#FFCDD2"/></svg>`,
     marmeladenfabrik: `<svg viewBox="0 0 100 100"><rect x="15" y="40" width="70" height="50" fill="#FFCDD2"/><polygon points="15,40 50,20 85,40" fill="#E53935"/><rect x="30" y="60" width="40" height="30" fill="#B71C1C"/></svg>`,
-    doenerfabrik: `<svg viewBox="0 0 100 100"><rect x="10" y="40" width="80" height="50" fill="#FFCC80"/><polygon points="10,40 50,15 90,40" fill="#E65100"/><rect x="40" y="55" width="20" height="35" fill="#5D4037"/><rect x="20" y="55" width="10" height="20" fill="#8D6E63" rx="2"/></svg>`
+    doenerfabrik: `<svg viewBox="0 0 100 100"><rect x="10" y="40" width="80" height="50" fill="#FFCC80"/><polygon points="10,40 50,15 90,40" fill="#E65100"/><rect x="40" y="55" width="20" height="35" fill="#5D4037"/><rect x="20" y="55" width="10" height="20" fill="#8D6E63" rx="2"/></svg>`,
+    fastfoodfabrik: `<svg viewBox="0 0 100 100"><rect x="10" y="40" width="80" height="50" fill="#90A4AE"/><polygon points="10,40 50,10 90,40" fill="#F44336"/><path d="M 40 20 L 60 20 L 60 30 L 40 30 Z" fill="#FFC107"/><rect x="40" y="55" width="20" height="35" fill="#37474F"/></svg>`
 };
 
 /** --- DATENSTRUKTUREN & KONFIGURATION --- */
-const GAME_CONFIG = {
-    dayDurationMs: 600000, 
-    tickRateMs: 1000,
-    baseWorkerSalary: 50,  
-};
+const GAME_CONFIG = { dayDurationMs: 600000, tickRateMs: 1000, baseWorkerSalary: 50 };
 
 const PLANTS = {
     weizen: { id: "weizen", name: "Weizen", baseGrowTime: 2, seedCost: 10, yield: 2, sellPrice: 15 },
@@ -275,6 +252,7 @@ const PLANTS = {
     rosmarin: { id: "rosmarin", name: "Rosmarin", baseGrowTime: 2, seedCost: 30, yield: 2, sellPrice: 20 },
     sonnenblumen: { id: "sonnenblumen", name: "Sonnenblumen", baseGrowTime: 4, seedCost: 30, yield: 1, sellPrice: 80 },
     kuerbis: { id: "kuerbis", name: "Kürbis", baseGrowTime: 4, seedCost: 35, yield: 1, sellPrice: 100 },
+    paprika: { id: "paprika", name: "Paprika", baseGrowTime: 2.5, seedCost: 22, yield: 3, sellPrice: 18 },
     zuckerrohr: { id: "zuckerrohr", name: "Zuckerrohr", baseGrowTime: 3, seedCost: 40, yield: 3, sellPrice: 30 },
     trauben: { id: "trauben", name: "Trauben", baseGrowTime: 3, seedCost: 50, yield: 4, sellPrice: 25 },
     kaffee: { id: "kaffee", name: "Kaffee", baseGrowTime: 4, seedCost: 80, yield: 2, sellPrice: 60 },
@@ -309,7 +287,8 @@ const ITEMS = {
     tupperware: { name: "Tupperware", sellPrice: 100 }, computer: { name: "Computer", sellPrice: 1500 },
     handy: { name: "Handy", sellPrice: 1200 }, server: { name: "Server", sellPrice: 2000 }, rechencenter: { name: "Rechencenter", sellPrice: 10000 },
     kissen: { name: "Kissen", sellPrice: 100 }, kuchen: { name: "Kuchen", sellPrice: 250 }, bier: { name: "Bier", sellPrice: 150 },
-    wein: { name: "Wein", sellPrice: 300 }, marmelade: { name: "Marmelade", sellPrice: 180 }
+    wein: { name: "Wein", sellPrice: 300 }, marmelade: { name: "Marmelade", sellPrice: 180 }, butter: { name: "Butter", sellPrice: 35 },
+    pommes: { name: "Pommes", sellPrice: 40 }, burger: { name: "Burger", sellPrice: 280 }, pizza: { name: "Pizza", sellPrice: 150 }
 };
 Object.values(PLANTS).forEach(p => { ITEMS[p.id] = { name: p.name, sellPrice: p.sellPrice }; });
 
@@ -318,10 +297,18 @@ const MACHINES = {
     mayofabrik: { id: "mayofabrik", name: "Mayo-Fabrik", cost: 900, recipes: [{ name: "Mayonnaise", input: { ei: 3 }, output: { mayonnaise: 1 }, time: 0.2 }] },
     ketchupfabrik: { id: "ketchupfabrik", name: "Ketchup-Fabrik", cost: 800, recipes: [{ name: "Ketchup", input: { tomaten: 3 }, output: { ketchup: 1 }, time: 0.2 }] },
     kaeserei: { id: "kaeserei", name: "Käserei", cost: 1000, recipes: [{ name: "Käse", input: { milch: 2 }, output: { kaese: 1 }, time: 0.5 }] },
-    molkerei: { id: "molkerei", name: "Molkerei", cost: 1200, recipes: [{ name: "Schafskäse", input: { schafsmilch: 2 }, output: { schafskaese: 1 }, time: 0.5 }] },
+    molkerei: { id: "molkerei", name: "Molkerei", cost: 1200, recipes: [
+        { name: "Schafskäse", input: { schafsmilch: 2 }, output: { schafskaese: 1 }, time: 0.5 },
+        { name: "Butter", input: { milch: 2 }, output: { butter: 1 }, time: 0.3 }
+    ]},
     baeckerei: { id: "baeckerei", name: "Bäckerei", cost: 1200, recipes: [
         { name: "Brot", input: { mehl: 1, ei: 1 }, output: { brot: 1 }, time: 0.3 },
         { name: "Kuchen", input: { mehl: 1, ei: 1, zucker: 1, milch: 1, erdbeeren: 1 }, output: { kuchen: 1 }, time: 0.6 }
+    ]},
+    fastfoodfabrik: { id: "fastfoodfabrik", name: "Fastfood-Bude", cost: 1400, recipes: [
+        { name: "Pommes", input: { kartoffeln: 2 }, output: { pommes: 1 }, time: 0.2 },
+        { name: "Burger", input: { brot: 1, rindfleisch: 1, tomaten: 1, kaese: 1 }, output: { burger: 1 }, time: 0.4 },
+        { name: "Pizza", input: { mehl: 1, tomaten: 2, kaese: 1, paprika: 1 }, output: { pizza: 1 }, time: 0.5 }
     ]},
     gewuerzfabrik: { id: "gewuerzfabrik", name: "Gewürzfabrik", cost: 1500, recipes: [{ name: "Gewürze", input: { rosmarin: 1, wilde_kraeuter: 1 }, output: { gewuerze: 1 }, time: 0.4 }] },
     weberei: { id: "weberei", name: "Weberei", cost: 1500, recipes: [{ name: "Stoff", input: { wolle: 2 }, output: { stoff: 1 }, time: 0.5 }] },
@@ -336,8 +323,8 @@ const MACHINES = {
     doenerfabrik: { id: "doenerfabrik", name: "Dönerfabrik", cost: 15000, unlock: (s) => s.animals.some(a=>a.type==='doenertier') || s.adminUnlockAll, recipes: [{ name: "Super Döner", input: { doenerfleisch: 1, magische_sosse: 1, brot: 1 }, output: { sandwich: 5 }, time: 0.5 }] },
     
     // Industrie & Tech
-    minenschacht: { id: "minenschacht", name: "Minenschacht", cost: 8000, recipes: [{ name: "Bergbau", input: {}, randomOutput: [{id:'eisen', chance:0.4}, {id:'kupfer', chance:0.3}, {id:'stein', chance:0.25}, {id:'gold', chance:0.05}], time: 0.5 }] },
-    plastikfabrik: { id: "plastikfabrik", name: "Plastikfabrik (Recycling)", cost: 5000, isRecycler: true, time: 0.2 },
+    minenschacht: { id: "minenschacht", name: "Minenschacht", cost: 8000, recipes: [{ name: "Bergbau", input: {}, randomOutput: [{id:'stein', chance:0.6}, {id:'eisen', chance:0.25}, {id:'kupfer', chance:0.10}, {id:'gold', chance:0.05}], time: 0.5 }] },
+    plastikfabrik: { id: "plastikfabrik", name: "Plastikfabrik (Recycling)", cost: 5000, isRecycler: true },
     plastikverarbeitung: { id: "plastikverarbeitung", name: "Plastikverarbeitung", cost: 6000, recipes: [{ name: "Plastikprodukte", input: { plastik: 1 }, randomOutput: [{id:'strandspielzeug', chance:0.4}, {id:'verpackungsmaterial', chance:0.4}, {id:'tupperware', chance:0.2}], time: 0.5 }] },
     prozessorfabrik: { id: "prozessorfabrik", name: "Prozessorfabrik", cost: 12000, recipes: [{ name: "Chips", input: { gold: 1, eisen: 2, plastik: 1 }, output: { computerchips: 2 }, time: 0.8 }] },
     computerfabrik: { id: "computerfabrik", name: "Computerfabrik", cost: 25000, recipes: [
@@ -351,7 +338,7 @@ const ACHIEVEMENTS = [
     { id: "money100k", name: "Kapitalist", desc: "Besitze 100.000€", icon: "🏦", check: s => s.money >= 100000, reward: 10000 },
     { id: "fields8", name: "Großbauer", desc: "Besitze 8 Felder", icon: "🚜", check: s => s.fields.length >= 8, reward: 2000 },
     { id: "animals10", name: "Streichelzoo", desc: "Besitze 10 Tiere", icon: "🐖", check: s => s.animals.length >= 10, reward: 500 },
-    { id: "factories5", name: "Industrialisierung", desc: "Besitze 5 Fabriken", icon: "🏭", check: s => s.machines.length >= 5, reward: 2500 },
+    { id: "factories5", name: "Industrialisierung", desc: "Besitze 5 Fabriken", icon: "🏭", check: s => Object.keys(s.machines).length >= 5, reward: 2500 },
     { id: "it_company", name: "Tech-Gigant", desc: "Gründe ein IT-Unternehmen", icon: "💻", check: s => s.itCompanies >= 1, reward: 20000 },
     { id: "doener", name: "Der Gerät", desc: "Besitze ein Dönertier", icon: "🥙", check: s => s.animals.some(a => a.type === 'doenertier'), reward: 10000 }
 ];
@@ -369,14 +356,13 @@ let state = {
     animals: [
         { id: 'a1', type: 'huhn', lastProduced: 0, producedCount: 0, workerAssigned: false }
     ], 
-    machines: [], 
+    machines: {}, // NEW: Format: { typeId: { count: 1, lastProduced: 0, selectedRecipe: 0, isActive: true, itemsLoaded: 0 } }
     workersTotal: 0, workersIdle: 0, activeTab: 'farm', timeScale: 1, lastTickTime: Date.now(), strike: false, nextPayday: 7,
-    upgrades: { fertilizer: 0 }, solarPanels: 0, itCompanies: 0, hasPower: true,
-    achievements: {}, adminUnlockAll: false
+    upgrades: { fertilizer: 0, yieldMulti: 0, animalSpeed: 0, workerCost: 0 }, 
+    solarPanels: 0, itCompanies: 0, hasPower: true, achievements: {}, adminUnlockAll: false
 };
 
 /** --- FIREBASE & LOCAL STORAGE SETUP --- */
-// Firebase Configuration provided by user
 const firebaseConfig = {
   apiKey: "AIzaSyD0jgwojcplK5AxdLtP1OKXBIuuZkaySKg",
   authDomain: "game-38294.firebaseapp.com",
@@ -394,19 +380,27 @@ let currentUserId = null;
 let isForcedAuthModalOpen = false;
 
 async function initFirebase() {
+    try {
+        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+            await signInWithCustomToken(auth, __initial_auth_token);
+        } else {
+            try { await signInAnonymously(auth); } catch(err) {
+                console.warn("Anonyme Anmeldung blockiert. Nutze lokalen Speicher.", err);
+                document.getElementById('loading-screen').style.display = 'none';
+            }
+        }
+    } catch(e) { console.error("Auth init:", e); }
+
     onAuthStateChanged(auth, async (user) => {
         if (user) {
             currentUserId = user.uid;
             if(!user.isAnonymous && isForcedAuthModalOpen) {
                 closeModal();
                 isForcedAuthModalOpen = false;
-                state.timeScale = 1; // Unpause
+                state.timeScale = 1; 
             }
-            await loadState();
-        } else {
-            currentUserId = null;
-            await signInAnonymously(auth);
-        }
+        } else { currentUserId = null; }
+        await loadState();
         document.getElementById('loading-screen').style.display = 'none';
     });
 
@@ -416,54 +410,50 @@ async function initFirebase() {
 
 async function loadState() {
     let localData = null;
-    try {
-        const localStr = localStorage.getItem('jtFarmState');
-        if (localStr) localData = JSON.parse(localStr);
-    } catch(e) {}
-
+    try { const ls = localStorage.getItem('jtFarmState'); if (ls) localData = JSON.parse(ls); } catch(e) {}
     let cloudData = null;
     if (currentUserId && db) {
         try {
-            const docRef = doc(db, 'users', currentUserId, 'game', 'farmState');
-            const docSnap = await getDoc(docRef);
+            const docSnap = await getDoc(doc(db, 'users', currentUserId, 'game', 'farmState'));
             if (docSnap.exists()) cloudData = docSnap.data();
-        } catch(e) { console.error("Cloud Load failed", e); }
+        } catch(e) {}
     }
 
     let bestData = localData;
-    if (cloudData && localData) {
-        if ((cloudData.lastTickTime || 0) > (localData.lastTickTime || 0)) bestData = cloudData;
-    } else if (cloudData) {
-        bestData = cloudData;
-    }
+    if (cloudData && localData) { if ((cloudData.lastTickTime||0) > (localData.lastTickTime||0)) bestData = cloudData; } 
+    else if (cloudData) { bestData = cloudData; }
 
     if (bestData) {
         const now = Date.now();
         const deltaMs = now - (bestData.lastTickTime || now);
         state = { ...state, ...bestData };
         if(!state.achievements) state.achievements = {};
+        if(!state.upgrades) state.upgrades = { fertilizer: 0, yieldMulti: 0, animalSpeed: 0, workerCost: 0 };
         
-        for(let key in state.inventory) { if(state.inventory[key] <= 0) delete state.inventory[key]; }
-        
-        if (deltaMs > 60000) { 
-            simulateOfflineProgress(deltaMs);
-            showNotification(`Willkommen zurück! Offline-Zeit berechnet.`, 'info');
+        // MIGRATION: Array machines to Object format
+        if(Array.isArray(state.machines)) {
+            const newM = {};
+            state.machines.forEach(m => {
+                if(!newM[m.type]) newM[m.type] = { count: 0, lastProduced: m.lastProduced||0, selectedRecipe: m.selectedRecipe||0, isActive: true, itemsLoaded: m.itemsLoaded||0 };
+                newM[m.type].count++;
+            });
+            state.machines = newM;
         }
+
+        for(let key in state.inventory) { if(state.inventory[key] <= 0) delete state.inventory[key]; }
+        if (deltaMs > 60000) { simulateOfflineProgress(deltaMs); showNotification(`Willkommen zurück! Offline-Zeit berechnet.`, 'info'); }
         state.lastTickTime = now;
     }
     updateFarmNameUI();
+    if(state.activeTab === 'machines') buildMachinesStatic();
     if(state.activeTab) renderContent();
 }
 
 async function saveState() {
     state.lastTickTime = Date.now();
     try { localStorage.setItem('jtFarmState', JSON.stringify(state)); } catch(e) {}
-
     if (!currentUserId || !db || auth.currentUser?.isAnonymous) return;
-    try {
-        const docRef = doc(db, 'users', currentUserId, 'game', 'farmState');
-        await setDoc(docRef, state);
-    } catch(e) { console.error("Cloud Save failed", e); }
+    try { await setDoc(doc(db, 'users', currentUserId, 'game', 'farmState'), state); } catch(e) {}
 }
 
 function simulateOfflineProgress(deltaMs) {
@@ -481,16 +471,15 @@ function simulateOfflineProgress(deltaMs) {
 /** --- AUTHENTICATION UI & LOGIC --- */
 window.showAuthModal = function(forced = false) {
     isForcedAuthModalOpen = forced;
-    if(forced) state.timeScale = 0; // Pause game during forced login
-    
+    if(forced) state.timeScale = 0; 
     let html = `
         <div class="flex flex-col gap-4 text-center">
             ${forced ? `<p class="font-black text-red-600 mb-2">Tag 3 erreicht! Um deinen Fortschritt dauerhaft zu sichern, musst du dich jetzt anmelden oder registrieren.</p>` : ''}
             <input id="auth-email" type="email" placeholder="E-Mail" class="p-3 border-4 border-gray-300 rounded-xl focus:border-[#8B5A2B] outline-none font-bold">
             <input id="auth-pw" type="password" placeholder="Passwort" class="p-3 border-4 border-gray-300 rounded-xl focus:border-[#8B5A2B] outline-none font-bold">
             <div class="flex gap-2 mt-2">
-                <button onclick="handleEmailLogin()" class="flex-1 bg-[#8B5A2B] hover:bg-[#5d4037] text-white font-black py-3 rounded-xl shadow-md border-b-4 border-[#4e342e] active:translate-y-1 active:border-b-0">Login</button>
-                <button onclick="handleEmailRegister()" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-black py-3 rounded-xl shadow-md border-b-4 border-green-800 active:translate-y-1 active:border-b-0">Registrieren</button>
+                <button onclick="handleEmailLogin()" class="flex-1 bg-[#8B5A2B] hover:bg-[#5d4037] text-white font-black py-3 rounded-xl shadow-md border-b-4 border-[#4e342e]">Login</button>
+                <button onclick="handleEmailRegister()" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-black py-3 rounded-xl shadow-md border-b-4 border-green-800">Registrieren</button>
             </div>
             <div class="font-black text-gray-400 my-2">ODER</div>
             <button onclick="handleGoogleLogin()" class="w-full bg-white hover:bg-gray-100 text-gray-800 font-black py-3 rounded-xl shadow-md border-4 border-gray-300 flex justify-center items-center gap-3">
@@ -503,41 +492,38 @@ window.showAuthModal = function(forced = false) {
 }
 
 window.handleEmailLogin = async function() {
-    const email = document.getElementById('auth-email').value;
-    const pw = document.getElementById('auth-pw').value;
     try {
-        await signInWithEmailAndPassword(auth, email, pw);
+        await signInWithEmailAndPassword(auth, document.getElementById('auth-email').value, document.getElementById('auth-pw').value);
         showNotification("Erfolgreich angemeldet!", "success");
         if(!isForcedAuthModalOpen) closeModal();
     } catch(e) { showNotification(e.message, "error"); }
 }
-
 window.handleEmailRegister = async function() {
-    const email = document.getElementById('auth-email').value;
-    const pw = document.getElementById('auth-pw').value;
     try {
-        await createUserWithEmailAndPassword(auth, email, pw);
-        await saveState(); // Save current local state to their new cloud account
+        await createUserWithEmailAndPassword(auth, document.getElementById('auth-email').value, document.getElementById('auth-pw').value);
+        await saveState(); 
         showNotification("Erfolgreich registriert!", "success");
         if(!isForcedAuthModalOpen) closeModal();
     } catch(e) { showNotification(e.message, "error"); }
 }
-
 window.handleGoogleLogin = async function() {
     try {
         const provider = new GoogleAuthProvider();
         await signInWithPopup(auth, provider);
-        await saveState(); // Save state to their cloud
+        await saveState(); 
         showNotification("Erfolgreich mit Google angemeldet!", "success");
         if(!isForcedAuthModalOpen) closeModal();
-    } catch(e) { showNotification(e.message, "error"); }
+    } catch(e) { 
+        if(e.code === 'auth/unauthorized-domain') {
+            alert("FEHLER: Deine Domain ist nicht in Firebase autorisiert!\nGehe in deine Firebase Console -> Authentication -> Settings -> Authorized domains.\nFüge dort diese URL/Domain hinzu!");
+        } else {
+            showNotification(e.message, "error"); 
+        }
+    }
 }
-
 window.handleLogout = async function() {
-    if(confirm("Möchtest du dich wirklich abmelden? Lokale Daten könnten überschrieben werden.")) {
-        await signOut(auth);
-        localStorage.removeItem('jtFarmState');
-        location.reload();
+    if(confirm("Wirklich abmelden? Lokale Daten könnten überschrieben werden.")) {
+        await signOut(auth); localStorage.removeItem('jtFarmState'); location.reload();
     }
 }
 
@@ -548,12 +534,15 @@ function formatTime(days) {
     return `${Math.floor(realSecs / 60)}m ${realSecs % 60}s`;
 }
 function getActualGrowTime(plant) { return plant.baseGrowTime * (1 - (state.upgrades?.fertilizer || 0) * 0.1); }
+function getActualAnimalCycle(anim) { return anim.cycle * (1 - (state.upgrades?.animalSpeed || 0) * 0.1); }
+function getActualWorkerSalary() { return Math.max(10, GAME_CONFIG.baseWorkerSalary - (state.upgrades?.workerCost || 0) * 10); }
+
 function addToInventory(id, amount) { if (!state.inventory[id]) state.inventory[id] = 0; state.inventory[id] += amount; }
 function addSeed(id, amount) { if (!state.seeds[id]) state.seeds[id] = 0; state.seeds[id] += amount; }
 
 /** --- GAME LOOP & LOGIK --- */
 function gameLoop() {
-    if(state.timeScale === 0) { requestAnimationFrame(gameLoop); return; } // Paused
+    if(state.timeScale === 0) { requestAnimationFrame(gameLoop); return; } 
     
     const now = Date.now();
     const dtReal = now - state.lastTickTime;
@@ -562,7 +551,6 @@ function gameLoop() {
     const daysPassed = (dtReal * state.timeScale) / GAME_CONFIG.dayDurationMs;
     state.timeElapsedDays += daysPassed;
 
-    // Day 3 Auth Check
     if (state.timeElapsedDays >= 3 && auth.currentUser?.isAnonymous && !isForcedAuthModalOpen) {
         showAuthModal(true);
     }
@@ -571,16 +559,15 @@ function gameLoop() {
         processFields(); processAnimals(); processMachines(); processWorkers();
     }
     
-    // Passive Income IT-Unternehmen
     if(state.itCompanies > 0 && !state.strike && state.hasPower) {
-        state.money += state.itCompanies * 100 * daysPassed; // 100 per game day
+        state.money += state.itCompanies * 100 * daysPassed; 
     }
 
     checkAchievements();
     updateUI();
     
     if(state.activeTab === 'farm') updateFarmDOM();
-    if(state.activeTab === 'machines') renderMachinesProgress();
+    if(state.activeTab === 'machines') updateMachinesDOM();
 
     requestAnimationFrame(gameLoop);
 }
@@ -597,11 +584,12 @@ function checkAchievements() {
 }
 
 function processFields() {
+    const yieldMulti = 1 + (state.upgrades?.yieldMulti || 0);
     state.fields.forEach(field => {
         if (field.plantId && field.workerAssigned && !state.strike) {
             const plant = PLANTS[field.plantId];
             if (state.timeElapsedDays >= field.plantedAt + getActualGrowTime(plant)) {
-                addToInventory(field.plantId, plant.yield);
+                addToInventory(field.plantId, plant.yield * yieldMulti);
                 field.plantedAt = state.timeElapsedDays;
             }
         }
@@ -613,9 +601,9 @@ function processAnimals() {
         const def = ANIMALS[a.type];
         if(def.needsWorker && (!a.workerAssigned || state.strike)) return;
 
-        if (state.timeElapsedDays >= a.lastProduced + def.cycle) {
+        const cycle = getActualAnimalCycle(def);
+        if (state.timeElapsedDays >= a.lastProduced + cycle) {
             def.products.forEach(prodId => addToInventory(prodId, 1));
-            // Pig Truffle Logic
             if(def.special === 'trueffel' && Math.random() < 0.2) addToInventory('trueffel', 1);
             
             a.lastProduced = state.timeElapsedDays;
@@ -625,32 +613,30 @@ function processAnimals() {
 }
 
 function processMachines() {
-    const factoryCount = state.machines.length;
-    const requiredSolar = Math.floor(factoryCount / 5);
-    state.hasPower = (state.solarPanels || 0) >= requiredSolar;
+    let factoryCount = 0;
+    for(let type in state.machines) factoryCount += state.machines[type].count;
     
+    state.hasPower = (state.solarPanels || 0) >= Math.floor(factoryCount / 5);
     document.getElementById('ui-power-warning').style.display = state.hasPower ? 'none' : 'block';
+    
     if (!state.hasPower) return;
 
     let changed = false;
-    state.machines.forEach(m => {
-        const def = MACHINES[m.type];
+    for(let type in state.machines) {
+        const m = state.machines[type];
+        if(!m.isActive) continue; // Skipped if paused
         
-        if(def.isRecycler) {
-            if((m.itemsLoaded || 0) >= 5 && state.timeElapsedDays >= m.lastProduced + def.time) {
-                m.itemsLoaded -= 5;
-                addToInventory('plastik', 1);
-                m.lastProduced = state.timeElapsedDays;
-                changed = true;
-            }
-            return;
-        }
+        const def = MACHINES[type];
+        if(def.isRecycler) continue; // Recyclers handled by minigame
 
         const recipes = def.recipes || [];
-        const activeRecipeIndex = m.selectedRecipe || 0;
-        const r = recipes[activeRecipeIndex] || recipes[0];
+        const r = recipes[m.selectedRecipe || 0] || recipes[0];
         
-        if (state.timeElapsedDays >= m.lastProduced + r.time) {
+        // Multiplikator: Mehr Maschinen = schnellere Produktion!
+        const activeRecipeTime = r.time / m.count;
+
+        // Catch up on multiple productions if offline for a long time
+        while (state.timeElapsedDays >= m.lastProduced + activeRecipeTime) {
             let canProduce = true;
             for (let id in r.input) { if ((state.inventory[id] || 0) < r.input[id]) { canProduce = false; break; } }
 
@@ -664,27 +650,36 @@ function processMachines() {
                         if(roll <= cum) { addToInventory(ro.id, 1); break; }
                     }
                 }
-                m.lastProduced = state.timeElapsedDays;
+                m.lastProduced += activeRecipeTime;
                 changed = true;
+            } else {
+                // Not enough materials, reset timer to wait for materials
+                m.lastProduced = state.timeElapsedDays;
+                break;
             }
         }
-    });
+    }
     if(changed && state.activeTab === 'inventory') renderContent(); 
 }
 
+let strikeNotified = false;
 function processWorkers() {
     if (state.timeElapsedDays >= state.nextPayday && state.workersTotal > 0) {
-        const totalSalary = state.workersTotal * GAME_CONFIG.baseWorkerSalary;
+        const totalSalary = state.workersTotal * getActualWorkerSalary();
         if (state.money >= totalSalary) {
             state.money -= totalSalary;
             state.nextPayday += 7;
             state.strike = false;
+            strikeNotified = false;
             document.getElementById('worker-warning').style.display = 'none';
         } else {
             if(!state.strike) {
                 state.strike = true;
                 document.getElementById('worker-warning').style.display = 'block';
-                showNotification(`Streik! Löhne konnten nicht gezahlt werden!`, 'error');
+                if(!strikeNotified) {
+                    showNotification(`Streik! Löhne konnten nicht gezahlt werden!`, 'error');
+                    strikeNotified = true;
+                }
             }
         }
     }
@@ -718,13 +713,13 @@ window.changeTab = function(tabName) {
         if(btn.dataset.tab === tabName) btn.classList.replace('tab-inactive', 'tab-active');
         else btn.classList.replace('tab-active', 'tab-inactive');
     });
+    if(tabName === 'machines') buildMachinesStatic();
     renderContent();
 }
 
 function renderContent() {
     const area = document.getElementById('content-area');
-    area.innerHTML = '';
-
+    
     if (state.activeTab === 'farm') {
         area.innerHTML = `
             <h2 class="text-3xl font-black mb-6 text-[#4e342e]">Meine Felder & Tiere</h2>
@@ -745,12 +740,12 @@ function renderContent() {
         let hasItems = false;
         for (let id in state.inventory) {
             if (state.inventory[id] > 0) {
-                hasItems = true; const it = ITEMS[id];
+                hasItems = true; const it = ITEMS[id] || PLANTS[id];
                 html += `<div class="bg-white border-4 border-[#D4A373] rounded-2xl p-4 flex flex-col items-center shadow-md">
                     <div class="w-16 h-16 mb-2 drop-shadow-md">${SVG[id] || SVG.sprout}</div>
-                    <div class="font-black text-center text-[#4e342e] leading-tight">${it.name}</div>
+                    <div class="font-black text-center text-[#4e342e] leading-tight">${it?.name||id}</div>
                     <div class="text-gray-500 mb-2 font-bold text-sm">Menge: <span class="text-gray-800">${Math.floor(state.inventory[id])}</span></div>
-                    <button onclick="sellItem('${id}')" class="w-full bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold py-1 rounded-lg shadow-sm text-sm">Verkaufen (+${it.sellPrice}€)</button>
+                    <button onclick="sellItem('${id}')" class="w-full bg-yellow-400 hover:bg-yellow-500 text-yellow-900 font-bold py-1 rounded-lg shadow-sm text-sm">Verkaufen (+${it?.sellPrice||0}€)</button>
                 </div>`;
             }
         }
@@ -772,8 +767,6 @@ function renderContent() {
     } else if (state.activeTab === 'shop') {
         const fieldCost = calculateFieldCost();
         const solarCost = 2000 * (state.solarPanels + 1);
-        const fertLevel = state.upgrades.fertilizer || 0;
-        const fertCost = 500 * (fertLevel + 1);
         
         area.innerHTML = `
             <h2 class="text-3xl font-black mb-6 text-[#4e342e]">Dorfladen</h2>
@@ -781,10 +774,10 @@ function renderContent() {
                 <!-- Upgrades & Infrastruktur -->
                 <section>
                     <h3 class="text-xl font-black bg-[#9C27B0] text-white p-2 rounded-t-xl shadow-sm">Upgrades & Infrastruktur</h3>
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 p-3 border-4 border-[#9C27B0] rounded-b-xl bg-white">
+                    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3 p-3 border-4 border-[#9C27B0] rounded-b-xl bg-white">
                         <div class="border-2 rounded-xl p-3 flex flex-col justify-between shadow-sm">
                             <div class="font-black text-lg">Erntehelfer</div>
-                            <div class="text-xs text-gray-600 mb-2 font-bold">Erntet automatisch.<br>Lohn: ${GAME_CONFIG.baseWorkerSalary}€/Woche</div>
+                            <div class="text-xs text-gray-600 mb-2 font-bold">Erntet automatisch.<br>Lohn: ${getActualWorkerSalary()}€/Woche</div>
                             <button onclick="buyWorker()" class="bg-purple-500 hover:bg-purple-600 text-white p-2 rounded-lg font-bold w-full">200€</button>
                         </div>
                         <div class="border-2 rounded-xl p-3 flex flex-col justify-between shadow-sm">
@@ -797,22 +790,34 @@ function renderContent() {
                             <div class="text-xs text-gray-600 mb-2 font-bold">Liefert Strom für 5 Fabriken.</div>
                             <button onclick="buySolar()" class="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-lg font-bold w-full">${solarCost}€</button>
                         </div>
-                        <div class="border-2 rounded-xl p-3 flex flex-col justify-between shadow-sm">
-                            <div class="font-black text-lg">Dünger Lvl ${fertLevel}/5</div>
-                            <div class="text-xs text-gray-600 mb-2 font-bold">Pflanzen wachsen 10% schneller.</div>
-                            <button onclick="buyFertilizer()" class="bg-green-600 hover:bg-green-700 text-white p-2 rounded-lg font-bold w-full" ${fertLevel>=5?'disabled':''}>${fertLevel>=5?'Max':fertCost+'€'}</button>
+                        
+                        <!-- NEUE UPGRADES -->
+                        <div class="border-2 rounded-xl p-3 flex flex-col justify-between shadow-sm bg-purple-50">
+                            <div class="font-black text-lg">Wachstum Lvl ${state.upgrades.fertilizer}/5</div>
+                            <div class="text-xs text-gray-600 mb-2 font-bold">Pflanzen 10% schneller.</div>
+                            <button onclick="buyUpgrade('fertilizer', 5, 500)" class="bg-green-600 text-white p-2 rounded-lg font-bold w-full" ${state.upgrades.fertilizer>=5?'disabled':''}>${state.upgrades.fertilizer>=5?'Max':(500*(state.upgrades.fertilizer+1))+'€'}</button>
                         </div>
+                        <div class="border-2 rounded-xl p-3 flex flex-col justify-between shadow-sm bg-purple-50">
+                            <div class="font-black text-lg">Ertrag Lvl ${state.upgrades.yieldMulti}/3</div>
+                            <div class="text-xs text-gray-600 mb-2 font-bold">+100% Ertrag auf Felder.</div>
+                            <button onclick="buyUpgrade('yieldMulti', 3, 2000)" class="bg-green-600 text-white p-2 rounded-lg font-bold w-full" ${state.upgrades.yieldMulti>=3?'disabled':''}>${state.upgrades.yieldMulti>=3?'Max':(2000*(state.upgrades.yieldMulti+1))+'€'}</button>
+                        </div>
+                        <div class="border-2 rounded-xl p-3 flex flex-col justify-between shadow-sm bg-purple-50">
+                            <div class="font-black text-lg">Zucht Lvl ${state.upgrades.animalSpeed}/5</div>
+                            <div class="text-xs text-gray-600 mb-2 font-bold">Tiere 10% schneller.</div>
+                            <button onclick="buyUpgrade('animalSpeed', 5, 800)" class="bg-green-600 text-white p-2 rounded-lg font-bold w-full" ${state.upgrades.animalSpeed>=5?'disabled':''}>${state.upgrades.animalSpeed>=5?'Max':(800*(state.upgrades.animalSpeed+1))+'€'}</button>
+                        </div>
+                        <div class="border-2 rounded-xl p-3 flex flex-col justify-between shadow-sm bg-purple-50">
+                            <div class="font-black text-lg">Tarifvertrag Lvl ${state.upgrades.workerCost}/4</div>
+                            <div class="text-xs text-gray-600 mb-2 font-bold">Lohn um 10€ senken.</div>
+                            <button onclick="buyUpgrade('workerCost', 4, 1500)" class="bg-green-600 text-white p-2 rounded-lg font-bold w-full" ${state.upgrades.workerCost>=4?'disabled':''}>${state.upgrades.workerCost>=4?'Max':(1500*(state.upgrades.workerCost+1))+'€'}</button>
+                        </div>
+
                         <div class="border-2 rounded-xl p-3 flex flex-col justify-between shadow-sm">
                             <div class="font-black text-lg">IT-Unternehmen (${state.itCompanies})</div>
-                            <div class="text-xs text-gray-600 mb-2 font-bold">Passives Einkommen: +100€/Tag</div>
-                            <button onclick="buyITCompany()" class="bg-gray-800 hover:bg-gray-900 text-white p-2 rounded-lg font-bold w-full text-xs">Kosten: 3x Computer, 2x Rechencenter</button>
+                            <div class="text-xs text-gray-600 mb-2 font-bold">Passiv: +100€/Tag</div>
+                            <button onclick="buyITCompany()" class="bg-gray-800 text-white p-2 rounded-lg font-bold w-full text-xs">3x PC, 2x Server</button>
                         </div>
-                        ${state.strike ? `
-                        <div class="border-2 rounded-xl p-3 flex flex-col justify-between shadow-sm bg-red-50">
-                            <div class="font-black text-red-700 text-lg">Schulden begleichen</div>
-                            <div class="text-xs text-gray-600 mb-2 font-bold">Beende den Streik.</div>
-                            <button onclick="endStrike()" class="bg-red-600 hover:bg-red-700 text-white p-2 rounded-lg font-bold w-full mt-2">Bezahlen (${state.workersTotal * GAME_CONFIG.baseWorkerSalary}€)</button>
-                        </div>` : ''}
                     </div>
                 </section>
                 
@@ -840,7 +845,7 @@ function renderContent() {
                                 <div class="text-[10px] text-gray-600 mb-2 flex-1 font-bold bg-gray-50 p-2 rounded border leading-tight">
                                     ⏱️ Dauer: ${a.cycle} Tage<br>
                                     📦 Gibt: ${a.products.map(p=>ITEMS[p].name).join(', ')}
-                                    ${a.special ? `<br>✨ Extra: ${ITEMS[a.special].name} (Zufall)` : ''}
+                                    ${a.special ? `<br>✨ Extra: ${ITEMS[a.special].name}` : ''}
                                 </div>
                                 <button onclick="buyAnimal('${a.id}')" class="w-full bg-[#03A9F4] hover:bg-[#0288D1] text-white py-1 rounded-lg font-bold text-sm shadow-sm">${a.cost}€</button>
                             </div>
@@ -855,8 +860,8 @@ function renderContent() {
                             return `
                             <div class="border-2 rounded-xl p-3 shadow-sm flex flex-col">
                                 <div class="flex items-center gap-2 mb-2"><div class="w-10 h-10">${SVG[m.id]}</div><div class="font-black">${m.name}</div></div>
-                                <div class="text-xs text-gray-600 mb-2 flex-1 font-bold bg-gray-50 p-2 rounded border">
-                                    ${m.recipes ? m.recipes.map(r => `Aus ${Object.keys(r.input).map(k=>ITEMS[k]?.name||k).join(', ')||'Nichts'} -> ${r.output ? Object.keys(r.output).map(k=>ITEMS[k]?.name||k).join(', ') : 'Zufällig'}`).join('<br>') : 'Recycelt Müll'}
+                                <div class="text-[10px] text-gray-600 mb-2 flex-1 font-bold bg-gray-50 p-2 rounded border leading-tight">
+                                    ${m.recipes ? m.recipes.map(r => `• ${r.name}: ${Object.keys(r.input).map(k=>ITEMS[k]?.name||PLANTS[k]?.name||k).join('+')||'Nichts'} ➔ ${r.output ? Object.keys(r.output).map(k=>ITEMS[k]?.name).join(', ') : 'Zufall'}`).join('<br>') : 'Recycelt 5x Müll'}
                                 </div>
                                 <button onclick="buyMachine('${m.id}')" class="bg-orange-500 hover:bg-orange-600 text-white p-2 rounded-lg font-bold w-full">${m.cost}€</button>
                             </div>`
@@ -867,67 +872,46 @@ function renderContent() {
     } else if (state.activeTab === 'machines') {
         area.innerHTML = `<h2 class="text-3xl font-black mb-6 text-[#4e342e]">Fabriken & Industrie</h2>
             <div class="mb-4 bg-blue-50 p-4 rounded-xl border-4 border-blue-200 font-bold text-blue-800 flex justify-between items-center">
-                <span>Strombedarf: ${state.machines.length} Fabriken benötigen ${Math.floor(state.machines.length/5)} Solaranlagen. Du hast ${state.solarPanels}.</span>
+                <span>Strombedarf: ${Object.values(state.machines).reduce((s,m)=>s+m.count,0)} Fabriken benötigen ${Math.floor(Object.values(state.machines).reduce((s,m)=>s+m.count,0)/5)} Solaranlagen. Du hast ${state.solarPanels}.</span>
                 <span class="${state.hasPower ? 'text-green-600' : 'text-red-600 font-black'}">${state.hasPower ? '✅ Ausreichend' : '❌ Stromausfall'}</span>
             </div>
             <div id="machines-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>`;
-        renderMachinesProgress();
-    } else if (state.activeTab === 'achievements') {
-        area.innerHTML = `
-            <h2 class="text-3xl font-black mb-6 text-[#4e342e]">🏆 Erfolge</h2>
-            <p class="mb-6 text-[#5d4037] font-bold">Erreiche Meilensteine, um einzigartige Belohnungen freizuschalten!</p>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                ${ACHIEVEMENTS.map(ach => {
-                    const unlocked = state.achievements[ach.id];
-                    return `
-                    <div class="achievement-card border-4 rounded-2xl p-4 flex gap-4 ${unlocked ? 'achievement-unlocked' : 'achievement-locked border-gray-300 bg-gray-100'}">
-                        <div class="text-5xl flex items-center justify-center">${ach.icon}</div>
-                        <div class="flex-1">
-                            <div class="font-black text-lg ${unlocked ? 'text-[#5d4037]' : 'text-gray-500'}">${ach.name}</div>
-                            <div class="text-xs font-bold ${unlocked ? 'text-gray-700' : 'text-gray-400'} mb-2">${ach.desc}</div>
-                            <div class="text-sm font-black ${unlocked ? 'text-green-600' : 'text-yellow-600'}">
-                                ${unlocked ? '✅ Freigeschaltet' : `Belohnung: ${ach.reward}€`}
-                            </div>
-                        </div>
-                    </div>`;
-                }).join('')}
-            </div>
-        `;
+        buildMachinesStatic();
     } else if (state.activeTab === 'settings') {
         const isAnon = auth.currentUser?.isAnonymous;
-        
         area.innerHTML = `
             <h2 class="text-3xl font-black mb-6 text-[#4e342e]">⚙️ Optionen & Spielstand</h2>
             
             <div class="bg-white border-4 border-[#D4A373] rounded-2xl p-6 shadow-md max-w-2xl mb-6">
                 <h3 class="text-xl font-bold mb-4">Cloud Speicher (Account)</h3>
                 <p class="mb-4 text-gray-600 font-bold">
-                    ${isAnon ? 'Dein Spielstand ist aktuell nur lokal und temporär gespeichert. Melde dich an, um ihn sicher in der Cloud aufzubewahren!' : `Du bist sicher angemeldet (ID: <span class="text-xs">${auth.currentUser.uid}</span>). Dein Fortschritt wird in der Cloud gesichert.`}
+                    ${isAnon ? 'Dein Spielstand ist aktuell nur lokal und temporär gespeichert. Melde dich an, um ihn sicher in der Cloud aufzubewahren!' : `Du bist sicher angemeldet (ID: <span class="text-xs">${auth.currentUser.uid}</span>).`}
                 </p>
                 <div class="flex gap-4">
-                    ${isAnon ? `<button onclick="showAuthModal()" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-xl shadow">Account erstellen / Anmelden</button>` : `<button onclick="handleLogout()" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-xl shadow">Abmelden</button>`}
+                    ${isAnon ? `<button onclick="showAuthModal()" class="bg-blue-500 text-white font-bold py-2 px-6 rounded-xl">Anmelden / Registrieren</button>` : `<button onclick="handleLogout()" class="bg-gray-500 text-white font-bold py-2 px-6 rounded-xl">Abmelden</button>`}
                 </div>
             </div>
             
-            <div class="bg-white border-4 border-[#D4A373] rounded-2xl p-6 shadow-md max-w-2xl">
+            <div class="bg-white border-4 border-[#D4A373] rounded-2xl p-6 shadow-md max-w-2xl mb-6">
                 <h3 class="text-xl font-bold mb-4">Lokaler Spielstand (Code)</h3>
-                <p class="mb-4 text-gray-600 font-bold">Du kannst deinen Spielstand zusätzlich als Code exportieren, um ihn auf einem anderen Gerät manuell zu laden.</p>
-                <div class="flex gap-4 mb-8">
-                    <button onclick="exportSave()" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-xl shadow">Code kopieren</button>
-                    <button onclick="importSave()" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-xl shadow">Code einfügen</button>
+                <div class="flex gap-4 mb-4">
+                    <button onclick="exportSave()" class="bg-blue-500 text-white font-bold py-2 px-6 rounded-xl">Code kopieren</button>
+                    <button onclick="importSave()" class="bg-green-500 text-white font-bold py-2 px-6 rounded-xl">Code einfügen</button>
                 </div>
-
-                <h3 class="text-xl font-bold mb-4 text-red-600">Gefahrenzone</h3>
-                <button onclick="resetGame()" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-6 rounded-xl shadow">Kompletten Spielstand löschen</button>
+                <button onclick="resetGame()" class="bg-red-500 text-white font-bold py-2 px-6 rounded-xl shadow">Spielstand löschen</button>
             </div>
             
             ${state.farmName.toLowerCase() === 'admin' ? `
-            <div class="bg-red-100 border-4 border-red-500 rounded-2xl p-6 shadow-md max-w-2xl mt-6">
+            <div class="bg-red-100 border-4 border-red-500 rounded-2xl p-6 shadow-md max-w-2xl">
                 <h3 class="text-xl font-black text-red-700 mb-4">Admin Panel</h3>
-                <div class="flex flex-wrap gap-4">
-                    <button onclick="adminGiveMoney()" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-xl shadow">+1.000.000€</button>
-                    <button onclick="adminTriggerStrike()" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-xl shadow">Streik auslösen</button>
-                    <button onclick="adminUnlockAll()" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-xl shadow">Alle Fabriken freischalten</button>
+                <div class="flex flex-wrap gap-4 mb-4">
+                    <button onclick="adminGiveMoney()" class="bg-red-500 text-white font-bold py-2 px-4 rounded-xl shadow">+1.000.000€</button>
+                    <button onclick="adminTriggerStrike()" class="bg-red-500 text-white font-bold py-2 px-4 rounded-xl shadow">Streik auslösen</button>
+                    <button onclick="adminUnlockAll()" class="bg-red-500 text-white font-bold py-2 px-4 rounded-xl shadow">Alles freischalten</button>
+                </div>
+                <div class="flex gap-2">
+                    <input id="admin-cmd" type="text" placeholder="Befehl: give gold 50" class="flex-1 p-2 border-2 border-red-300 rounded font-mono text-sm">
+                    <button onclick="adminCommand()" class="bg-red-600 text-white font-bold px-4 rounded">Ausführen</button>
                 </div>
             </div>` : ''}
         `;
@@ -942,7 +926,7 @@ function buildFarmStatic() {
     if(!fc || !ac) return;
 
     fc.innerHTML = state.fields.map((field, idx) => `
-        <div class="dirt-field h-32 cursor-pointer group flex flex-col justify-end items-center pb-2" onclick="handleFieldClick(${idx})" title="${field.plantId ? 'Wächst: '+PLANTS[field.plantId].name : 'Leer'}">
+        <div class="dirt-field h-32 cursor-pointer group flex flex-col justify-end items-center pb-2" onclick="handleFieldClick(${idx})">
             ${field.workerAssigned ? `<div class="absolute top-1 right-1 bg-white rounded-full w-6 h-6 flex justify-center items-center shadow-md font-bold text-xs z-10 border border-gray-300">👷</div>` : ''}
             <div id="field-content-${idx}" class="w-16 h-16 mb-1 drop-shadow-xl"></div>
             <div class="w-11/12 h-2 bg-[#4e342e] rounded-full overflow-hidden mb-1"><div id="field-bar-${idx}" class="h-full bg-green-400" style="width:0%"></div></div>
@@ -968,23 +952,18 @@ function buildFarmStatic() {
 
 function renderAnimalNode(a, count, list) {
     const def = ANIMALS[a.type];
-    const needsWorker = def.needsWorker;
     const totalProd = list.reduce((sum, an) => sum + (an.producedCount || 0), 0);
     const hasWorker = list.some(an => an.workerAssigned); 
-    
     return `
     <div class="relative group cursor-pointer" onclick="handleAnimalClick('${a.id}', ${count > 1})">
         ${count > 1 ? `<div class="absolute -top-2 -right-2 bg-red-500 text-white font-black text-xs rounded-full w-6 h-6 flex justify-center items-center z-10 border-2 border-white shadow-md">${count}</div>` : ''}
-        ${needsWorker && hasWorker ? `<div class="absolute -top-2 -left-2 bg-white rounded-full w-6 h-6 flex justify-center items-center shadow-md font-bold text-xs z-10 border border-gray-300">👷</div>` : ''}
-        
+        ${def.needsWorker && hasWorker ? `<div class="absolute -top-2 -left-2 bg-white rounded-full w-6 h-6 flex justify-center items-center shadow-md font-bold text-xs z-10 border border-gray-300">👷</div>` : ''}
         <div class="w-16 h-16 drop-shadow-xl transform transition hover:scale-110 hover:-translate-y-1">${SVG[a.type]}</div>
-        
         <div class="animal-tooltip absolute bg-white border-4 border-[#8B5A2B] p-3 rounded-xl shadow-xl w-48 text-center pointer-events-none">
             <div class="font-black text-[#5d4037] border-b-2 border-gray-200 pb-1 mb-1">${def.name} ${count > 1 ? `(x${count})` : ''}</div>
             <div class="text-xs font-bold text-gray-600 mb-1">Prod: <span id="prod-count-${a.id}" class="text-green-600">${totalProd}</span>x</div>
             <div class="w-full bg-gray-200 h-2 rounded-full mb-1 overflow-hidden"><div id="animal-bar-${a.id}" class="bg-blue-400 h-full" style="width:0%"></div></div>
             <div id="animal-time-${a.id}" class="text-[9px] font-black text-blue-600 mb-2"></div>
-            <div class="text-xs text-gray-500 font-bold mb-1">Klicken für Optionen</div>
         </div>
     </div>`;
 }
@@ -1006,163 +985,188 @@ function updateFarmDOM() {
             const growTime = getActualGrowTime(plant);
             const timeGrown = state.timeElapsedDays - field.plantedAt;
             const progress = Math.min(100, (timeGrown / growTime) * 100);
-            const daysRemaining = growTime - timeGrown;
             
             barEl.style.width = `${progress}%`;
-            
             if (progress >= 100) {
                 if(contentEl.dataset.state !== 'grown') { contentEl.innerHTML = SVG[field.plantId]; contentEl.dataset.state = 'grown'; barEl.style.backgroundColor = '#FFC107'; }
                 timeEl.innerText = 'Erntebereit!';
             } else {
                 if(contentEl.dataset.state !== 'growing') { contentEl.innerHTML = SVG.sprout; contentEl.dataset.state = 'growing'; barEl.style.backgroundColor = '#4CAF50'; }
-                timeEl.innerText = formatTime(daysRemaining);
+                timeEl.innerText = formatTime(growTime - timeGrown);
             }
         }
     });
 
     const groups = {};
     state.animals.forEach(a => { if(!groups[a.type]) groups[a.type] = []; groups[a.type].push(a); });
-    
     for(let type in groups) {
         const list = groups[type];
-        if(list.length > 10) {
-            updateSingleAnimalNode(list[0], list);
-        } else {
-            list.forEach(a => updateSingleAnimalNode(a, [a]));
-        }
-    }
-}
+        const a = list[0]; 
+        const barEl = document.getElementById(`animal-bar-${a.id}`);
+        if(barEl) {
+            const def = ANIMALS[a.type];
+            const timeSince = state.timeElapsedDays - a.lastProduced;
+            const cycle = getActualAnimalCycle(def);
+            const isWorking = !(def.needsWorker && (!a.workerAssigned || state.strike));
 
-function updateSingleAnimalNode(a, list) {
-    const barEl = document.getElementById(`animal-bar-${a.id}`);
-    const timeEl = document.getElementById(`animal-time-${a.id}`);
-    const countEl = document.getElementById(`prod-count-${a.id}`);
-    if(barEl) {
-        const def = ANIMALS[a.type];
-        const timeSince = state.timeElapsedDays - a.lastProduced;
-        const prog = Math.min(100, (timeSince / def.cycle) * 100);
-        
-        let isWorking = true;
-        if(def.needsWorker && (!a.workerAssigned || state.strike)) isWorking = false;
-
-        barEl.style.width = `${prog}%`;
-        
-        if(!isWorking) {
-            barEl.style.backgroundColor = '#fca5a5';
-            timeEl.innerText = state.strike ? 'Streik!' : 'Arbeiter fehlt!';
-        } else {
-            barEl.style.backgroundColor = '#60a5fa';
-            timeEl.innerText = formatTime(def.cycle - timeSince);
+            barEl.style.width = `${Math.min(100, (timeSince / cycle) * 100)}%`;
+            barEl.style.backgroundColor = isWorking ? '#60a5fa' : '#fca5a5';
+            document.getElementById(`animal-time-${a.id}`).innerText = isWorking ? formatTime(cycle - timeSince) : (state.strike ? 'Streik!' : 'Arbeiter fehlt!');
+            document.getElementById(`prod-count-${a.id}`).innerText = list.reduce((sum, an) => sum + (an.producedCount || 0), 0);
         }
-        
-        const totalProd = list.reduce((sum, an) => sum + (an.producedCount || 0), 0);
-        if(countEl.innerText !== totalProd.toString()) countEl.innerText = totalProd;
     }
 }
 
 window.changeRecipe = function(type, recipeIndex) {
-    state.machines.filter(m => m.type === type).forEach(m => m.selectedRecipe = parseInt(recipeIndex));
-    renderMachinesProgress();
+    if(state.machines[type]) {
+        state.machines[type].selectedRecipe = parseInt(recipeIndex);
+        state.machines[type].lastProduced = state.timeElapsedDays; // Reset timer
+    }
+}
+window.toggleMachine = function(type) {
+    if(state.machines[type]) {
+        state.machines[type].isActive = !state.machines[type].isActive;
+        buildMachinesStatic(); // Re-render for opacity change
+    }
 }
 
-function renderMachinesProgress() {
+function buildMachinesStatic() {
     const container = document.getElementById('machines-container');
     if(!container) return;
-    if (state.machines.length === 0) { container.innerHTML = `<div class="col-span-full text-center text-gray-500 font-bold py-10">Keine Fabriken.</div>`; return; }
-
-    const groups = {};
-    state.machines.forEach(m => { if(!groups[m.type]) groups[m.type] = []; groups[m.type].push(m); });
+    if (Object.keys(state.machines).length === 0) { container.innerHTML = `<div class="col-span-full text-center text-gray-500 font-bold py-10">Keine Fabriken.</div>`; return; }
 
     let html = '';
-    for(let type in groups) {
-        const list = groups[type];
-        const count = list.length;
+    for(let type in state.machines) {
+        const m = state.machines[type];
         const def = MACHINES[type];
-        const m = list[0]; 
+        const count = m.count;
         
+        let headerActions = `
+            <button onclick="toggleMachine('${type}')" class="text-xs bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded shadow-sm" title="Pausieren/Aktivieren">${m.isActive ? '⏸️' : '▶️'}</button>
+        `;
+
         if(def.isRecycler) {
-            const totalLoaded = list.reduce((s, an) => s + (an.itemsLoaded||0), 0);
-            const maxCapacity = count * 5;
-            const prog = Math.min(100, (totalLoaded / maxCapacity) * 100);
-            html += `<div class="bg-white border-4 border-[#D4A373] rounded-2xl p-4 shadow-md flex flex-col relative">
+            html += `<div class="bg-white border-4 border-[#D4A373] rounded-2xl p-4 shadow-md flex flex-col relative ${m.isActive ? 'opacity-100' : 'opacity-50 grayscale'}">
                 ${count > 1 ? `<div class="absolute -top-3 -right-3 bg-red-500 text-white font-black text-sm rounded-full w-8 h-8 flex justify-center items-center z-10 border-2 border-white shadow-md">x${count}</div>` : ''}
                 <div class="flex items-center gap-3 mb-2">
                     <div class="w-12 h-12">${SVG[def.id]}</div>
-                    <div class="flex-1"><h3 class="text-lg font-black">${def.name}</h3></div>
+                    <div class="flex-1"><h3 class="text-lg font-black leading-tight">${def.name}</h3></div>
+                    ${headerActions}
                 </div>
-                <div class="w-full bg-gray-200 rounded-full h-2 mb-2"><div class="bg-orange-500 h-full" style="width: ${prog}%"></div></div>
-                <div class="text-xs font-bold text-gray-600 mb-2">Items gesamt: ${totalLoaded}/${maxCapacity}</div>
-                <button onclick="openRecycleGroupModal('${type}')" class="mt-auto bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg font-bold w-full shadow">Material hinzufügen</button>
+                <div class="w-full bg-gray-200 rounded-full h-2 mb-2"><div id="mac-bar-${type}" class="bg-orange-500 h-full" style="width: 0%"></div></div>
+                <div id="mac-status-${type}" class="text-xs font-bold text-gray-600 mb-2"></div>
+                <button onclick="openRecycleModal('${type}')" class="mt-auto bg-green-500 hover:bg-green-600 text-white py-2 rounded-lg font-bold w-full shadow" ${!m.isActive?'disabled':''}>Recycling</button>
             </div>`;
             continue;
         }
 
-        const recipes = def.recipes || [];
-        const activeRecipeIndex = m.selectedRecipe || 0;
-        const activeRecipe = recipes[activeRecipeIndex] || recipes[0];
-        let hasInput = true;
-        for(let id in activeRecipe.input) { if((state.inventory[id]||0) < activeRecipe.input[id]) {hasInput=false; break;} }
-
-        const prog = Math.min(100, ((state.timeElapsedDays - m.lastProduced) / activeRecipe.time) * 100);
-        const statusText = state.hasPower ? (hasInput ? (prog >= 100 ? "Fertig!" : "Läuft...") : "Material fehlt") : "Kein Strom";
-        const statusColor = state.hasPower ? (hasInput ? "text-green-600" : "text-red-500") : "text-red-600";
-
         let recipeSelector = '';
-        if (recipes.length > 1) {
+        if (def.recipes && def.recipes.length > 1) {
             recipeSelector = `
-                <select onchange="changeRecipe('${type}', this.value)" class="w-full text-xs font-bold p-1 rounded border mb-2 bg-gray-50 outline-none cursor-pointer">
-                    ${recipes.map((r, i) => `<option value="${i}" ${i === activeRecipeIndex ? 'selected' : ''}>${r.name || 'Rezept '+(i+1)}</option>`).join('')}
+                <select onchange="changeRecipe('${type}', this.value)" class="w-full text-xs font-bold p-1 rounded border mb-2 bg-gray-50 outline-none cursor-pointer" ${!m.isActive?'disabled':''}>
+                    ${def.recipes.map((r, i) => `<option value="${i}" ${i === (m.selectedRecipe||0) ? 'selected' : ''}>${r.name || 'Rezept '+(i+1)}</option>`).join('')}
                 </select>
             `;
         }
 
         html += `
-            <div class="bg-white border-4 border-[#D4A373] rounded-2xl p-4 shadow-md flex flex-col relative opacity-${state.hasPower? '100' : '60'}">
+            <div class="bg-white border-4 border-[#D4A373] rounded-2xl p-4 shadow-md flex flex-col relative ${m.isActive && state.hasPower ? 'opacity-100' : 'opacity-50 grayscale'}">
                 ${count > 1 ? `<div class="absolute -top-3 -right-3 bg-red-500 text-white font-black text-sm rounded-full w-8 h-8 flex justify-center items-center z-10 border-2 border-white shadow-md">x${count}</div>` : ''}
                 <div class="flex items-center gap-3 mb-2">
                     <div class="w-12 h-12">${SVG[def.id]}</div>
-                    <div class="flex-1"><h3 class="text-lg font-black">${def.name}</h3><p class="text-xs font-bold ${statusColor}">${statusText}</p></div>
+                    <div class="flex-1"><h3 class="text-lg font-black leading-tight">${def.name}</h3></div>
+                    ${headerActions}
                 </div>
                 ${recipeSelector}
-                <div class="w-full bg-gray-200 rounded-full h-2 mb-3"><div class="bg-orange-500 h-full" style="width: ${hasInput&&state.hasPower ? prog : 0}%"></div></div>
-                <div class="text-[10px] font-bold text-gray-600 flex gap-2">
-                    <div class="bg-gray-50 p-1 flex-1 rounded border"><b>In:</b> ${Object.keys(activeRecipe.input).map(k=>`${activeRecipe.input[k]}x ${ITEMS[k]?.name}`).join(', ') || '-'}</div>
-                    <div class="bg-gray-50 p-1 flex-1 rounded border"><b>Out:</b> ${activeRecipe.output ? Object.keys(activeRecipe.output).map(k=>ITEMS[k]?.name).join(', ') : 'Zufällig'}</div>
-                </div>
+                <div id="mac-status-${type}" class="text-xs font-bold mb-1 h-4"></div>
+                <div class="w-full bg-gray-200 rounded-full h-2 mb-2"><div id="mac-bar-${type}" class="bg-orange-500 h-full transition-all" style="width: 0%"></div></div>
+                <div id="mac-io-${type}" class="text-[10px] font-bold text-gray-600 flex gap-2 mt-auto"></div>
             </div>`;
     }
     container.innerHTML = html;
+    updateMachinesDOM();
+}
+
+function updateMachinesDOM() {
+    if(state.activeTab !== 'machines') return;
+    for(let type in state.machines) {
+        const m = state.machines[type];
+        const def = MACHINES[type];
+        const bar = document.getElementById(`mac-bar-${type}`);
+        const status = document.getElementById(`mac-status-${type}`);
+        const io = document.getElementById(`mac-io-${type}`);
+
+        if(def.isRecycler) {
+            if(bar && status) {
+                const max = m.count * 5;
+                bar.style.width = `${Math.min(100, ((m.itemsLoaded||0)/max)*100)}%`;
+                status.innerText = m.isActive ? `Müll: ${m.itemsLoaded||0} / ${max}` : 'Pausiert';
+            }
+            continue;
+        }
+
+        const activeRecipe = def.recipes[m.selectedRecipe || 0] || def.recipes[0];
+        let hasInput = true;
+        for(let id in activeRecipe.input) { if((state.inventory[id]||0) < activeRecipe.input[id]) {hasInput=false; break;} }
+
+        if(bar && status && io) {
+            const activeTime = activeRecipe.time / m.count; // Speedup by count
+            const prog = Math.min(100, ((state.timeElapsedDays - m.lastProduced) / activeTime) * 100);
+            
+            bar.style.width = m.isActive && hasInput && state.hasPower ? `${prog}%` : '0%';
+            
+            if(!m.isActive) { status.innerText = 'Pausiert'; status.className = "text-xs font-bold mb-1 text-gray-500"; }
+            else if(!state.hasPower) { status.innerText = 'Kein Strom'; status.className = "text-xs font-bold mb-1 text-red-600"; }
+            else if(!hasInput) { status.innerText = 'Material fehlt'; status.className = "text-xs font-bold mb-1 text-red-500"; }
+            else { status.innerText = prog >= 100 ? 'Fertig!' : 'Produziert...'; status.className = "text-xs font-bold mb-1 text-green-600"; }
+            
+            io.innerHTML = `
+                <div class="bg-gray-50 p-1 flex-1 rounded border"><b>In:</b> ${Object.keys(activeRecipe.input).map(k=>`${activeRecipe.input[k]}x ${ITEMS[k]?.name||PLANTS[k]?.name||k}`).join(', ') || '-'}</div>
+                <div class="bg-gray-50 p-1 flex-1 rounded border"><b>Out:</b> ${activeRecipe.output ? Object.keys(activeRecipe.output).map(k=>ITEMS[k]?.name).join(', ') : 'Zufällig'}</div>
+            `;
+        }
+    }
 }
 
 /** --- INTERAKTIONEN --- */
 window.handleFieldClick = function(idx) {
     const field = state.fields[idx];
-    if (!field.plantId) openModal(`Feld ${idx+1} Bepflanzen`, generatePlantSelectionHTML(idx));
-    else {
+    if (!field.plantId) {
+        let html = `<div class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto p-1">`;
+        let hasSeed = false;
+        for (let id in PLANTS) {
+            if(state.seeds[id] > 0) {
+                hasSeed = true;
+                html += `<button class="bg-green-500 hover:bg-green-600 text-white flex items-center p-2 rounded-xl shadow" onclick="plantSeed(${idx}, '${id}')">
+                    <div class="w-10 h-10 mr-2">${SVG[id]}</div>
+                    <div class="text-left flex-1"><div class="font-black text-sm">${PLANTS[id].name}</div><div class="text-xs font-bold bg-green-700 px-1 rounded inline-block">Lager: ${Math.floor(state.seeds[id])}</div></div>
+                </button>`;
+            }
+        }
+        if(!hasSeed) html += `<div class="col-span-full text-center py-4 font-bold text-gray-500">Kein Saatgut. Kaufe es im Shop!</div>`;
+        openModal(`Feld ${idx+1} Bepflanzen`, html + `</div>`);
+    } else {
         const plant = PLANTS[field.plantId];
         const ready = state.timeElapsedDays >= field.plantedAt + getActualGrowTime(plant);
         if (ready) {
-            addToInventory(field.plantId, plant.yield);
+            addToInventory(field.plantId, plant.yield * (1 + (state.upgrades.yieldMulti||0)));
             field.plantId = null;
-            document.getElementById(`field-content-${idx}`).dataset.state = 'empty';
-            showNotification(`Ernte: + ${plant.yield}x ${plant.name}`, 'success');
+            showNotification(`Geerntet!`, 'success');
             buildFarmStatic();
         } else {
             let html = `<div class="mb-4">Auf diesem Feld wächst aktuell <b>${plant.name}</b>.</div>
-                <button onclick="clearField(${idx})" class="w-full bg-red-500 text-white font-bold py-2 rounded-xl mb-3">Pflanze entfernen (Abbrechen)</button>`;
+                <button onclick="clearField(${idx})" class="w-full bg-red-500 text-white font-bold py-2 rounded-xl mb-3">Pflanze abbrechen</button>`;
             if (state.workersIdle > 0 && !field.workerAssigned) html += `<button onclick="assignWorkerField(${idx})" class="w-full bg-purple-500 text-white font-bold py-2 rounded-xl">Helfer zuweisen</button>`;
             else if (field.workerAssigned) html += `<button onclick="removeWorkerField(${idx})" class="w-full bg-orange-500 text-white font-bold py-2 rounded-xl">Helfer abziehen</button>`;
-            openModal(`Feld ${idx+1} Verwalten`, html);
+            openModal(`Feld verwalten`, html);
         }
     }
 }
 
 window.handleAnimalClick = function(id, isGrouped) {
-    const aIdx = state.animals.findIndex(an => an.id === id);
-    if(aIdx === -1) return;
-    const a = state.animals[aIdx];
+    const a = state.animals.find(an => an.id === id);
+    if(!a) return;
     const def = ANIMALS[a.type];
-    
     let html = `<div class="mb-4 text-center">Was möchtest du mit dem ${def.name} tun?</div>`;
     
     if(def.needsWorker) {
@@ -1175,162 +1179,136 @@ window.handleAnimalClick = function(id, isGrouped) {
     openModal(`${def.name} Verwalten`, html);
 }
 
-function generatePlantSelectionHTML(idx) {
-    let html = `<div class="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto p-1">`;
-    let hasSeed = false;
-    for (let id in PLANTS) {
-        if(state.seeds[id] > 0) {
-            hasSeed = true;
-            html += `<button class="bg-green-500 hover:bg-green-600 text-white flex items-center p-2 rounded-xl shadow" onclick="plantSeed(${idx}, '${id}')">
-                <div class="w-10 h-10 mr-2">${SVG[id]}</div>
-                <div class="text-left flex-1"><div class="font-black text-sm">${PLANTS[id].name}</div><div class="text-xs font-bold bg-green-700 px-1 rounded inline-block">Menge: ${Math.floor(state.seeds[id])}</div></div>
-            </button>`;
-        }
-    }
-    if(!hasSeed) html += `<div class="col-span-full text-center py-4 font-bold text-gray-500">Kein Saatgut. Kaufe es im Shop!</div>`;
-    return html + `</div>`;
-}
-
 window.clearField = function(idx) { state.fields[idx].plantId = null; closeModal(); buildFarmStatic(); }
 window.plantSeed = function(idx, pId) { if(state.seeds[pId]>0){ state.seeds[pId]--; state.fields[idx].plantId = pId; state.fields[idx].plantedAt = state.timeElapsedDays; closeModal(); buildFarmStatic(); } }
 window.assignWorkerField = function(idx) { if(state.workersIdle>0){ state.workersIdle--; state.fields[idx].workerAssigned=true; closeModal(); buildFarmStatic(); } }
 window.removeWorkerField = function(idx) { if(state.fields[idx].workerAssigned){ state.fields[idx].workerAssigned=false; state.workersIdle++; closeModal(); buildFarmStatic(); } }
+window.assignWorkerAnimal = function(id) { const a = state.animals.find(an => an.id === id); if(a && state.workersIdle>0){ state.workersIdle--; a.workerAssigned=true; closeModal(); buildFarmStatic(); } }
+window.removeWorkerAnimal = function(id) { const a = state.animals.find(an => an.id === id); if(a && a.workerAssigned){ a.workerAssigned=false; state.workersIdle++; closeModal(); buildFarmStatic(); } }
 
-window.assignWorkerAnimal = function(id) {
-    const a = state.animals.find(an => an.id === id);
-    if(a && state.workersIdle>0){ state.workersIdle--; a.workerAssigned=true; closeModal(); buildFarmStatic(); }
-}
-window.removeWorkerAnimal = function(id) {
-    const a = state.animals.find(an => an.id === id);
-    if(a && a.workerAssigned){ a.workerAssigned=false; state.workersIdle++; closeModal(); buildFarmStatic(); }
-}
+window.buySeed = function(id) { const p=PLANTS[id]; if(state.money>=p.seedCost){state.money-=p.seedCost; addSeed(id,1); showNotification(`Gekauft!`, 'success'); updateUI(); changeTab('shop');} else showNotification('Zu wenig Geld', 'error'); }
+window.buyAnimal = function(id) { const a=ANIMALS[id]; if(a.max && state.animals.filter(an=>an.type===id).length>=a.max){showNotification(`Maximal ${a.max}!`, 'error'); return;} if(state.money>=a.cost){state.money-=a.cost; state.animals.push({id:'a'+Date.now()+Math.random(), type:id, lastProduced:state.timeElapsedDays, producedCount:0, workerAssigned:false}); showNotification(`Gekauft!`, 'success'); updateUI();} else showNotification('Zu wenig Geld', 'error'); }
+window.sellAnimal = function(id) { const idx=state.animals.findIndex(a=>a.id===id); if(idx>-1){ const a=state.animals[idx]; state.money+=ANIMALS[a.type].cost/2; if(a.workerAssigned) state.workersIdle++; state.animals.splice(idx,1); closeModal(); buildFarmStatic(); updateUI(); } }
+window.buyMachine = function(id) { const m=MACHINES[id]; if(state.money>=m.cost){state.money-=m.cost; if(!state.machines[id]) state.machines[id] = {count:0, lastProduced:state.timeElapsedDays, isActive:true, selectedRecipe:0, itemsLoaded:0}; state.machines[id].count++; showNotification(`Gebaut!`, 'success'); updateUI(); changeTab('shop');} else showNotification('Zu wenig Geld', 'error'); }
 
-window.buySeed = function(id) { const p=PLANTS[id]; if(state.money>=p.seedCost){state.money-=p.seedCost; addSeed(id,1); showNotification(`${p.name}-Samen!`, 'success'); updateUI(); changeTab('shop');} else showNotification('Zu wenig Geld', 'error'); }
-window.buyAnimal = function(id) { const a=ANIMALS[id]; if(a.max && state.animals.filter(an=>an.type===id).length>=a.max){showNotification(`Maximal ${a.max}!`, 'error'); return;} if(state.money>=a.cost){state.money-=a.cost; state.animals.push({id:'a'+Date.now()+Math.random(), type:id, lastProduced:state.timeElapsedDays, producedCount:0, workerAssigned:false}); showNotification(`${a.name} gekauft!`, 'success'); updateUI();} else showNotification('Zu wenig Geld', 'error'); }
-window.sellAnimal = function(id) { const idx=state.animals.findIndex(a=>a.id===id); if(idx>-1){ const a=state.animals[idx]; state.money+=ANIMALS[a.type].cost/2; if(a.workerAssigned) state.workersIdle++; state.animals.splice(idx,1); closeModal(); buildFarmStatic(); updateUI(); showNotification('Verkauft!', 'success'); } }
-window.buyMachine = function(id) { const m=MACHINES[id]; if(state.money>=m.cost){state.money-=m.cost; state.machines.push({type:id, lastProduced:state.timeElapsedDays, itemsLoaded:0, selectedRecipe: 0}); showNotification(`${m.name} gebaut!`, 'success'); updateUI(); changeTab('shop');} else showNotification('Zu wenig Geld', 'error'); }
+window.buyWorker = function() { if(state.money>=200){state.money-=200; state.workersTotal++; state.workersIdle++; updateUI();} else showNotification('Zu wenig Geld', 'error'); }
+window.buyField = function() { const c=calculateFieldCost(); if(state.money>=c){state.money-=c; state.fields.push({id:state.fields.length, plantId:null, plantedAt:null, workerAssigned:false}); changeTab('shop');} else showNotification('Zu wenig Geld', 'error'); }
+window.buySolar = function() { const c=2000*(state.solarPanels+1); if(state.money>=c){state.money-=c; state.solarPanels++; changeTab('shop');} else showNotification('Zu wenig Geld', 'error'); }
+window.buyUpgrade = function(type, max, baseCost) { const l=state.upgrades[type]||0; const c=baseCost*(l+1); if(l>=max)return; if(state.money>=c){state.money-=c; state.upgrades[type]=l+1; showNotification('Upgrade!', 'success'); changeTab('shop');} else showNotification('Zu wenig Geld', 'error'); }
+window.buyITCompany = function() { if((state.inventory.computer||0)>=3 && (state.inventory.rechencenter||0)>=2) { state.inventory.computer-=3; state.inventory.rechencenter-=2; state.itCompanies++; changeTab('shop'); } else showNotification('Material fehlt!', 'error'); }
 
-window.buyWorker = function() { if(state.money>=200){state.money-=200; state.workersTotal++; state.workersIdle++; showNotification('Helfer eingestellt!', 'success'); updateUI();} else showNotification('Zu wenig Geld', 'error'); }
-window.buyField = function() { const c=calculateFieldCost(); if(state.money>=c){state.money-=c; state.fields.push({id:state.fields.length, plantId:null, plantedAt:null, workerAssigned:false}); showNotification('Feld erweitert!', 'success'); changeTab('shop');} else showNotification('Zu wenig Geld', 'error'); }
-window.buyFertilizer = function() { const l=state.upgrades.fertilizer||0; const c=500*(l+1); if(l>=5)return; if(state.money>=c){state.money-=c; state.upgrades.fertilizer=l+1; showNotification('Dünger Upgrade!', 'success'); changeTab('shop');} else showNotification('Zu wenig Geld', 'error'); }
-window.buySolar = function() { const c=2000*(state.solarPanels+1); if(state.money>=c){state.money-=c; state.solarPanels++; showNotification('Solaranlage gebaut!', 'success'); changeTab('shop');} else showNotification('Zu wenig Geld', 'error'); }
-window.buyITCompany = function() {
-    if((state.inventory.computer||0)>=3 && (state.inventory.rechencenter||0)>=2) {
-        state.inventory.computer-=3; state.inventory.rechencenter-=2;
-        state.itCompanies++; showNotification('IT-Firma gegründet!', 'success'); changeTab('shop');
-    } else showNotification('Material fehlt!', 'error');
-}
-
-window.sellItem = function(id) { if(state.inventory[id]>0){state.inventory[id]--; state.money+=ITEMS[id].sellPrice; renderContent();} }
-window.sellAll = function() {
-    let e=0; for(let id in state.inventory){if(state.inventory[id]>0){e+=state.inventory[id]*ITEMS[id].sellPrice; delete state.inventory[id];}}
-    if(e>0){state.money+=e; showNotification(`+${e}€`, 'success'); renderContent();}
-}
-window.endStrike = function() { 
-    if(!state.strike) { showNotification('Kein Streik!', 'info'); return; }
-    const d=state.workersTotal*GAME_CONFIG.baseWorkerSalary; 
-    if(state.money>=d){state.money-=d; state.strike=false; state.nextPayday=state.timeElapsedDays+7; document.getElementById('worker-warning').style.display='none'; showNotification('Schulden bezahlt!', 'success'); renderContent(); } 
-    else showNotification('Zu wenig Geld!', 'error'); 
-}
+window.sellItem = function(id) { if(state.inventory[id]>0){state.inventory[id]--; state.money+=ITEMS[id]?.sellPrice||PLANTS[id]?.sellPrice||0; renderContent();} }
+window.sellAll = function() { let e=0; for(let id in state.inventory){if(state.inventory[id]>0){e+=state.inventory[id]*(ITEMS[id]?.sellPrice||PLANTS[id]?.sellPrice||0); delete state.inventory[id];}} if(e>0){state.money+=e; renderContent();} }
+window.endStrike = function() { if(!state.strike) return; const d=state.workersTotal*getActualWorkerSalary(); if(state.money>=d){state.money-=d; state.strike=false; state.nextPayday=state.timeElapsedDays+7; document.getElementById('worker-warning').style.display='none'; renderContent(); } else showNotification('Zu wenig Geld!', 'error'); }
 
 window.renameFarm = function() { const n=prompt("Name:", state.farmName); if(n && n.trim()!==''){state.farmName=n.trim(); updateFarmNameUI(); if(state.activeTab === 'settings') renderContent();} }
 
-/* ADMIN FUNKTIONEN */
-window.adminGiveMoney = function() { state.money += 1000000; updateUI(); showNotification("Admin: +1M€", "success"); }
-window.adminTriggerStrike = function() { state.money = 0; state.strike = true; document.getElementById('worker-warning').style.display = 'block'; showNotification("Admin: Streik ausgelöst!", "error"); renderContent(); }
-window.adminUnlockAll = function() { state.adminUnlockAll = true; showNotification("Admin: Fabriken freigeschaltet!", "success"); }
-
-/* EXPORT / IMPORT FUNKTIONEN */
-window.exportSave = async function() {
-    const saveStr = btoa(JSON.stringify(state));
-    try {
-        await navigator.clipboard.writeText(saveStr);
-        showNotification("Spielstand erfolgreich kopiert!", "success");
-    } catch(err) {
-        prompt("Kopiere diesen Code (Strg+C / Cmd+C):", saveStr);
-    }
-}
-window.importSave = function() {
-    const saveStr = prompt("Füge hier deinen kopierten Spielstand-Code ein:");
-    if(saveStr) {
-        try {
-            const parsed = JSON.parse(atob(saveStr));
-            if(parsed && typeof parsed === 'object') {
-                state = { ...state, ...parsed };
-                saveState();
-                updateFarmNameUI();
-                showNotification("Spielstand erfolgreich geladen!", "success");
-                changeTab('farm');
+/* --- RECYCLING MINIGAME --- */
+let minigameInterval;
+window.openRecycleModal = function(type) {
+    const m = state.machines[type];
+    const max = m.count * 5;
+    
+    if(m.itemsLoaded >= 5) {
+        // Minigame ready!
+        let html = `
+            <div class="text-center">
+                <h3 class="font-black text-xl mb-2 text-[#4e342e]">Plastik Gießen!</h3>
+                <p class="mb-4 text-sm font-bold text-gray-600">Stoppe den Balken im <span class="text-green-600">GRÜNEN</span> Bereich!</p>
+                <div class="w-full bg-gray-300 h-8 rounded-xl relative overflow-hidden mb-6 border-4 border-gray-400">
+                    <div class="absolute left-1/3 w-1/3 h-full bg-green-400"></div>
+                    <div id="mg-cursor" class="absolute left-0 w-3 h-full bg-red-600 shadow-md"></div>
+                </div>
+                <button onclick="stopMinigame('${type}')" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl font-black text-lg shadow-md border-b-4 border-blue-700 active:border-b-0 active:translate-y-1">STOPP!</button>
+            </div>
+        `;
+        openModal('Plastikfabrik', html);
+        
+        let pos = 0; let dir = 2; // speed
+        minigameInterval = setInterval(() => {
+            const cursor = document.getElementById('mg-cursor');
+            if(!cursor) { clearInterval(minigameInterval); return; }
+            pos += dir;
+            if(pos >= 97 || pos <= 0) dir *= -1;
+            cursor.style.left = `${pos}%`;
+        }, 20);
+    } else {
+        // Add items modal
+        let html = `<div class="mb-4">Müll einwerfen (Status: ${m.itemsLoaded||0}/${max})</div><div class="grid grid-cols-2 gap-2 max-h-[50vh] overflow-y-auto">`;
+        for(let id in state.inventory) {
+            if(state.inventory[id] > 0) {
+                html += `<button onclick="recycleItem('${id}', '${type}')" class="bg-gray-50 hover:bg-gray-100 p-2 rounded flex justify-between items-center border-2 border-gray-200">
+                    <span class="font-bold">${ITEMS[id]?.name||PLANTS[id]?.name||id} (x${Math.floor(state.inventory[id])})</span>
+                    <span class="w-8 h-8 drop-shadow-md">${SVG[id]||''}</span>
+                </button>`;
             }
-        } catch(e) {
-            showNotification("Fehlerhafter Code!", "error");
         }
-    }
-}
-window.resetGame = function() {
-    if(confirm("Möchtest du WIRKLICH von vorne anfangen? Dieser Schritt kann nicht rückgängig gemacht werden!")) {
-        localStorage.removeItem('jtFarmState');
-        location.reload();
+        if(Object.keys(state.inventory).length===0) html += `<div>Inventar leer.</div>`;
+        html += `</div>`;
+        openModal('Recycling', html);
     }
 }
 
-window.openRecycleGroupModal = function(type) {
-    const list = state.machines.filter(m => m.type === type);
-    if(list.length === 0) return;
+window.stopMinigame = function(type) {
+    clearInterval(minigameInterval);
+    const cursor = document.getElementById('mg-cursor');
+    const pos = parseFloat(cursor.style.left);
     
-    // The target is the first machine in this group that has space
-    const targetIdx = state.machines.findIndex(m => m.type === type && (m.itemsLoaded||0) < 5);
-    
-    const totalLoaded = list.reduce((s, m) => s + (m.itemsLoaded||0), 0);
-    const maxCapacity = list.length * 5;
-
-    let html = `<div class="mb-4">Wähle ein Item zum Recyceln. (Status: ${totalLoaded}/${maxCapacity})</div><div class="grid grid-cols-2 gap-2 max-h-[50vh] overflow-y-auto">`;
-    for(let id in state.inventory) {
-        if(state.inventory[id] > 0) {
-            // We pass the exact machine index we want to fill to ensure it works properly
-            html += `<button onclick="recycleItemGroup('${id}', ${targetIdx})" class="bg-gray-100 hover:bg-gray-200 p-2 rounded flex justify-between items-center border">
-                <span class="font-bold">${ITEMS[id].name} (x${Math.floor(state.inventory[id])})</span>
-                <span class="w-8 h-8 drop-shadow-md">${SVG[id]||''}</span>
-            </button>`;
-        }
+    // Win zone is 33% to 66%
+    if(pos >= 30 && pos <= 66) {
+        state.machines[type].itemsLoaded -= 5;
+        addToInventory('plastik', 1);
+        showNotification("Erfolgreich Plastik gegossen!", "success");
+    } else {
+        showNotification("Daneben! Müll verloren.", "error");
+        state.machines[type].itemsLoaded -= 5;
     }
-    if(Object.keys(state.inventory).length===0) html += `<div>Inventar leer.</div>`;
-    html += `</div>`;
-    openModal('Recycling', html);
+    closeModal();
+    buildMachinesStatic();
 }
 
-window.recycleItemGroup = function(id, targetIdx) {
-    if(targetIdx === -1) {
-        showNotification('Alle Recycler sind voll!', 'error');
-        return;
-    }
-    if(state.inventory[id] > 0) {
+window.recycleItem = function(id, type) {
+    const m = state.machines[type];
+    if(state.inventory[id] > 0 && m.itemsLoaded < m.count * 5) {
         state.inventory[id]--;
         if(state.inventory[id] <= 0) delete state.inventory[id];
-        
-        const target = state.machines[targetIdx];
-        target.itemsLoaded = (target.itemsLoaded || 0) + 1;
-        
-        const type = target.type;
-        const list = state.machines.filter(m => m.type === type);
-        const totalLoaded = list.reduce((s, m) => s + (m.itemsLoaded||0), 0);
-        const maxCapacity = list.length * 5;
-        
-        if(totalLoaded >= maxCapacity) closeModal(); 
-        else openRecycleGroupModal(type); 
+        m.itemsLoaded++;
+        if(m.itemsLoaded >= 5) closeModal(); else openRecycleModal(type); 
     }
 }
 
-/** --- MODALS & NOTIFICATIONS --- */
+/* ADMIN FUNKTIONEN */
+window.adminGiveMoney = function() { state.money += 1000000; updateUI(); showNotification("Admin: +1M€", "success"); }
+window.adminTriggerStrike = function() { state.money = 0; state.strike = true; document.getElementById('worker-warning').style.display = 'block'; showNotification("Admin: Streik!", "error"); renderContent(); }
+window.adminUnlockAll = function() { state.adminUnlockAll = true; showNotification("Admin: Alles freigeschaltet!", "success"); }
+window.adminCommand = function() {
+    const val = document.getElementById('admin-cmd').value.toLowerCase().trim().split(' ');
+    if(val[0] === 'give' && val[1]) {
+        const item = val[1]; const amt = parseInt(val[2]) || 1;
+        if(ITEMS[item] || PLANTS[item]) { addToInventory(item, amt); showNotification(`Gegeben: ${amt}x ${item}`, "success"); }
+        else showNotification(`Item '${item}' existiert nicht.`, "error");
+    }
+}
+
+/* EXPORT / IMPORT */
+window.exportSave = async function() {
+    const s = btoa(JSON.stringify(state));
+    try { await navigator.clipboard.writeText(s); showNotification("Kopiert!", "success"); } catch(e) { prompt("Code kopieren:", s); }
+}
+window.importSave = function() {
+    const s = prompt("Code einfügen:");
+    if(s) { try { state = { ...state, ...JSON.parse(atob(s)) }; saveState(); updateFarmNameUI(); changeTab('farm'); showNotification("Geladen!", "success"); } catch(e) { showNotification("Fehlerhafter Code!", "error"); } }
+}
+window.resetGame = function() { if(confirm("Wirklich alles löschen?")) { localStorage.removeItem('jtFarmState'); location.reload(); } }
+
+/** --- MODALS & SETUP --- */
 function openModal(t, c, forced = false) { 
     document.getElementById('modal-title').innerText=t; 
     document.getElementById('modal-content').innerHTML=c; 
     document.getElementById('modal-close').style.display = forced ? 'none' : 'block';
     document.getElementById('modal').classList.remove('hidden'); 
 }
-window.closeModal = function() { 
-    if(!isForcedAuthModalOpen) document.getElementById('modal').classList.add('hidden'); 
-}
+window.closeModal = function() { if(!isForcedAuthModalOpen) document.getElementById('modal').classList.add('hidden'); clearInterval(minigameInterval); }
 document.getElementById('modal-close').addEventListener('click', closeModal);
 document.getElementById('modal').addEventListener('click', (e) => { if (e.target.id === 'modal' && !isForcedAuthModalOpen) closeModal(); });
 document.querySelectorAll('.nav-btn').forEach(b => b.addEventListener('click', () => changeTab(b.dataset.tab)));
