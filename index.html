@@ -71,6 +71,18 @@
             position: fixed; inset: 0; background: #557A46; z-index: 9999;
             display: flex; flex-direction: column; align-items: center; justify-content: center; color: white;
         }
+        
+        .achievement-card {
+            transition: all 0.3s ease;
+        }
+        .achievement-unlocked {
+            border-color: #F59E0B;
+            background: linear-gradient(135deg, #FFFDE7 0%, #FFF8E1 100%);
+        }
+        .achievement-locked {
+            filter: grayscale(100%);
+            opacity: 0.6;
+        }
     </style>
 </head>
 <body class="min-h-screen text-gray-800 selection:bg-green-300">
@@ -122,6 +134,9 @@
             </button>
             <button class="nav-btn tab-inactive p-4 text-left font-bold text-lg border-b-2 border-[#D4A373] transition flex items-center" data-tab="machines">
                 <svg class="w-6 h-6 mr-3 text-gray-700" fill="currentColor" viewBox="0 0 24 24"><path d="M12 12h7v7h-7zm1 2h5v3h-5zM4 6h16v2H4zm0 5h6v8H4z"/></svg> Fabriken
+            </button>
+            <button class="nav-btn tab-inactive p-4 text-left font-bold text-lg border-b-2 border-[#D4A373] transition flex items-center" data-tab="achievements">
+                <svg class="w-6 h-6 mr-3 text-yellow-600" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg> Erfolge
             </button>
             
             <div class="mt-auto p-4 bg-[#e9edc9] border-t-4 border-[#D4A373] text-sm text-[#4b5563] font-bold">
@@ -288,9 +303,9 @@ const ITEMS = {
     trueffel: { name: "Trüffel", sellPrice: 100 }, milch: { name: "Milch", sellPrice: 15 }, rindfleisch: { name: "Rindfleisch", sellPrice: 50 },
     doenerfleisch: { name: "Dönerfleisch", sellPrice: 200 }, magische_sosse: { name: "Magische Soße", sellPrice: 300 },
     honig: { name: "Honig", sellPrice: 35 },
-    kaese: { name: "Käse", sellPrice: 45 }, stoff: { name: "Stoff", sellPrice: 60 }, ketchup: { name: "Ketchup", sellPrice: 35 },
+    kaese: { name: "Käse", sellPrice: 45 }, stoff: { name: "Stoff", sellPrice: 60 }, ketchup: { name: "Ketchup", sellPrice: 50 },
     energie: { name: "Energie", sellPrice: 5 }, mehl: { name: "Mehl", sellPrice: 25 }, brot: { name: "Brot", sellPrice: 50 },
-    wurst: { name: "Wurst", sellPrice: 80 }, zucker: { name: "Zucker", sellPrice: 70 }, apfelsaft: { name: "Apfelsaft", sellPrice: 200 },
+    wurst: { name: "Wurst", sellPrice: 60 }, zucker: { name: "Zucker", sellPrice: 70 }, apfelsaft: { name: "Apfelsaft", sellPrice: 200 },
     mayonnaise: { name: "Mayonnaise", sellPrice: 20 }, schafskaese: { name: "Schafskäse", sellPrice: 60 },
     sandwich: { name: "Sandwich", sellPrice: 350 }, gewuerze: { name: "Gewürze", sellPrice: 80 },
     eisen: { name: "Eisen", sellPrice: 30 }, kupfer: { name: "Kupfer", sellPrice: 40 }, gold: { name: "Gold", sellPrice: 250 },
@@ -317,7 +332,7 @@ const MACHINES = {
     weberei: { id: "weberei", name: "Weberei", cost: 1500, recipes: [{ input: { wolle: 2 }, output: { stoff: 1 }, time: 0.5 }] },
     kissenfabrik: { id: "kissenfabrik", name: "Kissenfabrik", cost: 1600, recipes: [{ input: { federn: 3, stoff: 1 }, output: { kissen: 1 }, time: 0.4 }] },
     zuckerfabrik: { id: "zuckerfabrik", name: "Zuckerfabrik", cost: 1800, recipes: [{ input: { zuckerrohr: 2 }, output: { zucker: 1 }, time: 0.4 }] },
-    metzgerei: { id: "metzgerei", name: "Metzgerei", cost: 2500, recipes: [{ input: { schweinefleisch: 1 }, output: { wurst: 2 }, time: 0.5 }] },
+    metzgerei: { id: "metzgerei", name: "Metzgerei", cost: 2500, recipes: [{ input: { schweinefleisch: 1 }, output: { wurst: 1 }, time: 0.5 }] },
     marmeladenfabrik: { id: "marmeladenfabrik", name: "Marmeladenfabrik", cost: 2800, recipes: [{ input: { trauben: 2, erdbeeren: 2, zucker: 1 }, output: { marmelade: 1 }, time: 0.5 }] },
     brauerei: { id: "brauerei", name: "Brauerei", cost: 3000, recipes: [{ input: { weizen: 3, zucker: 1 }, output: { bier: 1 }, time: 0.6 }] },
     winzerei: { id: "winzerei", name: "Winzerei", cost: 3500, recipes: [{ input: { trauben: 3, zucker: 1 }, output: { wein: 1 }, time: 0.8 }] },
@@ -336,6 +351,16 @@ const MACHINES = {
     ]}
 };
 
+const ACHIEVEMENTS = [
+    { id: "money1k", name: "Erster Profit", desc: "Besitze 1.000€", icon: "💰", check: s => s.money >= 1000, reward: 500 },
+    { id: "money100k", name: "Kapitalist", desc: "Besitze 100.000€", icon: "🏦", check: s => s.money >= 100000, reward: 10000 },
+    { id: "fields8", name: "Großbauer", desc: "Besitze 8 Felder", icon: "🚜", check: s => s.fields.length >= 8, reward: 2000 },
+    { id: "animals10", name: "Streichelzoo", desc: "Besitze 10 Tiere", icon: "🐖", check: s => s.animals.length >= 10, reward: 1000 },
+    { id: "factories5", name: "Industrialisierung", desc: "Besitze 5 Fabriken", icon: "🏭", check: s => s.machines.length >= 5, reward: 2500 },
+    { id: "it_company", name: "Tech-Gigant", desc: "Gründe ein IT-Unternehmen", icon: "💻", check: s => s.itCompanies >= 1, reward: 20000 },
+    { id: "doener", name: "Der Gerät", desc: "Besitze ein Dönertier", icon: "🥙", check: s => s.animals.some(a => a.type === 'doenertier'), reward: 10000 }
+];
+
 /** --- SPIELSTATUS (STATE) --- */
 let state = {
     farmName: "JT Farm", money: 150, timeElapsedDays: 0,
@@ -351,7 +376,8 @@ let state = {
     ], 
     machines: [], 
     workersTotal: 0, workersIdle: 0, activeTab: 'farm', timeScale: 1, lastTickTime: Date.now(), strike: false, nextPayday: 7,
-    upgrades: { fertilizer: 0 }, solarPanels: 0, itCompanies: 0, hasPower: true
+    upgrades: { fertilizer: 0 }, solarPanels: 0, itCompanies: 0, hasPower: true,
+    achievements: {} // Speichert freigeschaltete Achievements
 };
 
 /** --- FIREBASE SETUP --- */
@@ -394,6 +420,7 @@ async function loadState() {
             const now = Date.now();
             const deltaMs = now - (savedState.lastTickTime || now);
             state = { ...state, ...savedState };
+            if(!state.achievements) state.achievements = {};
             
             // Clean up 0 items to prevent UI clutter
             for(let key in state.inventory) { if(state.inventory[key] <= 0) delete state.inventory[key]; }
@@ -457,11 +484,24 @@ function gameLoop() {
         state.money += state.itCompanies * 100 * daysPassed; // 100 per game day
     }
 
+    checkAchievements();
     updateUI();
+    
     if(state.activeTab === 'farm') updateFarmDOM();
     if(state.activeTab === 'machines') renderMachinesProgress();
 
     requestAnimationFrame(gameLoop);
+}
+
+function checkAchievements() {
+    ACHIEVEMENTS.forEach(ach => {
+        if(!state.achievements[ach.id] && ach.check(state)) {
+            state.achievements[ach.id] = { unlockedAt: state.timeElapsedDays };
+            state.money += ach.reward;
+            showNotification(`Erfolg freigeschaltet: ${ach.name}! (+${ach.reward}€)`, 'success');
+            if(state.activeTab === 'achievements') renderContent();
+        }
+    });
 }
 
 function processFields() {
@@ -727,6 +767,27 @@ function renderContent() {
             </div>
             <div id="machines-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>`;
         renderMachinesProgress();
+    } else if (state.activeTab === 'achievements') {
+        area.innerHTML = `
+            <h2 class="text-3xl font-black mb-6 text-[#4e342e]">🏆 Erfolge</h2>
+            <p class="mb-6 text-[#5d4037] font-bold">Erreiche Meilensteine, um einzigartige Belohnungen freizuschalten!</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                ${ACHIEVEMENTS.map(ach => {
+                    const unlocked = state.achievements[ach.id];
+                    return `
+                    <div class="achievement-card border-4 rounded-2xl p-4 flex gap-4 ${unlocked ? 'achievement-unlocked' : 'achievement-locked border-gray-300 bg-gray-100'}">
+                        <div class="text-5xl flex items-center justify-center">${ach.icon}</div>
+                        <div class="flex-1">
+                            <div class="font-black text-lg ${unlocked ? 'text-[#5d4037]' : 'text-gray-500'}">${ach.name}</div>
+                            <div class="text-xs font-bold ${unlocked ? 'text-gray-700' : 'text-gray-400'} mb-2">${ach.desc}</div>
+                            <div class="text-sm font-black ${unlocked ? 'text-green-600' : 'text-yellow-600'}">
+                                ${unlocked ? '✅ Freigeschaltet' : `Belohnung: ${ach.reward}€`}
+                            </div>
+                        </div>
+                    </div>`;
+                }).join('')}
+            </div>
+        `;
     }
 }
 
