@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -338,9 +337,14 @@ const ACHIEVEMENTS = [
     { id: "money5k", name: "Erster Profit", desc: "Besitze 5.000€", icon: "💰", check: s => s.money >= 5000, reward: 1000 },
     { id: "money100k", name: "Kapitalist", desc: "Besitze 100.000€", icon: "🏦", check: s => s.money >= 100000, reward: 10000 },
     { id: "fields8", name: "Großbauer", desc: "Besitze 8 Felder", icon: "🚜", check: s => s.fields.length >= 8, reward: 2000 },
+    { id: "fields20", name: "Landlord", desc: "Besitze 20 Felder", icon: "🌍", check: s => s.fields.length >= 20, reward: 5000 },
     { id: "animals10", name: "Streichelzoo", desc: "Besitze 10 Tiere", icon: "🐖", check: s => s.animals.length >= 10, reward: 500 },
-    { id: "factories5", name: "Industrialisierung", desc: "Besitze 5 Fabriken", icon: "🏭", check: s => Object.keys(s.machines).length >= 5, reward: 2500 },
+    { id: "animals50", name: "Tierliebhaber", desc: "Besitze 50 Tiere", icon: "🐄", check: s => s.animals.length >= 50, reward: 5000 },
+    { id: "factories5", name: "Industrialisierung", desc: "Besitze 5 Fabriken", icon: "🏭", check: s => Object.keys(s.machines).reduce((acc, k) => acc + s.machines[k].count, 0) >= 5, reward: 2500 },
+    { id: "plastic100", name: "Recycling-Meister", desc: "Besitze 100 Plastik", icon: "♻️", check: s => (s.inventory.plastik || 0) >= 100, reward: 5000 },
+    { id: "gold10", name: "Goldrausch", desc: "Besitze 10 Gold", icon: "✨", check: s => (s.inventory.gold || 0) >= 10, reward: 5000 },
     { id: "it_company", name: "Tech-Gigant", desc: "Gründe ein IT-Unternehmen", icon: "💻", check: s => s.itCompanies >= 1, reward: 20000 },
+    { id: "it_monopoly", name: "Tech-Monopol", desc: "Besitze 5 IT-Unternehmen", icon: "🌐", check: s => s.itCompanies >= 5, reward: 50000 },
     { id: "doener", name: "Der Gerät", desc: "Besitze ein Dönertier", icon: "🥙", check: s => s.animals.some(a => a.type === 'doenertier'), reward: 10000 }
 ];
 
@@ -463,7 +467,7 @@ function simulateOfflineProgress(deltaMs) {
     while(offlineDays > 0) {
         const currentStep = Math.min(step, offlineDays);
         state.timeElapsedDays += currentStep;
-        if (!state.strike) { processFields(); processAnimals(); processMachines(); processWorkers(); }
+        processFields(); processAnimals(); processMachines(); processWorkers();
         offlineDays -= currentStep;
     }
 }
@@ -555,9 +559,10 @@ function gameLoop() {
         showAuthModal(true);
     }
 
-    if (!state.strike) {
-        processFields(); processAnimals(); processMachines(); processWorkers();
-    }
+    processFields(); 
+    processAnimals(); 
+    processMachines(); 
+    processWorkers();
     
     if(state.itCompanies > 0 && !state.strike && state.hasPower) {
         state.money += state.itCompanies * 100 * daysPassed; 
@@ -662,22 +667,17 @@ function processMachines() {
 let strikeNotified = false;
 function processWorkers() {
     if (state.timeElapsedDays >= state.nextPayday && state.workersTotal > 0) {
+        if(state.strike) return; 
+
         const totalSalary = state.workersTotal * getActualWorkerSalary();
         if (state.money >= totalSalary) {
             state.money -= totalSalary;
             state.nextPayday += 7;
-            state.strike = false;
-            strikeNotified = false;
-            document.getElementById('worker-warning').style.display = 'none';
         } else {
-            if(!state.strike) {
-                state.strike = true;
-                document.getElementById('worker-warning').style.display = 'block';
-                if(!strikeNotified) {
-                    showNotification(`Streik! Löhne konnten nicht gezahlt werden!`, 'error');
-                    strikeNotified = true;
-                }
-            }
+            state.strike = true;
+            document.getElementById('worker-warning').style.display = 'block';
+            showNotification(`Streik! Löhne konnten nicht gezahlt werden!`, 'error');
+            if (state.activeTab === 'shop' || state.activeTab === 'settings') renderContent();
         }
     }
 }
@@ -764,6 +764,7 @@ function renderContent() {
     } else if (state.activeTab === 'shop') {
         const fieldCost = calculateFieldCost();
         const solarCost = 2000 * (state.solarPanels + 1);
+        const fertLevel = state.upgrades.fertilizer || 0;
         
         area.innerHTML = `
             <h2 class="text-3xl font-black mb-6 text-[#4e342e]">Dorfladen</h2>
@@ -813,6 +814,12 @@ function renderContent() {
                             <div class="text-xs text-gray-600 mb-2 font-bold">Passiv: +100€/Tag</div>
                             <button onclick="buyITCompany()" class="bg-gray-800 text-white p-2 rounded-lg font-bold w-full text-xs">3x PC, 2x Server</button>
                         </div>
+
+                        <div class="border-2 rounded-xl p-3 flex flex-col justify-between shadow-sm ${state.strike ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'}">
+                            <div class="font-black text-lg ${state.strike ? 'text-red-700' : 'text-green-700'}">${state.strike ? 'Schulden begleichen' : 'Bonus auszahlen'}</div>
+                            <div class="text-xs text-gray-600 mb-2 font-bold">${state.strike ? 'Beende den Streik.' : 'Gibt Arbeitern Trinkgeld (ohne Effekt).'}</div>
+                            <button onclick="${state.strike ? 'endStrike()' : 'payBonus()'}" class="${state.strike ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'} text-white p-2 rounded-lg font-bold w-full mt-2">Bezahlen (${state.workersTotal * getActualWorkerSalary()}€)</button>
+                        </div>
                     </div>
                 </section>
                 
@@ -840,7 +847,7 @@ function renderContent() {
                                 <div class="text-[10px] text-gray-600 mb-2 flex-1 font-bold bg-gray-50 p-2 rounded border leading-tight">
                                     ⏱️ Dauer: ${a.cycle} Tage<br>
                                     📦 Gibt: ${a.products.map(p=>ITEMS[p].name).join(', ')}
-                                    ${a.special ? `<br>✨ Extra: ${ITEMS[a.special].name}` : ''}
+                                    ${a.special ? `<br>✨ Extra: ${ITEMS[a.special].name} (Zufall)` : ''}
                                 </div>
                                 <button onclick="buyAnimal('${a.id}')" class="w-full bg-[#03A9F4] hover:bg-[#0288D1] text-white py-1 rounded-lg font-bold text-sm shadow-sm">${a.cost}€</button>
                             </div>
@@ -923,6 +930,7 @@ function renderContent() {
                 <div class="flex flex-wrap gap-4 mb-4">
                     <button onclick="adminGiveMoney()" class="bg-red-500 text-white font-bold py-2 px-4 rounded-xl shadow">+1.000.000€</button>
                     <button onclick="adminTriggerStrike()" class="bg-red-500 text-white font-bold py-2 px-4 rounded-xl shadow">Streik auslösen</button>
+                    <button onclick="adminStopStrike()" class="bg-red-500 text-white font-bold py-2 px-4 rounded-xl shadow">Streik stoppen</button>
                     <button onclick="adminUnlockAll()" class="bg-red-500 text-white font-bold py-2 px-4 rounded-xl shadow">Alles freischalten</button>
                 </div>
                 <div class="flex gap-2">
@@ -934,7 +942,14 @@ function renderContent() {
     }
 }
 
-function calculateFieldCost() { return 100 * Math.pow(2, state.fields.length - 4); }
+function calculateFieldCost() { 
+    let cost = 100;
+    for(let i = 4; i < state.fields.length; i++) {
+        if (cost < 4000) cost *= 2;
+        else cost += 400;
+    }
+    return cost;
+}
 
 function buildFarmStatic() {
     const fc = document.getElementById('fields-container');
@@ -1015,21 +1030,33 @@ function updateFarmDOM() {
 
     const groups = {};
     state.animals.forEach(a => { if(!groups[a.type]) groups[a.type] = []; groups[a.type].push(a); });
+    
     for(let type in groups) {
         const list = groups[type];
-        const a = list[0]; 
-        const barEl = document.getElementById(`animal-bar-${a.id}`);
-        if(barEl) {
-            const def = ANIMALS[a.type];
-            const timeSince = state.timeElapsedDays - a.lastProduced;
-            const cycle = getActualAnimalCycle(def);
-            const isWorking = !(def.needsWorker && (!a.workerAssigned || state.strike));
-
-            barEl.style.width = `${Math.min(100, (timeSince / cycle) * 100)}%`;
-            barEl.style.backgroundColor = isWorking ? '#60a5fa' : '#fca5a5';
-            document.getElementById(`animal-time-${a.id}`).innerText = isWorking ? formatTime(cycle - timeSince) : (state.strike ? 'Streik!' : 'Arbeiter fehlt!');
-            document.getElementById(`prod-count-${a.id}`).innerText = list.reduce((sum, an) => sum + (an.producedCount || 0), 0);
+        if (list.length > 10) {
+            updateSingleAnimalNode(list[0], list); 
+        } else {
+            list.forEach(a => updateSingleAnimalNode(a, [a])); 
         }
+    }
+}
+
+function updateSingleAnimalNode(a, list) {
+    const barEl = document.getElementById(`animal-bar-${a.id}`);
+    const timeEl = document.getElementById(`animal-time-${a.id}`);
+    const countEl = document.getElementById(`prod-count-${a.id}`);
+    if(barEl && timeEl && countEl) {
+        const def = ANIMALS[a.type];
+        const timeSince = state.timeElapsedDays - a.lastProduced;
+        const cycle = getActualAnimalCycle(def);
+        const isWorking = !(def.needsWorker && (!a.workerAssigned || state.strike));
+
+        barEl.style.width = `${Math.min(100, (timeSince / cycle) * 100)}%`;
+        barEl.style.backgroundColor = isWorking ? '#60a5fa' : '#fca5a5';
+        timeEl.innerText = isWorking ? formatTime(cycle - timeSince) : (state.strike ? 'Streik!' : 'Arbeiter fehlt!');
+        
+        const totalProd = list.reduce((sum, an) => sum + (an.producedCount || 0), 0);
+        if(countEl.innerText !== totalProd.toString()) countEl.innerText = totalProd;
     }
 }
 
@@ -1213,11 +1240,32 @@ window.buyWorker = function() { if(state.money>=200){state.money-=200; state.wor
 window.buyField = function() { const c=calculateFieldCost(); if(state.money>=c){state.money-=c; state.fields.push({id:state.fields.length, plantId:null, plantedAt:null, workerAssigned:false}); changeTab('shop');} else showNotification('Zu wenig Geld', 'error'); }
 window.buySolar = function() { const c=2000*(state.solarPanels+1); if(state.money>=c){state.money-=c; state.solarPanels++; changeTab('shop');} else showNotification('Zu wenig Geld', 'error'); }
 window.buyUpgrade = function(type, max, baseCost) { const l=state.upgrades[type]||0; const c=baseCost*(l+1); if(l>=max)return; if(state.money>=c){state.money-=c; state.upgrades[type]=l+1; showNotification('Upgrade!', 'success'); changeTab('shop');} else showNotification('Zu wenig Geld', 'error'); }
-window.buyITCompany = function() { if((state.inventory.computer||0)>=3 && (state.inventory.rechencenter||0)>=2) { state.inventory.computer-=3; state.inventory.rechencenter-=2; state.itCompanies++; changeTab('shop'); } else showNotification('Material fehlt!', 'error'); }
+window.buyITCompany = function() { if((state.inventory.computer||0)>=3 && (state.inventory.server||0)>=2) { state.inventory.computer-=3; state.inventory.server-=2; state.itCompanies++; changeTab('shop'); } else showNotification('Material fehlt!', 'error'); }
 
 window.sellItem = function(id) { if(state.inventory[id]>0){state.inventory[id]--; state.money+=ITEMS[id]?.sellPrice||PLANTS[id]?.sellPrice||0; renderContent();} }
 window.sellAll = function() { let e=0; for(let id in state.inventory){if(state.inventory[id]>0){e+=state.inventory[id]*(ITEMS[id]?.sellPrice||PLANTS[id]?.sellPrice||0); delete state.inventory[id];}} if(e>0){state.money+=e; renderContent();} }
-window.endStrike = function() { if(!state.strike) return; const d=state.workersTotal*getActualWorkerSalary(); if(state.money>=d){state.money-=d; state.strike=false; state.nextPayday=state.timeElapsedDays+7; document.getElementById('worker-warning').style.display='none'; renderContent(); } else showNotification('Zu wenig Geld!', 'error'); }
+
+window.endStrike = function() { 
+    if(!state.strike) return; 
+    const d = state.workersTotal * getActualWorkerSalary(); 
+    if(state.money >= d){
+        state.money -= d; 
+        state.strike = false; 
+        state.nextPayday = state.timeElapsedDays + 7; 
+        document.getElementById('worker-warning').style.display='none'; 
+        showNotification('Schulden bezahlt!', 'success'); 
+        renderContent(); 
+    } else showNotification('Zu wenig Geld!', 'error'); 
+}
+window.payBonus = function() {
+    if(state.workersTotal <= 0) { showNotification('Du hast keine Arbeiter!', 'error'); return; }
+    const d = state.workersTotal * getActualWorkerSalary(); 
+    if(state.money >= d) {
+        state.money -= d; 
+        showNotification('Bonus ausgezahlt! Deine Arbeiter freuen sich.', 'success'); 
+        updateUI();
+    } else showNotification('Zu wenig Geld für einen Bonus!', 'error'); 
+}
 
 window.renameFarm = function() { const n=prompt("Name:", state.farmName); if(n && n.trim()!==''){state.farmName=n.trim(); updateFarmNameUI(); if(state.activeTab === 'settings') renderContent();} }
 
@@ -1233,7 +1281,7 @@ window.openRecycleModal = function(type) {
                 <h3 class="font-black text-xl mb-2 text-[#4e342e]">Plastik Gießen!</h3>
                 <p class="mb-4 text-sm font-bold text-gray-600">Stoppe den Balken im <span class="text-green-600">GRÜNEN</span> Bereich!</p>
                 <div class="w-full bg-gray-300 h-8 rounded-xl relative overflow-hidden mb-6 border-4 border-gray-400">
-                    <div class="absolute left-1/3 w-1/3 h-full bg-green-400"></div>
+                    <div class="absolute left-[30%] w-[36%] h-full bg-green-400"></div>
                     <div id="mg-cursor" class="absolute left-0 w-3 h-full bg-red-600 shadow-md"></div>
                 </div>
                 <button onclick="stopMinigame('${type}')" class="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-xl font-black text-lg shadow-md border-b-4 border-blue-700 active:border-b-0 active:translate-y-1">STOPP!</button>
@@ -1241,12 +1289,14 @@ window.openRecycleModal = function(type) {
         `;
         openModal('Plastikfabrik', html);
         
-        let pos = 0; let dir = 2; // speed
+        let pos = 0; 
+        let dir = 1.5 + Math.random() * 2.5; // Random speed between 1.5 and 4.0
         minigameInterval = setInterval(() => {
             const cursor = document.getElementById('mg-cursor');
             if(!cursor) { clearInterval(minigameInterval); return; }
             pos += dir;
-            if(pos >= 97 || pos <= 0) dir *= -1;
+            if(pos >= 97) { pos = 97; dir *= -1; }
+            if(pos <= 0) { pos = 0; dir *= -1; }
             cursor.style.left = `${pos}%`;
         }, 20);
     } else {
@@ -1270,7 +1320,7 @@ window.stopMinigame = function(type) {
     const cursor = document.getElementById('mg-cursor');
     const pos = parseFloat(cursor.style.left);
     
-    // Win zone is 33% to 66%
+    // Win zone is roughly 30% to 66%
     if(pos >= 30 && pos <= 66) {
         state.machines[type].itemsLoaded -= 5;
         addToInventory('plastik', 1);
@@ -1296,6 +1346,7 @@ window.recycleItem = function(id, type) {
 /* ADMIN FUNKTIONEN */
 window.adminGiveMoney = function() { state.money += 1000000; updateUI(); showNotification("Admin: +1M€", "success"); }
 window.adminTriggerStrike = function() { state.money = 0; state.strike = true; document.getElementById('worker-warning').style.display = 'block'; showNotification("Admin: Streik!", "error"); renderContent(); }
+window.adminStopStrike = function() { state.strike = false; state.nextPayday = state.timeElapsedDays + 7; document.getElementById('worker-warning').style.display = 'none'; showNotification("Admin: Streik beendet!", "success"); renderContent(); }
 window.adminUnlockAll = function() { state.adminUnlockAll = true; showNotification("Admin: Alles freigeschaltet!", "success"); }
 window.adminCommand = function() {
     const val = document.getElementById('admin-cmd').value.toLowerCase().trim().split(' ');
@@ -1349,6 +1400,3 @@ changeTab('farm');
 </script>
 </body>
 </html>
-
-
-```
