@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="de">
 <head>
@@ -356,7 +357,7 @@ let state = {
     animals: [
         { id: 'a1', type: 'huhn', lastProduced: 0, producedCount: 0, workerAssigned: false }
     ], 
-    machines: {}, // NEW: Format: { typeId: { count: 1, lastProduced: 0, selectedRecipe: 0, isActive: true, itemsLoaded: 0 } }
+    machines: {}, 
     workersTotal: 0, workersIdle: 0, activeTab: 'farm', timeScale: 1, lastTickTime: Date.now(), strike: false, nextPayday: 7,
     upgrades: { fertilizer: 0, yieldMulti: 0, animalSpeed: 0, workerCost: 0 }, 
     solarPanels: 0, itCompanies: 0, hasPower: true, achievements: {}, adminUnlockAll: false
@@ -430,7 +431,6 @@ async function loadState() {
         if(!state.achievements) state.achievements = {};
         if(!state.upgrades) state.upgrades = { fertilizer: 0, yieldMulti: 0, animalSpeed: 0, workerCost: 0 };
         
-        // MIGRATION: Array machines to Object format
         if(Array.isArray(state.machines)) {
             const newM = {};
             state.machines.forEach(m => {
@@ -624,19 +624,17 @@ function processMachines() {
     let changed = false;
     for(let type in state.machines) {
         const m = state.machines[type];
-        if(!m.isActive) continue; // Skipped if paused
+        if(!m.isActive) continue; 
         
         const def = MACHINES[type];
-        if(def.isRecycler) continue; // Recyclers handled by minigame
+        if(def.isRecycler) continue; 
 
         const recipes = def.recipes || [];
         const r = recipes[m.selectedRecipe || 0] || recipes[0];
         
-        // Multiplikator: Mehr Maschinen = schnellere Produktion!
-        const activeRecipeTime = r.time / m.count;
+        const activeTime = r.time / m.count;
 
-        // Catch up on multiple productions if offline for a long time
-        while (state.timeElapsedDays >= m.lastProduced + activeRecipeTime) {
+        while (state.timeElapsedDays >= m.lastProduced + activeTime) {
             let canProduce = true;
             for (let id in r.input) { if ((state.inventory[id] || 0) < r.input[id]) { canProduce = false; break; } }
 
@@ -650,10 +648,9 @@ function processMachines() {
                         if(roll <= cum) { addToInventory(ro.id, 1); break; }
                     }
                 }
-                m.lastProduced += activeRecipeTime;
+                m.lastProduced += activeTime;
                 changed = true;
             } else {
-                // Not enough materials, reset timer to wait for materials
                 m.lastProduced = state.timeElapsedDays;
                 break;
             }
@@ -771,7 +768,6 @@ function renderContent() {
         area.innerHTML = `
             <h2 class="text-3xl font-black mb-6 text-[#4e342e]">Dorfladen</h2>
             <div class="space-y-6">
-                <!-- Upgrades & Infrastruktur -->
                 <section>
                     <h3 class="text-xl font-black bg-[#9C27B0] text-white p-2 rounded-t-xl shadow-sm">Upgrades & Infrastruktur</h3>
                     <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3 p-3 border-4 border-[#9C27B0] rounded-b-xl bg-white">
@@ -791,7 +787,6 @@ function renderContent() {
                             <button onclick="buySolar()" class="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded-lg font-bold w-full">${solarCost}€</button>
                         </div>
                         
-                        <!-- NEUE UPGRADES -->
                         <div class="border-2 rounded-xl p-3 flex flex-col justify-between shadow-sm bg-purple-50">
                             <div class="font-black text-lg">Wachstum Lvl ${state.upgrades.fertilizer}/5</div>
                             <div class="text-xs text-gray-600 mb-2 font-bold">Pflanzen 10% schneller.</div>
@@ -877,6 +872,27 @@ function renderContent() {
             </div>
             <div id="machines-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>`;
         buildMachinesStatic();
+    } else if (state.activeTab === 'achievements') {
+        area.innerHTML = `
+            <h2 class="text-3xl font-black mb-6 text-[#4e342e]">🏆 Erfolge</h2>
+            <p class="mb-6 text-[#5d4037] font-bold">Erreiche Meilensteine, um einzigartige Belohnungen freizuschalten!</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                ${ACHIEVEMENTS.map(ach => {
+                    const unlocked = state.achievements[ach.id];
+                    return `
+                    <div class="achievement-card border-4 rounded-2xl p-4 flex gap-4 ${unlocked ? 'achievement-unlocked' : 'achievement-locked border-gray-300 bg-gray-100'}">
+                        <div class="text-5xl flex items-center justify-center">${ach.icon}</div>
+                        <div class="flex-1">
+                            <div class="font-black text-lg ${unlocked ? 'text-[#5d4037]' : 'text-gray-500'}">${ach.name}</div>
+                            <div class="text-xs font-bold ${unlocked ? 'text-gray-700' : 'text-gray-400'} mb-2">${ach.desc}</div>
+                            <div class="text-sm font-black ${unlocked ? 'text-green-600' : 'text-yellow-600'}">
+                                ${unlocked ? '✅ Freigeschaltet' : `Belohnung: ${ach.reward}€`}
+                            </div>
+                        </div>
+                    </div>`;
+                }).join('')}
+            </div>
+        `;
     } else if (state.activeTab === 'settings') {
         const isAnon = auth.currentUser?.isAnonymous;
         area.innerHTML = `
@@ -888,15 +904,15 @@ function renderContent() {
                     ${isAnon ? 'Dein Spielstand ist aktuell nur lokal und temporär gespeichert. Melde dich an, um ihn sicher in der Cloud aufzubewahren!' : `Du bist sicher angemeldet (ID: <span class="text-xs">${auth.currentUser.uid}</span>).`}
                 </p>
                 <div class="flex gap-4">
-                    ${isAnon ? `<button onclick="showAuthModal()" class="bg-blue-500 text-white font-bold py-2 px-6 rounded-xl">Anmelden / Registrieren</button>` : `<button onclick="handleLogout()" class="bg-gray-500 text-white font-bold py-2 px-6 rounded-xl">Abmelden</button>`}
+                    ${isAnon ? `<button onclick="showAuthModal()" class="bg-blue-500 text-white font-bold py-2 px-6 rounded-xl shadow">Anmelden / Registrieren</button>` : `<button onclick="handleLogout()" class="bg-gray-500 text-white font-bold py-2 px-6 rounded-xl shadow">Abmelden</button>`}
                 </div>
             </div>
             
             <div class="bg-white border-4 border-[#D4A373] rounded-2xl p-6 shadow-md max-w-2xl mb-6">
                 <h3 class="text-xl font-bold mb-4">Lokaler Spielstand (Code)</h3>
                 <div class="flex gap-4 mb-4">
-                    <button onclick="exportSave()" class="bg-blue-500 text-white font-bold py-2 px-6 rounded-xl">Code kopieren</button>
-                    <button onclick="importSave()" class="bg-green-500 text-white font-bold py-2 px-6 rounded-xl">Code einfügen</button>
+                    <button onclick="exportSave()" class="bg-blue-500 text-white font-bold py-2 px-6 rounded-xl shadow">Code kopieren</button>
+                    <button onclick="importSave()" class="bg-green-500 text-white font-bold py-2 px-6 rounded-xl shadow">Code einfügen</button>
                 </div>
                 <button onclick="resetGame()" class="bg-red-500 text-white font-bold py-2 px-6 rounded-xl shadow">Spielstand löschen</button>
             </div>
@@ -911,7 +927,7 @@ function renderContent() {
                 </div>
                 <div class="flex gap-2">
                     <input id="admin-cmd" type="text" placeholder="Befehl: give gold 50" class="flex-1 p-2 border-2 border-red-300 rounded font-mono text-sm">
-                    <button onclick="adminCommand()" class="bg-red-600 text-white font-bold px-4 rounded">Ausführen</button>
+                    <button onclick="adminCommand()" class="bg-red-600 text-white font-bold px-4 rounded shadow">Ausführen</button>
                 </div>
             </div>` : ''}
         `;
@@ -1020,13 +1036,13 @@ function updateFarmDOM() {
 window.changeRecipe = function(type, recipeIndex) {
     if(state.machines[type]) {
         state.machines[type].selectedRecipe = parseInt(recipeIndex);
-        state.machines[type].lastProduced = state.timeElapsedDays; // Reset timer
+        state.machines[type].lastProduced = state.timeElapsedDays;
     }
 }
 window.toggleMachine = function(type) {
     if(state.machines[type]) {
         state.machines[type].isActive = !state.machines[type].isActive;
-        buildMachinesStatic(); // Re-render for opacity change
+        buildMachinesStatic(); 
     }
 }
 
@@ -1110,7 +1126,7 @@ function updateMachinesDOM() {
         for(let id in activeRecipe.input) { if((state.inventory[id]||0) < activeRecipe.input[id]) {hasInput=false; break;} }
 
         if(bar && status && io) {
-            const activeTime = activeRecipe.time / m.count; // Speedup by count
+            const activeTime = activeRecipe.time / m.count; 
             const prog = Math.min(100, ((state.timeElapsedDays - m.lastProduced) / activeTime) * 100);
             
             bar.style.width = m.isActive && hasInput && state.hasPower ? `${prog}%` : '0%';
@@ -1164,9 +1180,11 @@ window.handleFieldClick = function(idx) {
 }
 
 window.handleAnimalClick = function(id, isGrouped) {
-    const a = state.animals.find(an => an.id === id);
-    if(!a) return;
+    const aIdx = state.animals.findIndex(an => an.id === id);
+    if(aIdx === -1) return;
+    const a = state.animals[aIdx];
     const def = ANIMALS[a.type];
+    
     let html = `<div class="mb-4 text-center">Was möchtest du mit dem ${def.name} tun?</div>`;
     
     if(def.needsWorker) {
@@ -1210,7 +1228,6 @@ window.openRecycleModal = function(type) {
     const max = m.count * 5;
     
     if(m.itemsLoaded >= 5) {
-        // Minigame ready!
         let html = `
             <div class="text-center">
                 <h3 class="font-black text-xl mb-2 text-[#4e342e]">Plastik Gießen!</h3>
@@ -1233,7 +1250,6 @@ window.openRecycleModal = function(type) {
             cursor.style.left = `${pos}%`;
         }, 20);
     } else {
-        // Add items modal
         let html = `<div class="mb-4">Müll einwerfen (Status: ${m.itemsLoaded||0}/${max})</div><div class="grid grid-cols-2 gap-2 max-h-[50vh] overflow-y-auto">`;
         for(let id in state.inventory) {
             if(state.inventory[id] > 0) {
@@ -1333,3 +1349,6 @@ changeTab('farm');
 </script>
 </body>
 </html>
+
+
+```
