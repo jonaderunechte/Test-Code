@@ -120,6 +120,9 @@
             <button class="nav-btn tab-inactive p-4 text-left font-bold text-lg border-b-2 border-[#D4A373] transition flex items-center" data-tab="achievements">
                 <svg class="w-6 h-6 mr-3 text-yellow-600" fill="currentColor" viewBox="0 0 24 24"><path d="M19 3h-2V2h-2v1H9V2H7v1H5c-1.1 0-2 .9-2 2v3c0 2.21 1.79 4 4 4h1.1c.97 1.63 2.79 2.76 4.9 2.94V19H8v2h8v-2h-3v-4.06c2.11-.18 3.93-1.31 4.9-2.94H20c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-14 5V5h2v5H5zm14 0h-2V5h2v5z"/></svg> Erfolge
             </button>
+            <button class="nav-btn tab-inactive p-4 text-left font-bold text-lg border-b-2 border-[#D4A373] transition flex items-center" data-tab="scoreboard">
+                <svg class="w-6 h-6 mr-3 text-gray-700" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg> Leaderboard
+            </button>
             <button class="nav-btn tab-inactive p-4 text-left font-bold text-lg border-b-2 border-[#D4A373] transition flex items-center" data-tab="settings">
                 <svg class="w-6 h-6 mr-3 text-gray-700" fill="currentColor" viewBox="0 0 24 24"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg> Optionen
             </button>
@@ -151,7 +154,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
 import { getAuth, signInAnonymously, createUserWithEmailAndPassword, signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, signInWithCustomToken, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
 /** --- NATIVE SVG ASSETS (Cartoon Design) --- */
 const SVG = {
@@ -170,6 +173,9 @@ const SVG = {
     icon_bank: `<svg viewBox="0 0 100 100"><polygon points="10,40 50,10 90,40" fill="#78909C"/><rect x="20" y="40" width="10" height="40" fill="#B0BEC5"/><rect x="45" y="40" width="10" height="40" fill="#B0BEC5"/><rect x="70" y="40" width="10" height="40" fill="#B0BEC5"/><rect x="10" y="80" width="80" height="10" fill="#78909C"/></svg>`,
     icon_tractor: `<svg viewBox="0 0 100 100"><rect x="20" y="40" width="40" height="30" fill="#F44336"/><circle cx="30" cy="70" r="15" fill="#424242"/><circle cx="70" cy="70" r="20" fill="#424242"/><path d="M 60 40 L 80 40 L 80 60 L 60 60 Z" fill="#E53935"/></svg>`,
     icon_globe: `<svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="#2196F3"/><path d="M 20 40 Q 40 20 60 40 T 80 60" fill="#4CAF50"/></svg>`,
+    icon_settings: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.06-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.73,8.87C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.06,0.94l-2.03,1.58c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.43-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.49-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/></svg>`,
+    icon_trophy: `<svg viewBox="0 0 24 24" fill="currentColor"><path d="M19 3h-2V2h-2v1H9V2H7v1H5c-1.1 0-2 .9-2 2v3c0 2.21 1.79 4 4 4h1.1c.97 1.63 2.79 2.76 4.9 2.94V19H8v2h8v-2h-3v-4.06c2.11-.18 3.93-1.31 4.9-2.94H20c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-14 5V5h2v5H5zm14 0h-2V5h2v5z"/></svg>`,
+    icon_star: `<svg viewBox="0 0 24 24" fill="#FFC107"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>`,
 
     // Items / Plants
     weizen: `<svg viewBox="0 0 100 100"><rect x="45" y="20" width="10" height="70" fill="#d4af37" rx="5"/><ellipse cx="35" cy="40" rx="8" ry="15" fill="#f3e5ab" transform="rotate(-30 35 40)"/><ellipse cx="65" cy="40" rx="8" ry="15" fill="#f3e5ab" transform="rotate(30 65 40)"/></svg>`,
@@ -190,6 +196,8 @@ const SVG = {
     trauben: `<svg viewBox="0 0 100 100"><path d="M 50 10 L 50 30 M 50 20 Q 70 10 80 30" stroke="#4CAF50" stroke-width="4" fill="none"/><circle cx="40" cy="35" r="12" fill="#9C27B0"/><circle cx="60" cy="35" r="12" fill="#9C27B0"/><circle cx="30" cy="55" r="12" fill="#9C27B0"/><circle cx="70" cy="55" r="12" fill="#9C27B0"/><circle cx="50" cy="50" r="12" fill="#8E24AA"/><circle cx="40" cy="70" r="12" fill="#8E24AA"/><circle cx="60" cy="70" r="12" fill="#8E24AA"/><circle cx="50" cy="85" r="12" fill="#7B1FA2"/></svg>`,
     kaffee: `<svg viewBox="0 0 100 100"><ellipse cx="40" cy="50" rx="20" ry="30" fill="#4E342E" transform="rotate(-20 40 50)"/><ellipse cx="60" cy="60" rx="20" ry="30" fill="#5D4037" transform="rotate(20 60 60)"/><path d="M 30 30 Q 40 50 30 70" stroke="#3E2723" stroke-width="4" fill="none" transform="rotate(-20 40 50)"/><path d="M 50 40 Q 60 60 50 80" stroke="#3E2723" stroke-width="4" fill="none" transform="rotate(20 60 60)"/></svg>`,
     goldbeeren: `<svg viewBox="0 0 100 100"><path d="M 50 90 L 50 30 M 50 60 L 30 40 M 50 70 L 70 50" stroke="#388E3C" stroke-width="4" fill="none"/><circle cx="30" cy="40" r="12" fill="#FFD700"/><circle cx="70" cy="50" r="12" fill="#FFD700"/><circle cx="50" cy="30" r="15" fill="#FFC107"/><path d="M 45 25 L 50 15 L 55 25 L 65 30 L 55 35 L 50 45 L 45 35 L 35 30 Z" fill="#FFF8E1"/></svg>`,
+    eiche: `<svg viewBox="0 0 100 100"><rect x="40" y="50" width="20" height="50" fill="#5D4037"/><circle cx="50" cy="35" r="30" fill="#388E3C"/><circle cx="35" cy="45" r="20" fill="#4CAF50"/><circle cx="65" cy="45" r="20" fill="#4CAF50"/><circle cx="50" cy="20" r="15" fill="#81C784"/></svg>`,
+    kiefer: `<svg viewBox="0 0 100 100"><rect x="45" y="70" width="10" height="30" fill="#4E342E"/><polygon points="50,10 20,50 80,50" fill="#2E7D32"/><polygon points="50,30 15,75 85,75" fill="#388E3C"/></svg>`,
 
     // Animals
     huhn: `<svg viewBox="0 0 100 100"><ellipse cx="50" cy="60" rx="30" ry="25" fill="#FFFFFF"/><circle cx="70" cy="40" r="15" fill="#FFFFFF"/><path d="M 80 35 L 95 40 L 80 45 Z" fill="#FFC107"/><path d="M 60 25 Q 70 10 80 25 Z" fill="#F44336"/><circle cx="75" cy="38" r="2" fill="#000"/><line x1="40" y1="85" x2="40" y2="95" stroke="#FF9800" stroke-width="4"/><line x1="60" y1="85" x2="60" y2="95" stroke="#FF9800" stroke-width="4"/></svg>`,
@@ -201,6 +209,7 @@ const SVG = {
     dinosaurier: `<svg viewBox="0 0 100 100"><path d="M 30 90 L 30 60 Q 30 40 50 40 L 70 20 L 90 20 L 90 40 L 70 50 L 70 90 Z" fill="#4CAF50"/><circle cx="80" cy="25" r="3" fill="#000"/><path d="M 20 90 L 25 70 L 35 70 L 40 90 Z" fill="#388E3C"/><path d="M 60 90 L 65 70 L 75 70 L 80 90 Z" fill="#388E3C"/><path d="M 50 50 L 40 50 L 40 55 L 50 55 Z" fill="#81C784"/></svg>`,
     doenertier: `<svg viewBox="0 0 100 100"><rect x="30" y="10" width="40" height="80" fill="#8D6E63" rx="10"/><line x1="50" y1="5" x2="50" y2="95" stroke="#5D4037" stroke-width="6"/><path d="M 30 30 Q 50 40 70 30 M 30 50 Q 50 60 70 50" stroke="#5D4037" stroke-width="3" fill="none"/><circle cx="50" cy="50" r="10" fill="#FFB74D"/><circle cx="45" cy="48" r="2" fill="#000"/><circle cx="55" cy="48" r="2" fill="#000"/><path d="M 45 55 Q 50 60 55 55" stroke="#000" stroke-width="2" fill="none"/></svg>`,
     bienen: `<svg viewBox="0 0 100 100"><path d="M 20 80 L 80 80 L 70 40 Q 50 20 30 40 Z" fill="#FFB300"/><line x1="25" y1="50" x2="75" y2="50" stroke="#FF8F00" stroke-width="4"/><line x1="22" y1="65" x2="78" y2="65" stroke="#FF8F00" stroke-width="4"/><ellipse cx="50" cy="70" rx="8" ry="12" fill="#3E2723"/><path d="M 75 30 Q 85 20 95 30 Q 85 40 75 30" fill="#B3E5FC" opacity="0.8"/><circle cx="80" cy="30" r="8" fill="#FFEB3B"/><line x1="78" y1="26" x2="78" y2="34" stroke="#000" stroke-width="2"/><line x1="82" y1="26" x2="82" y2="34" stroke="#000" stroke-width="2"/></svg>`,
+    phoenix: `<svg viewBox="0 0 100 100"><ellipse cx="50" cy="60" rx="30" ry="25" fill="#FF5722"/><circle cx="70" cy="40" r="15" fill="#FF5722"/><path d="M 80 35 L 95 40 L 80 45 Z" fill="#FFC107"/><path d="M 60 25 Q 70 0 80 25 Z" fill="#FF9800"/><path d="M 50 10 Q 60 0 70 20" stroke="#FFCA28" stroke-width="4" fill="none"/><circle cx="75" cy="38" r="2" fill="#FFF"/><path d="M 20 60 Q 10 30 40 50 Z" fill="#FFCA28"/><path d="M 30 90 Q 50 70 70 90" stroke="#E65100" stroke-width="6" fill="none"/></svg>`,
 
     // Products
     ei: `<svg viewBox="0 0 100 100"><ellipse cx="50" cy="55" rx="25" ry="35" fill="#FFF9C4" stroke="#FFE082" stroke-width="4"/></svg>`,
@@ -216,6 +225,8 @@ const SVG = {
     magische_sosse: `<svg viewBox="0 0 100 100"><path d="M 40 10 L 60 10 L 55 30 L 75 90 L 25 90 L 45 30 Z" fill="#B2EBF2" stroke="#80DEEA" stroke-width="4"/><path d="M 35 60 Q 50 70 65 60 L 70 85 L 30 85 Z" fill="#E040FB"/></svg>`,
     honig: `<svg viewBox="0 0 100 100"><path d="M 30 40 L 70 40 L 65 80 L 35 80 Z" fill="#FFC107"/><rect x="25" y="30" width="50" height="10" fill="#795548"/><path d="M 40 40 L 45 60 Q 50 65 55 60 L 60 40 Z" fill="#FFA000"/></svg>`,
     dino_nuggets: `<svg viewBox="0 0 100 100"><path d="M 20 50 Q 30 20 50 30 Q 70 20 80 50 Q 90 80 50 80 Q 10 80 20 50 Z" fill="#FFA726" stroke="#EF6C00" stroke-width="4"/><path d="M 35 45 Q 40 40 45 45" stroke="#FB8C00" stroke-width="3" fill="none"/></svg>`,
+    phoenixfeder: `<svg viewBox="0 0 100 100"><path d="M 20 80 Q 50 50 80 20 Q 90 40 50 90 Q 30 90 20 80 Z" fill="#FF5722"/><line x1="20" y1="80" x2="80" y2="20" stroke="#FFC107" stroke-width="4"/></svg>`,
+    goldenes_ei: `<svg viewBox="0 0 100 100"><ellipse cx="50" cy="55" rx="25" ry="35" fill="#FFD54F" stroke="#FFC107" stroke-width="4"/><circle cx="40" cy="35" r="3" fill="#FFF"/><circle cx="65" cy="45" r="2" fill="#FFF"/></svg>`,
     kaese: `<svg viewBox="0 0 100 100"><path d="M 20 70 L 50 20 L 80 70 Z" fill="#FFCA28"/><path d="M 20 70 L 50 90 L 80 70 Z" fill="#FFB300"/><circle cx="45" cy="55" r="6" fill="#FFA000"/></svg>`,
     schafskaese: `<svg viewBox="0 0 100 100"><path d="M 20 70 L 50 30 L 80 70 Z" fill="#F5F5F5"/><circle cx="45" cy="55" r="5" fill="#E0E0E0"/><circle cx="60" cy="65" r="4" fill="#E0E0E0"/></svg>`,
     stoff: `<svg viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="60" fill="#00BCD4" rx="5"/><line x1="20" y1="40" x2="80" y2="40" stroke="#B2EBF2" stroke-width="4"/><line x1="40" y1="20" x2="40" y2="80" stroke="#B2EBF2" stroke-width="4"/></svg>`,
@@ -229,6 +240,7 @@ const SVG = {
     mayonnaise: `<svg viewBox="0 0 100 100"><ellipse cx="50" cy="80" rx="30" ry="15" fill="#FFF59D"/><path d="M 20 80 L 25 40 L 75 40 L 80 80 Z" fill="#FFF9C4"/><ellipse cx="50" cy="40" rx="25" ry="10" fill="#FFF176"/></svg>`,
     sandwich: `<svg viewBox="0 0 100 100"><rect x="15" y="60" width="70" height="15" fill="#FFCC80" rx="5"/><rect x="20" y="50" width="60" height="10" fill="#8BC34A" rx="2"/><rect x="20" y="40" width="60" height="10" fill="#E53935" rx="2"/><rect x="20" y="30" width="60" height="10" fill="#FFCA28" rx="2"/><rect x="15" y="15" width="70" height="15" fill="#FFCC80" rx="5"/></svg>`,
     gewuerze: `<svg viewBox="0 0 100 100"><rect x="35" y="40" width="30" height="50" fill="#E0E0E0" rx="5"/><path d="M 35 40 Q 50 20 65 40 Z" fill="#9E9E9E"/><circle cx="45" cy="30" r="2" fill="#424242"/><circle cx="55" cy="30" r="2" fill="#424242"/><circle cx="50" cy="25" r="2" fill="#424242"/><rect x="35" y="60" width="30" height="10" fill="#4CAF50"/></svg>`,
+    oel: `<svg viewBox="0 0 100 100"><rect x="35" y="30" width="30" height="50" fill="#FFF59D" rx="10" stroke="#FBC02D" stroke-width="4"/><rect x="42" y="15" width="16" height="15" fill="#FFCA28"/><path d="M 40 40 Q 50 50 60 40" stroke="#FBC02D" stroke-width="2" fill="none"/></svg>`,
     eisen: `<svg viewBox="0 0 100 100"><rect x="20" y="40" width="60" height="25" fill="#9E9E9E" rx="3"/><polygon points="20,40 30,30 90,30 80,40" fill="#BDBDBD"/><polygon points="80,40 90,30 90,55 80,65" fill="#757575"/></svg>`,
     kupfer: `<svg viewBox="0 0 100 100"><rect x="20" y="40" width="60" height="25" fill="#D84315" rx="3"/><polygon points="20,40 30,30 90,30 80,40" fill="#FF7043"/><polygon points="80,40 90,30 90,55 80,65" fill="#BF360C"/></svg>`,
     gold: `<svg viewBox="0 0 100 100"><rect x="20" y="40" width="60" height="25" fill="#FFC107" rx="3"/><polygon points="20,40 30,30 90,30 80,40" fill="#FFD54F"/><polygon points="80,40 90,30 90,55 80,65" fill="#FF8F00"/></svg>`,
@@ -251,6 +263,9 @@ const SVG = {
     pommes: `<svg viewBox="0 0 100 100"><path d="M 30 40 L 70 40 L 60 90 L 40 90 Z" fill="#D32F2F"/><rect x="35" y="20" width="5" height="30" fill="#FFCA28" rx="2"/><rect x="45" y="10" width="5" height="40" fill="#FFC107" rx="2"/><rect x="55" y="15" width="5" height="35" fill="#FFD54F" rx="2"/><rect x="62" y="25" width="5" height="25" fill="#FFB300" rx="2"/><path d="M 40 60 Q 50 70 60 60" stroke="#FFCDD2" stroke-width="3" fill="none"/></svg>`,
     burger: `<svg viewBox="0 0 100 100"><path d="M 20 40 Q 50 10 80 40 Z" fill="#FFCC80"/><rect x="18" y="42" width="64" height="6" fill="#4CAF50" rx="3"/><rect x="20" y="50" width="60" height="12" fill="#795548" rx="4"/><rect x="18" y="64" width="64" height="6" fill="#FFCA28" rx="2"/><path d="M 20 72 Q 50 90 80 72 Z" fill="#FFCC80"/></svg>`,
     pizza: `<svg viewBox="0 0 100 100"><path d="M 50 90 L 10 20 Q 50 10 90 20 Z" fill="#FFCA28"/><path d="M 50 85 L 15 25 Q 50 15 85 25 Z" fill="#FFCC80"/><circle cx="50" cy="40" r="6" fill="#D32F2F"/><circle cx="35" cy="35" r="5" fill="#D32F2F"/><circle cx="65" cy="35" r="5" fill="#D32F2F"/><circle cx="50" cy="60" r="5" fill="#D32F2F"/><path d="M 10 20 Q 50 10 90 20" stroke="#F57C00" stroke-width="6" fill="none"/></svg>`,
+    holz: `<svg viewBox="0 0 100 100"><circle cx="40" cy="50" r="25" fill="#A1887F"/><circle cx="40" cy="50" r="20" fill="#8D6E63"/><circle cx="40" cy="50" r="15" fill="#795548"/><rect x="35" y="25" width="40" height="50" fill="#5D4037" transform="rotate(-30 55 50)"/></svg>`,
+    holzplanken: `<svg viewBox="0 0 100 100"><rect x="20" y="20" width="60" height="15" fill="#D7CCC8" stroke="#8D6E63" stroke-width="2"/><rect x="25" y="40" width="50" height="15" fill="#BCAAA4" stroke="#8D6E63" stroke-width="2"/><rect x="15" y="60" width="70" height="15" fill="#A1887F" stroke="#8D6E63" stroke-width="2"/></svg>`,
+    zauberstab: `<svg viewBox="0 0 100 100"><line x1="20" y1="80" x2="70" y2="30" stroke="#795548" stroke-width="6" stroke-linecap="round"/><path d="M 75 15 L 80 25 L 90 25 L 85 35 L 88 45 L 75 40 L 62 45 L 65 35 L 60 25 L 70 25 Z" fill="#FFEB3B"/></svg>`,
 
     // Machines
     kaeserei: `<svg viewBox="0 0 100 100"><rect x="10" y="40" width="80" height="50" fill="#BCAAA4"/><polygon points="10,40 50,10 90,40" fill="#8D6E63"/><rect x="40" y="60" width="20" height="30" fill="#5D4037"/><circle cx="30" cy="65" r="8" fill="#FFCA28"/></svg>`,
@@ -275,7 +290,10 @@ const SVG = {
     winzerei: `<svg viewBox="0 0 100 100"><rect x="15" y="40" width="70" height="50" fill="#EF9A9A"/><polygon points="15,40 50,10 85,40" fill="#C62828"/><rect x="40" y="60" width="20" height="30" fill="#7F0000"/><circle cx="50" cy="50" r="6" fill="#FFCDD2"/></svg>`,
     marmeladenfabrik: `<svg viewBox="0 0 100 100"><rect x="15" y="40" width="70" height="50" fill="#FFCDD2"/><polygon points="15,40 50,20 85,40" fill="#E53935"/><rect x="30" y="60" width="40" height="30" fill="#B71C1C"/></svg>`,
     doenerfabrik: `<svg viewBox="0 0 100 100"><rect x="10" y="40" width="80" height="50" fill="#FFCC80"/><polygon points="10,40 50,15 90,40" fill="#E65100"/><rect x="40" y="55" width="20" height="35" fill="#5D4037"/><rect x="20" y="55" width="10" height="20" fill="#8D6E63" rx="2"/></svg>`,
-    fastfoodfabrik: `<svg viewBox="0 0 100 100"><rect x="10" y="40" width="80" height="50" fill="#90A4AE"/><polygon points="10,40 50,10 90,40" fill="#F44336"/><path d="M 40 20 L 60 20 L 60 30 L 40 30 Z" fill="#FFC107"/><rect x="40" y="55" width="20" height="35" fill="#37474F"/></svg>`
+    fastfoodfabrik: `<svg viewBox="0 0 100 100"><rect x="10" y="40" width="80" height="50" fill="#90A4AE"/><polygon points="10,40 50,10 90,40" fill="#F44336"/><path d="M 40 20 L 60 20 L 60 30 L 40 30 Z" fill="#FFC107"/><rect x="40" y="55" width="20" height="35" fill="#37474F"/></svg>`,
+    saegewerk: `<svg viewBox="0 0 100 100"><rect x="10" y="40" width="80" height="50" fill="#A1887F"/><polygon points="10,40 50,10 90,40" fill="#5D4037"/><circle cx="50" cy="65" r="15" fill="#BDBDBD" stroke="#757575" stroke-width="4" stroke-dasharray="4,2"/><rect x="30" y="55" width="40" height="5" fill="#795548"/></svg>`,
+    zauberfabrik: `<svg viewBox="0 0 100 100"><rect x="30" y="40" width="40" height="60" fill="#9C27B0"/><polygon points="20,40 50,10 80,40" fill="#6A1B9A"/><circle cx="50" cy="55" r="8" fill="#FFEB3B"/><path d="M 20 20 L 25 30 L 35 25 L 30 15 Z" fill="#CE93D8"/><path d="M 70 20 L 80 15 L 85 25 L 75 30 Z" fill="#CE93D8"/></svg>`,
+    oelmuehle: `<svg viewBox="0 0 100 100"><polygon points="30,90 40,40 60,40 70,90" fill="#D7CCC8"/><polygon points="35,40 50,15 65,40" fill="#FFB300"/><circle cx="50" cy="50" r="10" fill="#FFF59D"/></svg>`
 };
 
 /** --- DATENSTRUKTUREN & KONFIGURATION --- */
@@ -297,6 +315,8 @@ const PLANTS = {
     trauben: { id: "trauben", name: "Trauben", baseGrowTime: 3, seedCost: 50, yield: 4, sellPrice: 25 },
     kaffee: { id: "kaffee", name: "Kaffee", baseGrowTime: 4, seedCost: 80, yield: 2, sellPrice: 60 },
     apfel: { id: "apfel", name: "Apfelbaum", baseGrowTime: 5, seedCost: 100, yield: 3, sellPrice: 80 },
+    eiche: { id: "eiche", name: "Eiche", baseGrowTime: 5, seedCost: 150, yield: 3, sellPrice: 50 },
+    kiefer: { id: "kiefer", name: "Kiefer", baseGrowTime: 6, seedCost: 180, yield: 4, sellPrice: 60 },
     goldbeeren: { id: "goldbeeren", name: "Goldbeeren", baseGrowTime: 6, seedCost: 500, yield: 1, sellPrice: 1000 }
 };
 
@@ -309,7 +329,8 @@ const ANIMALS = {
     bienen: { id: "bienen", name: "Bienenstock", cost: 300, products: ["honig"], cycle: 1, needsWorker: true },
     kuh: { id: "kuh", name: "Kuh", cost: 500, products: ["milch", "rindfleisch"], cycle: 1 },
     doenertier: { id: "doenertier", name: "Mächtiges Dönertier", cost: 10000, products: ["doenerfleisch", "magische_sosse"], cycle: 0.2, max: 1 },
-    dinosaurier: { id: "dinosaurier", name: "Dinosaurier", cost: 50000, products: ["dino_nuggets"], cycle: 1.2 }
+    dinosaurier: { id: "dinosaurier", name: "Dinosaurier", cost: 50000, products: ["dino_nuggets"], cycle: 1.2 },
+    phoenix: { id: "phoenix", name: "Goldener Phönix", cost: 0, products: ["phoenixfeder", "phoenixfeder", "goldenes_ei", "goldenes_ei"], cycle: 2.0, max: 1 }
 };
 
 const ITEMS = {
@@ -318,11 +339,12 @@ const ITEMS = {
     trueffel: { name: "Trüffel", sellPrice: 100 }, milch: { name: "Milch", sellPrice: 15 }, rindfleisch: { name: "Rindfleisch", sellPrice: 50 },
     doenerfleisch: { name: "Dönerfleisch", sellPrice: 200 }, magische_sosse: { name: "Magische Soße", sellPrice: 300 },
     honig: { name: "Honig", sellPrice: 35 }, dino_nuggets: { name: "Dino Nuggets", sellPrice: 2000 },
+    phoenixfeder: { name: "Phönixfeder", sellPrice: 800 }, goldenes_ei: { name: "Goldenes Ei", sellPrice: 1500 },
     kaese: { name: "Käse", sellPrice: 45 }, stoff: { name: "Stoff", sellPrice: 60 }, ketchup: { name: "Ketchup", sellPrice: 50 },
     energie: { name: "Energie", sellPrice: 5 }, mehl: { name: "Mehl", sellPrice: 25 }, brot: { name: "Brot", sellPrice: 50 },
     wurst: { name: "Wurst", sellPrice: 60 }, zucker: { name: "Zucker", sellPrice: 70 }, apfelsaft: { name: "Apfelsaft", sellPrice: 200 },
     mayonnaise: { name: "Mayonnaise", sellPrice: 20 }, schafskaese: { name: "Schafskäse", sellPrice: 60 },
-    sandwich: { name: "Sandwich", sellPrice: 350 }, gewuerze: { name: "Gewürze", sellPrice: 80 },
+    sandwich: { name: "Sandwich", sellPrice: 350 }, gewuerze: { name: "Gewürze", sellPrice: 80 }, oel: { name: "Öl", sellPrice: 40 },
     eisen: { name: "Eisen", sellPrice: 30 }, kupfer: { name: "Kupfer", sellPrice: 40 }, gold: { name: "Gold", sellPrice: 250 },
     stein: { name: "Stein", sellPrice: 10 }, plastik: { name: "Plastik", sellPrice: 50 }, computerchips: { name: "Computerchips", sellPrice: 400 },
     strandspielzeug: { name: "Strandspielzeug", sellPrice: 120 }, verpackungsmaterial: { name: "Verpackung", sellPrice: 80 },
@@ -330,14 +352,18 @@ const ITEMS = {
     handy: { name: "Handy", sellPrice: 1200 }, server: { name: "Server", sellPrice: 2000 }, rechencenter: { name: "Rechencenter", sellPrice: 10000 },
     kissen: { name: "Kissen", sellPrice: 100 }, kuchen: { name: "Kuchen", sellPrice: 250 }, bier: { name: "Bier", sellPrice: 150 },
     wein: { name: "Wein", sellPrice: 300 }, marmelade: { name: "Marmelade", sellPrice: 180 }, butter: { name: "Butter", sellPrice: 35 },
-    pommes: { name: "Pommes", sellPrice: 40 }, burger: { name: "Burger", sellPrice: 280 }, pizza: { name: "Pizza", sellPrice: 150 }
+    pommes: { name: "Pommes", sellPrice: 40 }, burger: { name: "Burger", sellPrice: 280 }, pizza: { name: "Pizza", sellPrice: 150 },
+    holz: { name: "Holz", sellPrice: 20 }, holzplanken: { name: "Holzplanken", sellPrice: 45 }, zauberstab: { name: "Zauberstab", sellPrice: 2500 }
 };
 Object.values(PLANTS).forEach(p => { ITEMS[p.id] = { name: p.name, sellPrice: p.sellPrice }; });
+
+const TOTAL_DISCOVERABLE = Object.keys(ITEMS).length;
 
 const MACHINES = {
     muehle: { id: "muehle", name: "Mühle", cost: 600, recipes: [{ name: "Mehl", input: { weizen: 1 }, output: { mehl: 1 }, time: 0.1 }] },
     mayofabrik: { id: "mayofabrik", name: "Mayo-Fabrik", cost: 900, recipes: [{ name: "Mayonnaise", input: { ei: 3 }, output: { mayonnaise: 1 }, time: 0.2 }] },
     ketchupfabrik: { id: "ketchupfabrik", name: "Ketchup-Fabrik", cost: 800, recipes: [{ name: "Ketchup", input: { tomaten: 3 }, output: { ketchup: 1 }, time: 0.2 }] },
+    oelmuehle: { id: "oelmuehle", name: "Ölmühle", cost: 900, recipes: [{ name: "Sonnenblumenöl", input: { sonnenblumen: 2 }, output: { oel: 1 }, time: 0.3 }] },
     kaeserei: { id: "kaeserei", name: "Käserei", cost: 1000, recipes: [{ name: "Käse", input: { milch: 2 }, output: { kaese: 1 }, time: 0.5 }] },
     molkerei: { id: "molkerei", name: "Molkerei", cost: 1200, recipes: [
         { name: "Schafskäse", input: { schafsmilch: 2 }, output: { schafskaese: 1 }, time: 0.5 },
@@ -348,10 +374,11 @@ const MACHINES = {
         { name: "Kuchen", input: { mehl: 1, ei: 1, zucker: 1, milch: 1, erdbeeren: 1 }, output: { kuchen: 1 }, time: 0.6 }
     ]},
     fastfoodfabrik: { id: "fastfoodfabrik", name: "Fastfood-Bude", cost: 1400, recipes: [
-        { name: "Pommes", input: { kartoffeln: 2 }, output: { pommes: 1 }, time: 0.2 },
+        { name: "Pommes", input: { kartoffeln: 2, oel: 1 }, output: { pommes: 1 }, time: 0.2 },
         { name: "Burger", input: { brot: 1, rindfleisch: 1, tomaten: 1, kaese: 1 }, output: { burger: 1 }, time: 0.4 },
         { name: "Pizza", input: { mehl: 1, tomaten: 2, kaese: 1, paprika: 1 }, output: { pizza: 1 }, time: 0.5 }
     ]},
+    saegewerk: { id: "saegewerk", name: "Sägewerk", cost: 1500, recipes: [{ name: "Planken", input: { holz: 2 }, output: { holzplanken: 1 }, time: 0.4 }] },
     gewuerzfabrik: { id: "gewuerzfabrik", name: "Gewürzfabrik", cost: 1500, recipes: [{ name: "Gewürze", input: { rosmarin: 1, wilde_kraeuter: 1 }, output: { gewuerze: 1 }, time: 0.4 }] },
     weberei: { id: "weberei", name: "Weberei", cost: 1500, recipes: [{ name: "Stoff", input: { wolle: 2 }, output: { stoff: 1 }, time: 0.5 }] },
     kissenfabrik: { id: "kissenfabrik", name: "Kissenfabrik", cost: 1600, recipes: [{ name: "Kissen", input: { federn: 3, stoff: 1 }, output: { kissen: 1 }, time: 0.4 }] },
@@ -363,7 +390,9 @@ const MACHINES = {
     sandwichfabrik: { id: "sandwichfabrik", name: "Sandwichfabrik", cost: 4000, recipes: [{ name: "Sandwich", input: { wurst: 1, brot: 1, kaese: 1, mayonnaise: 1, tomaten: 1, gewuerze: 1 }, output: { sandwich: 1 }, time: 0.8 }] },
     saftpresse: { id: "saftpresse", name: "Saftpresse", cost: 5000, recipes: [{ name: "Apfelsaft", input: { apfel: 2 }, output: { apfelsaft: 1 }, time: 1.0 }] },
     doenerfabrik: { id: "doenerfabrik", name: "Dönerfabrik", cost: 15000, unlock: (s) => s.animals.some(a=>a.type==='doenertier') || s.adminUnlockAll, recipes: [{ name: "Super Döner", input: { doenerfleisch: 1, magische_sosse: 1, brot: 1 }, output: { sandwich: 5 }, time: 0.5 }] },
+    zauberfabrik: { id: "zauberfabrik", name: "Zauberfabrik", cost: 20000, unlock: (s) => s.animals.some(a=>a.type==='phoenix') || s.adminUnlockAll, recipes: [{ name: "Zauberstab", input: { holzplanken: 1, phoenixfeder: 1 }, output: { zauberstab: 1 }, time: 1.0 }] },
     
+    // Industrie & Tech
     minenschacht: { id: "minenschacht", name: "Minenschacht", cost: 8000, recipes: [{ name: "Bergbau", input: {}, randomOutput: [{id:'stein', chance:0.6}, {id:'eisen', chance:0.25}, {id:'kupfer', chance:0.10}, {id:'gold', chance:0.05}], time: 0.5 }] },
     plastikfabrik: { id: "plastikfabrik", name: "Plastikfabrik (Recycling)", cost: 5000, isRecycler: true },
     plastikverarbeitung: { id: "plastikverarbeitung", name: "Plastikverarbeitung", cost: 6000, recipes: [{ name: "Plastikprodukte", input: { plastik: 1 }, randomOutput: [{id:'strandspielzeug', chance:0.4}, {id:'verpackungsmaterial', chance:0.4}, {id:'tupperware', chance:0.2}], time: 0.5 }] },
@@ -386,13 +415,14 @@ const ACHIEVEMENTS = [
     { id: "gold10", name: "Goldrausch", desc: "Besitze 10 Gold", icon: "gold", check: s => (s.inventory.gold || 0) >= 10, reward: 5000 },
     { id: "it_company", name: "Tech-Gigant", desc: "Gründe ein IT-Unternehmen", icon: "computer", check: s => s.itCompanies >= 1, reward: 20000 },
     { id: "it_monopoly", name: "Tech-Monopol", desc: "Besitze 5 IT-Unternehmen", icon: "server", check: s => s.itCompanies >= 5, reward: 50000 },
+    { id: "phoenix_ach", name: "Feuervogel", desc: "Erschaffe den Phönix", icon: "phoenix", check: s => s.animals.some(a => a.type === 'phoenix'), reward: 25000 },
     { id: "doener", name: "Der Gerät", desc: "Besitze ein Dönertier", icon: "doenertier", check: s => s.animals.some(a => a.type === 'doenertier'), reward: 10000 }
 ];
 
 /** --- SPIELSTATUS (STATE) --- */
 let state = {
     farmName: "JT Farm", money: 150, timeElapsedDays: 0,
-    inventory: {}, seeds: { 'weizen': 5 },
+    inventory: {}, seeds: { 'weizen': 5 }, discoveredItems: {},
     fields: [
         { id: 0, plantId: 'weizen', plantedAt: 0, workerAssigned: false },
         { id: 1, plantId: null, plantedAt: null, workerAssigned: false },
@@ -459,13 +489,15 @@ async function initFirebase() {
     setInterval(saveState, 10000);
 }
 
+const appIdVar = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
 async function loadState() {
     let localData = null;
     try { const ls = localStorage.getItem('jtFarmState'); if (ls) localData = JSON.parse(ls); } catch(e) {}
     let cloudData = null;
     if (currentUserId && db) {
         try {
-            const docSnap = await getDoc(doc(db, 'users', currentUserId, 'game', 'farmState'));
+            const docSnap = await getDoc(doc(db, 'artifacts', appIdVar, 'users', currentUserId, 'farmState'));
             if (docSnap.exists()) cloudData = docSnap.data();
         } catch(e) {}
     }
@@ -477,19 +509,24 @@ async function loadState() {
     if (bestData) {
         const now = Date.now();
         const deltaMs = now - (bestData.lastTickTime || now);
-        state = { ...state, ...bestData };
-        if(!state.achievements) state.achievements = {};
-        if(!state.upgrades) state.upgrades = { fertilizer: 0, yieldMulti: 0, animalSpeed: 0, workerCost: 0 };
         
-        if(Array.isArray(state.machines)) {
+        let mergedState = { ...state, ...bestData };
+        mergedState.achievements = bestData.achievements || {};
+        mergedState.discoveredItems = bestData.discoveredItems || {};
+        mergedState.upgrades = { fertilizer: 0, yieldMulti: 0, animalSpeed: 0, workerCost: 0, ...(bestData.upgrades || {}) };
+        
+        if(Array.isArray(bestData.machines)) {
             const newM = {};
-            state.machines.forEach(m => {
+            bestData.machines.forEach(m => {
                 if(!newM[m.type]) newM[m.type] = { count: 0, lastProduced: m.lastProduced||0, selectedRecipe: m.selectedRecipe||0, isActive: true, itemsLoaded: m.itemsLoaded||0 };
                 newM[m.type].count++;
             });
-            state.machines = newM;
+            mergedState.machines = newM;
+        } else {
+            mergedState.machines = bestData.machines || {};
         }
 
+        state = mergedState;
         for(let key in state.inventory) { if(state.inventory[key] <= 0) delete state.inventory[key]; }
         if (deltaMs > 60000) { simulateOfflineProgress(deltaMs); showNotification(`Willkommen zurück! Offline-Zeit berechnet.`, 'info'); }
         state.lastTickTime = now;
@@ -503,8 +540,18 @@ async function saveState() {
     if(!authInitialized) return;
     state.lastTickTime = Date.now();
     try { localStorage.setItem('jtFarmState', JSON.stringify(state)); } catch(e) {}
+    
     if (!currentUserId || !db || auth.currentUser?.isAnonymous) return;
-    try { await setDoc(doc(db, 'users', currentUserId, 'game', 'farmState'), state); } catch(e) {}
+    try { 
+        await setDoc(doc(db, 'artifacts', appIdVar, 'users', currentUserId, 'farmState'), state);
+        if(state.farmName.toLowerCase() !== 'admin') {
+            await setDoc(doc(db, 'artifacts', appIdVar, 'public', 'data', 'leaderboard', currentUserId), {
+                name: state.farmName,
+                money: state.money,
+                timestamp: Date.now()
+            });
+        }
+    } catch(e) { console.error("Cloud Save failed", e); }
 }
 
 function simulateOfflineProgress(deltaMs) {
@@ -562,7 +609,7 @@ window.handleGoogleLogin = async function() {
         const provider = new GoogleAuthProvider();
         await signInWithPopup(auth, provider);
         await saveState(); 
-        showNotification("Erfolgreich mit Google angemeldet!", "success");
+        showNotification("Erfolgreich angemeldet!", "success");
         if(!isForcedAuthModalOpen) closeModal();
     } catch(e) { 
         if(e.code === 'auth/unauthorized-domain') {
@@ -584,12 +631,25 @@ function formatTime(days) {
     let realSecs = Math.max(0, Math.ceil((days * GAME_CONFIG.dayDurationMs / state.timeScale) / 1000));
     return `${Math.floor(realSecs / 60)}m ${realSecs % 60}s`;
 }
-function getActualGrowTime(plant) { return plant.baseGrowTime * (1 - (state.upgrades?.fertilizer || 0) * 0.1); }
+function getActualGrowTime(plant) { 
+    let base = plant.baseGrowTime * (1 - (state.upgrades?.fertilizer || 0) * 0.1);
+    let wands = state.inventory['zauberstab'] || 0;
+    let magicReduction = Math.min(0.90, wands * 0.05); 
+    return base * (1 - magicReduction); 
+}
 function getActualAnimalCycle(anim) { return anim.cycle * (1 - (state.upgrades?.animalSpeed || 0) * 0.1); }
 function getActualWorkerSalary() { return Math.max(10, GAME_CONFIG.baseWorkerSalary - (state.upgrades?.workerCost || 0) * 10); }
 
-function addToInventory(id, amount) { if (!state.inventory[id]) state.inventory[id] = 0; state.inventory[id] += amount; }
-function addSeed(id, amount) { if (!state.seeds[id]) state.seeds[id] = 0; state.seeds[id] += amount; }
+function addToInventory(id, amount) { 
+    if (!state.inventory[id]) state.inventory[id] = 0; 
+    state.inventory[id] += amount; 
+    if(!state.discoveredItems) state.discoveredItems = {};
+    state.discoveredItems[id] = true;
+}
+function addSeed(id, amount) { 
+    if (!state.seeds[id]) state.seeds[id] = 0; 
+    state.seeds[id] += amount; 
+}
 
 /** --- GAME LOOP & LOGIK --- */
 function gameLoop() {
@@ -632,6 +692,7 @@ function checkAchievements() {
         if(!state.achievements[ach.id] && ach.check(state)) {
             state.achievements[ach.id] = { unlockedAt: state.timeElapsedDays };
             state.money += ach.reward;
+            saveState();
             showNotification(`Erfolg freigeschaltet: ${ach.name}! (+${ach.reward}€)`, 'success');
             if(state.activeTab === 'achievements') renderContent();
         }
@@ -652,6 +713,19 @@ function processFields() {
 }
 
 function processAnimals() {
+    const chickenCount = state.animals.filter(a => a.type === 'huhn').length;
+    if (chickenCount >= 40 && !state.animals.some(a => a.type === 'phoenix')) {
+        let removed = 0;
+        state.animals = state.animals.filter(a => {
+            if(a.type === 'huhn' && removed < 40) { removed++; return false; }
+            return true;
+        });
+        state.animals.push({id:'a'+Date.now(), type:'phoenix', lastProduced:state.timeElapsedDays, producedCount:0, workerAssigned:false});
+        showNotification("✨ Wahnsinn! 40 Hühner sind zu einem mythischen Phönix verschmolzen! ✨", "success");
+        saveState();
+        if(state.activeTab === 'farm') buildFarmStatic();
+    }
+
     state.animals.forEach(a => {
         const def = ANIMALS[a.type];
         if(def.needsWorker && (!a.workerAssigned || state.strike)) return;
@@ -781,9 +855,17 @@ function renderContent() {
         `;
         buildFarmStatic();
     } else if (state.activeTab === 'inventory') {
-        let html = `<div class="flex justify-between items-center mb-6"><h2 class="text-3xl font-black text-[#4e342e]">Inventar</h2>
-            <button onclick="sellAll()" class="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-xl shadow font-bold">Alles Verkaufen</button></div>
+        let discCount = Object.keys(state.discoveredItems || {}).length;
+        let html = `
+            <div class="flex justify-between items-center mb-6">
+                <div>
+                    <h2 class="text-3xl font-black text-[#4e342e]">Inventar</h2>
+                    <p class="text-sm font-bold text-gray-600">Entdeckte Items: ${discCount} / ${TOTAL_DISCOVERABLE}</p>
+                </div>
+                <button onclick="sellAll()" class="bg-red-500 hover:bg-red-600 text-white px-5 py-2 rounded-xl shadow font-bold">Alles Verkaufen</button>
+            </div>
             <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-8">`;
+            
         let hasItems = false;
         for (let id in state.inventory) {
             if (state.inventory[id] > 0) {
@@ -815,6 +897,10 @@ function renderContent() {
         const fieldCost = calculateFieldCost();
         const solarCost = 2000 * (state.solarPanels + 1);
         const fertLevel = state.upgrades.fertilizer || 0;
+        const yieldLevel = state.upgrades.yieldMulti || 0;
+        const animLevel = state.upgrades.animalSpeed || 0;
+        const workLevel = state.upgrades.workerCost || 0;
+        const nextPaydayIn = Math.max(0, state.nextPayday - state.timeElapsedDays).toFixed(1);
         
         area.innerHTML = `
             <h2 class="text-3xl font-black mb-6 text-[#4e342e]">Dorfladen</h2>
@@ -824,7 +910,7 @@ function renderContent() {
                     <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3 p-3 border-4 border-[#9C27B0] rounded-b-xl bg-white">
                         <div class="border-2 rounded-xl p-3 flex flex-col justify-between shadow-sm">
                             <div class="font-black text-lg">Erntehelfer</div>
-                            <div class="text-xs text-gray-600 mb-2 font-bold">Erntet automatisch.<br>Lohn: ${getActualWorkerSalary()}€/Woche</div>
+                            <div class="text-xs text-gray-600 mb-2 font-bold">Lohn: ${getActualWorkerSalary()}€/Woche<br><span class="text-blue-600">Zahltag in: ${nextPaydayIn} Tagen</span></div>
                             <button onclick="buyWorker()" class="bg-purple-500 hover:bg-purple-600 text-white p-2 rounded-lg font-bold w-full">200€</button>
                         </div>
                         <div class="border-2 rounded-xl p-3 flex flex-col justify-between shadow-sm">
@@ -839,24 +925,24 @@ function renderContent() {
                         </div>
                         
                         <div class="border-2 rounded-xl p-3 flex flex-col justify-between shadow-sm bg-purple-50">
-                            <div class="font-black text-lg">Wachstum Lvl ${state.upgrades.fertilizer}/5</div>
+                            <div class="font-black text-lg">Wachstum Lvl ${fertLevel}/5</div>
                             <div class="text-xs text-gray-600 mb-2 font-bold">Pflanzen 10% schneller.</div>
-                            <button onclick="buyUpgrade('fertilizer', 5, 500)" class="bg-green-600 text-white p-2 rounded-lg font-bold w-full" ${state.upgrades.fertilizer>=5?'disabled':''}>${state.upgrades.fertilizer>=5?'Max':(500*(state.upgrades.fertilizer+1))+'€'}</button>
+                            <button onclick="buyUpgrade('fertilizer', 5, 500)" class="bg-green-600 text-white p-2 rounded-lg font-bold w-full" ${fertLevel>=5?'disabled':''}>${fertLevel>=5?'Max':(500*(fertLevel+1))+'€'}</button>
                         </div>
                         <div class="border-2 rounded-xl p-3 flex flex-col justify-between shadow-sm bg-purple-50">
-                            <div class="font-black text-lg">Ertrag Lvl ${state.upgrades.yieldMulti}/3</div>
+                            <div class="font-black text-lg">Ertrag Lvl ${yieldLevel}/3</div>
                             <div class="text-xs text-gray-600 mb-2 font-bold">+100% Ertrag auf Felder.</div>
-                            <button onclick="buyUpgrade('yieldMulti', 3, 2000)" class="bg-green-600 text-white p-2 rounded-lg font-bold w-full" ${state.upgrades.yieldMulti>=3?'disabled':''}>${state.upgrades.yieldMulti>=3?'Max':(2000*(state.upgrades.yieldMulti+1))+'€'}</button>
+                            <button onclick="buyUpgrade('yieldMulti', 3, 2000)" class="bg-green-600 text-white p-2 rounded-lg font-bold w-full" ${yieldLevel>=3?'disabled':''}>${yieldLevel>=3?'Max':(2000*(yieldLevel+1))+'€'}</button>
                         </div>
                         <div class="border-2 rounded-xl p-3 flex flex-col justify-between shadow-sm bg-purple-50">
-                            <div class="font-black text-lg">Zucht Lvl ${state.upgrades.animalSpeed}/5</div>
+                            <div class="font-black text-lg">Zucht Lvl ${animLevel}/5</div>
                             <div class="text-xs text-gray-600 mb-2 font-bold">Tiere 10% schneller.</div>
-                            <button onclick="buyUpgrade('animalSpeed', 5, 800)" class="bg-green-600 text-white p-2 rounded-lg font-bold w-full" ${state.upgrades.animalSpeed>=5?'disabled':''}>${state.upgrades.animalSpeed>=5?'Max':(800*(state.upgrades.animalSpeed+1))+'€'}</button>
+                            <button onclick="buyUpgrade('animalSpeed', 5, 800)" class="bg-green-600 text-white p-2 rounded-lg font-bold w-full" ${animLevel>=5?'disabled':''}>${animLevel>=5?'Max':(800*(animLevel+1))+'€'}</button>
                         </div>
                         <div class="border-2 rounded-xl p-3 flex flex-col justify-between shadow-sm bg-purple-50">
-                            <div class="font-black text-lg">Tarifvertrag Lvl ${state.upgrades.workerCost}/4</div>
+                            <div class="font-black text-lg">Tarifvertrag Lvl ${workLevel}/4</div>
                             <div class="text-xs text-gray-600 mb-2 font-bold">Lohn um 10€ senken.</div>
-                            <button onclick="buyUpgrade('workerCost', 4, 1500)" class="bg-green-600 text-white p-2 rounded-lg font-bold w-full" ${state.upgrades.workerCost>=4?'disabled':''}>${state.upgrades.workerCost>=4?'Max':(1500*(state.upgrades.workerCost+1))+'€'}</button>
+                            <button onclick="buyUpgrade('workerCost', 4, 1500)" class="bg-green-600 text-white p-2 rounded-lg font-bold w-full" ${workLevel>=4?'disabled':''}>${workLevel>=4?'Max':(1500*(workLevel+1))+'€'}</button>
                         </div>
 
                         <div class="border-2 rounded-xl p-3 flex flex-col justify-between shadow-sm">
@@ -874,7 +960,7 @@ function renderContent() {
                 </section>
                 
                 <section>
-                    <h3 class="text-xl font-black bg-[#8BC34A] text-white p-2 rounded-t-xl shadow-sm">Saatgut</h3>
+                    <h3 class="text-xl font-black bg-[#8BC34A] text-white p-2 rounded-t-xl shadow-sm">Saatgut & Bäume</h3>
                     <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 p-3 border-4 border-[#8BC34A] rounded-b-xl bg-white">
                         ${Object.values(PLANTS).map(p => `
                             <div class="border-2 rounded-xl p-2 flex flex-col items-center shadow-sm">
@@ -888,7 +974,9 @@ function renderContent() {
                 <section>
                     <h3 class="text-xl font-black bg-[#4FC3F7] text-white p-2 rounded-t-xl shadow-sm">Tiere</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 p-3 border-4 border-[#4FC3F7] rounded-b-xl bg-white">
-                        ${Object.values(ANIMALS).map(a => `
+                        ${Object.values(ANIMALS).map(a => {
+                            if(a.cost === 0) return '';
+                            return `
                             <div class="border-2 rounded-xl p-3 flex flex-col shadow-sm">
                                 <div class="flex items-center gap-2 mb-2">
                                     <div class="w-10 h-10">${SVG[a.id]}</div>
@@ -900,8 +988,8 @@ function renderContent() {
                                     ${a.special ? `<br><span class="inline-block w-3 h-3 mr-1 text-yellow-500">${SVG.icon_sparkles}</span> Extra: ${ITEMS[a.special].name}` : ''}
                                 </div>
                                 <button onclick="buyAnimal('${a.id}')" class="w-full bg-[#03A9F4] hover:bg-[#0288D1] text-white py-1 rounded-lg font-bold text-sm shadow-sm">${a.cost}€</button>
-                            </div>
-                        `).join('')}
+                            </div>`
+                        }).join('')}
                     </div>
                 </section>
                 <section>
@@ -929,6 +1017,11 @@ function renderContent() {
             </div>
             <div id="machines-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"></div>`;
         buildMachinesStatic();
+    } else if (state.activeTab === 'scoreboard') {
+        area.innerHTML = `<h2 class="text-3xl font-black mb-6 text-[#4e342e] flex items-center gap-2"><span class="w-8 h-8 inline-block">${SVG.icon_globe}</span> Globales Scoreboard</h2>
+            <div id="scoreboard-loading" class="text-center font-bold text-gray-500 py-10">Lade Top-Farmer aus der Cloud...</div>
+            <div id="scoreboard-container" class="space-y-4"></div>`;
+        loadScoreboard();
     } else if (state.activeTab === 'achievements') {
         area.innerHTML = `
             <h2 class="text-3xl font-black mb-6 text-[#4e342e] flex items-center gap-2"><span class="w-8 h-8 inline-block">${SVG.icon_trophy}</span> Erfolge</h2>
@@ -938,7 +1031,7 @@ function renderContent() {
                     const unlocked = state.achievements[ach.id];
                     return `
                     <div class="achievement-card border-4 rounded-2xl p-4 flex gap-4 ${unlocked ? 'achievement-unlocked' : 'achievement-locked border-gray-300 bg-gray-100'}">
-                        <div class="w-12 h-12 flex items-center justify-center">${SVG[ach.icon]}</div>
+                        <div class="w-12 h-12 flex items-center justify-center">${SVG[ach.icon] || ''}</div>
                         <div class="flex-1">
                             <div class="font-black text-lg ${unlocked ? 'text-[#5d4037]' : 'text-gray-500'}">${ach.name}</div>
                             <div class="text-xs font-bold ${unlocked ? 'text-gray-700' : 'text-gray-400'} mb-2">${ach.desc}</div>
@@ -992,10 +1085,51 @@ function renderContent() {
     }
 }
 
+window.loadScoreboard = async function() {
+    try {
+        const snap = await getDocs(collection(db, 'artifacts', appIdVar, 'public', 'data', 'leaderboard'));
+        let players = [];
+        snap.forEach(d => {
+            const data = d.data();
+            if(data.name && data.name.toLowerCase() !== 'admin') players.push(data);
+        });
+        players.sort((a,b) => b.money - a.money);
+        players = players.slice(0, 10);
+        
+        document.getElementById('scoreboard-loading').style.display = 'none';
+        const container = document.getElementById('scoreboard-container');
+        
+        if(players.length === 0) {
+            container.innerHTML = `<div class="text-center font-bold text-gray-500">Noch keine Spieler im Leaderboard!</div>`;
+            return;
+        }
+
+        let html = '';
+        players.forEach((p, i) => {
+            const colors = ['bg-yellow-100 border-yellow-400', 'bg-gray-100 border-gray-400', 'bg-orange-100 border-orange-400'];
+            html += `
+                <div class="${colors[i] || 'bg-white border-[#D4A373]'} border-4 rounded-2xl p-4 flex items-center shadow-md">
+                    <div class="text-4xl font-black text-gray-400 w-12 text-center">#${i+1}</div>
+                    <div class="flex-1 ml-4">
+                        <div class="text-2xl font-black text-[#4e342e]">${p.name}</div>
+                        <div class="text-sm font-bold text-gray-500">Gesehen: ${new Date(p.timestamp).toLocaleDateString()}</div>
+                    </div>
+                    <div class="text-2xl font-black text-green-700 flex items-center gap-2">
+                        <span class="w-8 h-8 inline-block">${SVG.icon_coin}</span> ${Math.floor(p.money).toLocaleString('de-DE')} €
+                    </div>
+                </div>
+            `;
+        });
+        container.innerHTML = html;
+    } catch(e) {
+        document.getElementById('scoreboard-loading').innerText = "Leaderboard konnte nicht geladen werden.";
+    }
+}
+
 function calculateFieldCost() { 
     let cost = 100;
     for(let i = 4; i < state.fields.length; i++) {
-        if (cost < 4000) cost *= 2;
+        if (cost < 3200) cost *= 2;
         else cost += 400;
     }
     return cost;
@@ -1114,11 +1248,13 @@ window.changeRecipe = function(type, recipeIndex) {
     if(state.machines[type]) {
         state.machines[type].selectedRecipe = parseInt(recipeIndex);
         state.machines[type].lastProduced = state.timeElapsedDays;
+        saveState();
     }
 }
 window.toggleMachine = function(type) {
     if(state.machines[type]) {
         state.machines[type].isActive = !state.machines[type].isActive;
+        saveState();
         buildMachinesStatic(); 
     }
 }
@@ -1270,27 +1406,29 @@ window.handleAnimalClick = function(id, isGrouped) {
         else html += `<div class="text-red-500 font-bold mb-3 text-center">Keine freien Arbeiter!</div>`;
     }
 
-    html += `<button onclick="sellAnimal('${id}')" class="w-full bg-red-500 text-white font-bold py-2 rounded-xl">Verkaufen (+${def.cost/2}€) ${isGrouped ? '(Verkauft nur 1)' : ''}</button>`;
+    if(a.type !== 'phoenix') {
+        html += `<button onclick="sellAnimal('${id}')" class="w-full bg-red-500 text-white font-bold py-2 rounded-xl">Verkaufen (+${def.cost/2}€) ${isGrouped ? '(Verkauft nur 1)' : ''}</button>`;
+    }
     openModal(`${def.name} Verwalten`, html);
 }
 
 window.clearField = function(idx) { state.fields[idx].plantId = null; closeModal(); buildFarmStatic(); }
-window.plantSeed = function(idx, pId) { if(state.seeds[pId]>0){ state.seeds[pId]--; state.fields[idx].plantId = pId; state.fields[idx].plantedAt = state.timeElapsedDays; closeModal(); buildFarmStatic(); } }
-window.assignWorkerField = function(idx) { if(state.workersIdle>0){ state.workersIdle--; state.fields[idx].workerAssigned=true; closeModal(); buildFarmStatic(); } }
-window.removeWorkerField = function(idx) { if(state.fields[idx].workerAssigned){ state.fields[idx].workerAssigned=false; state.workersIdle++; closeModal(); buildFarmStatic(); } }
-window.assignWorkerAnimal = function(id) { const a = state.animals.find(an => an.id === id); if(a && state.workersIdle>0){ state.workersIdle--; a.workerAssigned=true; closeModal(); buildFarmStatic(); } }
-window.removeWorkerAnimal = function(id) { const a = state.animals.find(an => an.id === id); if(a && a.workerAssigned){ a.workerAssigned=false; state.workersIdle++; closeModal(); buildFarmStatic(); } }
+window.plantSeed = function(idx, pId) { if(state.seeds[pId]>0){ state.seeds[pId]--; state.fields[idx].plantId = pId; state.fields[idx].plantedAt = state.timeElapsedDays; closeModal(); saveState(); buildFarmStatic(); } }
+window.assignWorkerField = function(idx) { if(state.workersIdle>0){ state.workersIdle--; state.fields[idx].workerAssigned=true; closeModal(); saveState(); buildFarmStatic(); } }
+window.removeWorkerField = function(idx) { if(state.fields[idx].workerAssigned){ state.fields[idx].workerAssigned=false; state.workersIdle++; closeModal(); saveState(); buildFarmStatic(); } }
+window.assignWorkerAnimal = function(id) { const a = state.animals.find(an => an.id === id); if(a && state.workersIdle>0){ state.workersIdle--; a.workerAssigned=true; closeModal(); saveState(); buildFarmStatic(); } }
+window.removeWorkerAnimal = function(id) { const a = state.animals.find(an => an.id === id); if(a && a.workerAssigned){ a.workerAssigned=false; state.workersIdle++; closeModal(); saveState(); buildFarmStatic(); } }
 
-window.buySeed = function(id) { const p=PLANTS[id]; if(state.money>=p.seedCost){state.money-=p.seedCost; addSeed(id,1); showNotification(`Gekauft!`, 'success'); updateUI(); changeTab('shop');} else showNotification('Zu wenig Geld', 'error'); }
-window.buyAnimal = function(id) { const a=ANIMALS[id]; if(a.max && state.animals.filter(an=>an.type===id).length>=a.max){showNotification(`Maximal ${a.max}!`, 'error'); return;} if(state.money>=a.cost){state.money-=a.cost; state.animals.push({id:'a'+Date.now()+Math.random(), type:id, lastProduced:state.timeElapsedDays, producedCount:0, workerAssigned:false}); showNotification(`Gekauft!`, 'success'); updateUI();} else showNotification('Zu wenig Geld', 'error'); }
-window.sellAnimal = function(id) { const idx=state.animals.findIndex(a=>a.id===id); if(idx>-1){ const a=state.animals[idx]; state.money+=ANIMALS[a.type].cost/2; if(a.workerAssigned) state.workersIdle++; state.animals.splice(idx,1); closeModal(); buildFarmStatic(); updateUI(); } }
-window.buyMachine = function(id) { const m=MACHINES[id]; if(state.money>=m.cost){state.money-=m.cost; if(!state.machines[id]) state.machines[id] = {count:0, lastProduced:state.timeElapsedDays, isActive:true, selectedRecipe:0, itemsLoaded:0}; state.machines[id].count++; showNotification(`Gebaut!`, 'success'); updateUI(); changeTab('shop');} else showNotification('Zu wenig Geld', 'error'); }
+window.buySeed = async function(id) { const p=PLANTS[id]; if(state.money>=p.seedCost){state.money-=p.seedCost; addSeed(id,1); await saveState(); showNotification(`Gekauft!`, 'success'); updateUI(); changeTab('shop');} else showNotification('Zu wenig Geld', 'error'); }
+window.buyAnimal = async function(id) { const a=ANIMALS[id]; if(a.max && state.animals.filter(an=>an.type===id).length>=a.max){showNotification(`Maximal ${a.max}!`, 'error'); return;} if(state.money>=a.cost){state.money-=a.cost; state.animals.push({id:'a'+Date.now()+Math.random(), type:id, lastProduced:state.timeElapsedDays, producedCount:0, workerAssigned:false}); await saveState(); showNotification(`Gekauft!`, 'success'); updateUI();} else showNotification('Zu wenig Geld', 'error'); }
+window.sellAnimal = async function(id) { const idx=state.animals.findIndex(a=>a.id===id); if(idx>-1){ const a=state.animals[idx]; state.money+=ANIMALS[a.type].cost/2; if(a.workerAssigned) state.workersIdle++; state.animals.splice(idx,1); await saveState(); closeModal(); buildFarmStatic(); updateUI(); } }
+window.buyMachine = async function(id) { const m=MACHINES[id]; if(state.money>=m.cost){state.money-=m.cost; if(!state.machines[id]) state.machines[id] = {count:0, lastProduced:state.timeElapsedDays, isActive:true, selectedRecipe:0, itemsLoaded:0}; state.machines[id].count++; await saveState(); showNotification(`Gebaut!`, 'success'); updateUI(); changeTab('shop');} else showNotification('Zu wenig Geld', 'error'); }
 
-window.buyWorker = function() { if(state.money>=200){state.money-=200; state.workersTotal++; state.workersIdle++; updateUI();} else showNotification('Zu wenig Geld', 'error'); }
-window.buyField = function() { const c=calculateFieldCost(); if(state.money>=c){state.money-=c; state.fields.push({id:state.fields.length, plantId:null, plantedAt:null, workerAssigned:false}); changeTab('shop');} else showNotification('Zu wenig Geld', 'error'); }
-window.buySolar = function() { const c=2000*(state.solarPanels+1); if(state.money>=c){state.money-=c; state.solarPanels++; changeTab('shop');} else showNotification('Zu wenig Geld', 'error'); }
-window.buyUpgrade = function(type, max, baseCost) { const l=state.upgrades[type]||0; const c=baseCost*(l+1); if(l>=max)return; if(state.money>=c){state.money-=c; state.upgrades[type]=l+1; showNotification('Upgrade!', 'success'); changeTab('shop');} else showNotification('Zu wenig Geld', 'error'); }
-window.buyITCompany = function() { if((state.inventory.computer||0)>=3 && (state.inventory.server||0)>=2) { state.inventory.computer-=3; state.inventory.server-=2; state.itCompanies++; changeTab('shop'); } else showNotification('Material fehlt!', 'error'); }
+window.buyWorker = async function() { if(state.money>=200){state.money-=200; state.workersTotal++; state.workersIdle++; await saveState(); updateUI();} else showNotification('Zu wenig Geld', 'error'); }
+window.buyField = async function() { const c=calculateFieldCost(); if(state.money>=c){state.money-=c; state.fields.push({id:state.fields.length, plantId:null, plantedAt:null, workerAssigned:false}); await saveState(); changeTab('shop');} else showNotification('Zu wenig Geld', 'error'); }
+window.buySolar = async function() { const c=2000*(state.solarPanels+1); if(state.money>=c){state.money-=c; state.solarPanels++; await saveState(); changeTab('shop');} else showNotification('Zu wenig Geld', 'error'); }
+window.buyUpgrade = async function(type, max, baseCost) { const l=state.upgrades[type]||0; const c=baseCost*(l+1); if(l>=max)return; if(state.money>=c){state.money-=c; state.upgrades[type]=l+1; await saveState(); showNotification('Upgrade!', 'success'); changeTab('shop');} else showNotification('Zu wenig Geld', 'error'); }
+window.buyITCompany = async function() { if((state.inventory.computer||0)>=3 && (state.inventory.server||0)>=2) { state.inventory.computer-=3; state.inventory.server-=2; state.itCompanies++; await saveState(); changeTab('shop'); } else showNotification('Material fehlt!', 'error'); }
 
 window.sellItem = function(id) { 
     if(state.inventory[id]>0){
@@ -1298,6 +1436,7 @@ window.sellItem = function(id) {
         const price = ITEMS[id]?.sellPrice||PLANTS[id]?.sellPrice||0;
         state.money+=price; 
         showNotification(`+ ${price}€`, 'success');
+        saveState();
         renderContent();
     } 
 }
@@ -1312,6 +1451,7 @@ window.sellAll = function() {
     if(e>0){
         state.money+=e; 
         showNotification(`+ ${e}€`, 'success');
+        saveState();
         renderContent();
     } 
 }
@@ -1325,6 +1465,7 @@ window.endStrike = function() {
         state.nextPayday = state.timeElapsedDays + 7; 
         document.getElementById('worker-warning').style.display='none'; 
         showNotification('Schulden bezahlt!', 'success'); 
+        saveState();
         renderContent(); 
     } else showNotification('Zu wenig Geld!', 'error'); 
 }
@@ -1334,11 +1475,12 @@ window.payBonus = function() {
     if(state.money >= d) {
         state.money -= d; 
         showNotification('Bonus ausgezahlt! Deine Arbeiter freuen sich.', 'success'); 
+        saveState();
         updateUI();
     } else showNotification('Zu wenig Geld für einen Bonus!', 'error'); 
 }
 
-window.renameFarm = function() { const n=prompt("Name:", state.farmName); if(n && n.trim()!==''){state.farmName=n.trim(); updateFarmNameUI(); if(state.activeTab === 'settings') renderContent();} }
+window.renameFarm = function() { const n=prompt("Name:", state.farmName); if(n && n.trim()!==''){state.farmName=n.trim(); saveState(); updateFarmNameUI(); if(state.activeTab === 'settings') renderContent();} }
 
 /* --- RECYCLING MINIGAME --- */
 let minigameInterval;
@@ -1399,6 +1541,7 @@ window.stopMinigame = function(type) {
         showNotification("Daneben! Müll verloren.", "error");
         state.machines[type].itemsLoaded -= 5;
     }
+    saveState();
     closeModal();
     buildMachinesStatic();
 }
@@ -1421,22 +1564,22 @@ window.recycleItemGroup = function(id, type) {
         if(state.inventory[id] <= 0) delete state.inventory[id];
         
         target.itemsLoaded = (target.itemsLoaded || 0) + 1;
-        
+        saveState();
         if(target.itemsLoaded >= maxCapacity) closeModal(); 
         else openRecycleGroupModal(type); 
     }
 }
 
 /* ADMIN FUNKTIONEN */
-window.adminGiveMoney = function() { state.money += 1000000; updateUI(); showNotification("Admin: +1M€", "success"); }
-window.adminTriggerStrike = function() { state.money = 0; state.strike = true; document.getElementById('worker-warning').style.display = 'block'; showNotification("Admin: Streik!", "error"); renderContent(); }
-window.adminStopStrike = function() { state.strike = false; state.nextPayday = state.timeElapsedDays + 7; document.getElementById('worker-warning').style.display = 'none'; showNotification("Admin: Streik beendet!", "success"); renderContent(); }
-window.adminUnlockAll = function() { state.adminUnlockAll = true; showNotification("Admin: Alles freigeschaltet!", "success"); }
+window.adminGiveMoney = function() { state.money += 1000000; updateUI(); saveState(); showNotification("Admin: +1M€", "success"); }
+window.adminTriggerStrike = function() { state.money = 0; state.strike = true; document.getElementById('worker-warning').style.display = 'block'; showNotification("Admin: Streik!", "error"); saveState(); renderContent(); }
+window.adminStopStrike = function() { state.strike = false; state.nextPayday = state.timeElapsedDays + 7; document.getElementById('worker-warning').style.display = 'none'; showNotification("Admin: Streik beendet!", "success"); saveState(); renderContent(); }
+window.adminUnlockAll = function() { state.adminUnlockAll = true; saveState(); showNotification("Admin: Alles freigeschaltet!", "success"); }
 window.adminCommand = function() {
     const val = document.getElementById('admin-cmd').value.toLowerCase().trim().split(' ');
     if(val[0] === 'give' && val[1]) {
         const item = val[1]; const amt = parseInt(val[2]) || 1;
-        if(ITEMS[item] || PLANTS[item]) { addToInventory(item, amt); showNotification(`Gegeben: ${amt}x ${item}`, "success"); }
+        if(ITEMS[item] || PLANTS[item]) { addToInventory(item, amt); saveState(); showNotification(`Gegeben: ${amt}x ${item}`, "success"); }
         else showNotification(`Item '${item}' existiert nicht.`, "error");
     }
 }
